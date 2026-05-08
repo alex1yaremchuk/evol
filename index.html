@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Основные развилки эволюции</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="deck" id="deck" aria-live="polite">
+      <section class="slide-shell" id="slide"></section>
+    </main>
+
+    <nav class="controls" aria-label="Навигация по слайдам">
+      <button class="nav-button" id="prev" type="button" aria-label="Предыдущий слайд">
+        <span aria-hidden="true">‹</span>
+      </button>
+      <div class="progress" aria-label="Номер слайда">
+        <span id="current">1</span>
+        <span>/</span>
+        <span id="total">1</span>
+      </div>
+      <button class="nav-button" id="next" type="button" aria-label="Следующий слайд">
+        <span aria-hidden="true">›</span>
+      </button>
+    </nav>
+
+    <script src="app.js"></script>
+  </body>
+</html>
