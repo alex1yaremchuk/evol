@@ -34,8 +34,41 @@ button {
 }
 
 .deck {
+  position: relative;
+  z-index: 0;
   width: 100vw;
   height: 100vh;
+}
+
+.scheme-nav {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  z-index: 8;
+  display: flex;
+  gap: 0.45rem;
+  width: min(calc(100% - 2rem), 44rem);
+  justify-content: center;
+  transform: translateX(-50%);
+}
+
+.scheme-button {
+  min-height: 2.45rem;
+  padding: 0.42rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 0.7rem 1.6rem rgba(24, 33, 43, 0.09);
+  color: #26323c;
+  cursor: pointer;
+  font-size: clamp(0.78rem, 1.35vw, 0.94rem);
+  font-weight: 820;
+  backdrop-filter: blur(12px);
+}
+
+.scheme-button.active {
+  background: rgba(36, 125, 116, 0.94);
+  color: #fff;
 }
 
 .slide-shell {
@@ -51,8 +84,9 @@ button {
 .slide {
   display: grid;
   grid-template-columns: minmax(19rem, 0.82fr) minmax(22rem, 1.18fr);
+  grid-template-rows: auto 1fr;
   gap: clamp(1.25rem, 3vw, 3.5rem);
-  align-items: center;
+  align-items: start;
   width: min(100%, 1420px);
   min-height: 100vh;
   margin: 0 auto;
@@ -62,7 +96,7 @@ button {
 
 .copy {
   display: grid;
-  align-content: center;
+  align-content: start;
   gap: clamp(1rem, 2vw, 1.55rem);
 }
 
@@ -78,11 +112,144 @@ button {
   letter-spacing: 0;
 }
 
+.timeline {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: none;
+  padding: 0.7rem 0.82rem 0.84rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0.8rem 1.7rem rgba(24, 33, 43, 0.08);
+  backdrop-filter: blur(9px);
+}
+
+.timeline-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+  color: #35424d;
+  font-size: clamp(0.72rem, 1.25vw, 0.84rem);
+  line-height: 1.2;
+}
+
+.timeline-head span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.timeline-head strong {
+  color: var(--accent);
+  font-weight: 880;
+  white-space: nowrap;
+}
+
+.era-row,
+.period-row {
+  position: relative;
+  height: 1.24rem;
+  overflow: hidden;
+  border-radius: 0.3rem;
+  background: rgba(24, 33, 43, 0.07);
+}
+
+.era-row {
+  height: 1.02rem;
+  margin-bottom: 0.16rem;
+}
+
+.era-band,
+.period-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.62);
+  background: rgba(36, 125, 116, 0.18);
+  color: rgba(24, 33, 43, 0.72);
+}
+
+.era-band {
+  background: rgba(24, 33, 43, 0.16);
+  color: rgba(24, 33, 43, 0.78);
+}
+
+.period-band:nth-child(2n) {
+  background: rgba(209, 79, 63, 0.15);
+}
+
+.era-band b,
+.period-band b {
+  overflow: hidden;
+  max-width: 100%;
+  padding: 0 0.18rem;
+  font-size: clamp(0.56rem, 0.92vw, 0.72rem);
+  font-weight: 780;
+  line-height: 1;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.era-band b {
+  font-size: clamp(0.52rem, 0.82vw, 0.66rem);
+  text-transform: uppercase;
+}
+
+.timeline-track {
+  position: relative;
+  height: 2.1rem;
+  margin-top: 0.16rem;
+  border-top: 0.22rem solid rgba(24, 33, 43, 0.22);
+}
+
+.time-tick,
+.time-dot {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.time-tick {
+  top: -0.34rem;
+  display: grid;
+  place-items: center;
+  gap: 0.18rem;
+  color: rgba(24, 33, 43, 0.64);
+  font-size: clamp(0.58rem, 1.05vw, 0.7rem);
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.time-tick i {
+  width: 0.12rem;
+  height: 0.58rem;
+  background: rgba(24, 33, 43, 0.36);
+}
+
+.time-tick b {
+  font-weight: 760;
+}
+
+.time-dot {
+  top: -0.62rem;
+  width: 1rem;
+  height: 1rem;
+  border: 0.18rem solid #fff;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0.25rem rgba(209, 79, 63, 0.18);
+}
+
 .title {
   margin: 0;
-  max-width: 12ch;
-  font-size: clamp(2.45rem, 6.4vw, 6.25rem);
-  line-height: 0.93;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(2.1rem, 4.8vw, 4.65rem);
+  line-height: 0.98;
   letter-spacing: 0;
 }
 
@@ -94,45 +261,103 @@ button {
   line-height: 1.43;
 }
 
-.fact-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 0.4rem;
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
 }
 
-.fact {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 2.35rem;
-  padding: 0.52rem 0.78rem;
+.info-card {
+  min-height: 3.65rem;
+  padding: 0.56rem 0.66rem;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.58);
   color: #26323c;
-  font-size: clamp(0.88rem, 1.6vw, 1rem);
-  font-weight: 680;
 }
 
-.fact strong {
+.info-card strong {
+  display: block;
+  margin-bottom: 0.24rem;
   color: var(--accent);
-  font-weight: 850;
+  font-size: clamp(0.72rem, 1.2vw, 0.82rem);
+  font-weight: 880;
 }
 
-.side-note {
-  border-left: 0.28rem solid var(--accent-2);
-  padding: 0.35rem 0 0.35rem 0.9rem;
+.info-card span {
+  display: block;
   color: #38444e;
-  font-size: clamp(0.94rem, 1.65vw, 1.06rem);
-  line-height: 1.42;
+  font-size: clamp(0.82rem, 1.35vw, 0.94rem);
+  font-weight: 660;
+  line-height: 1.28;
 }
 
 .stage {
   position: relative;
   display: grid;
-  place-items: center;
-  min-height: min(68vh, 43rem);
+  align-content: start;
+  justify-items: center;
+  gap: 0.72rem;
+  min-height: 0;
+}
+
+.photo-card {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgba(24, 33, 43, 0.18);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: 0 1rem 2.2rem rgba(24, 33, 43, 0.14);
+}
+
+.photo-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.silhouette-photo {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42)),
+    rgba(255, 255, 255, 0.64);
+}
+
+.silhouette-photo img {
+  padding: 1rem;
+  object-fit: contain;
+}
+
+.photo-card figcaption {
+  position: absolute;
+  left: 0.55rem;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  width: fit-content;
+  max-width: calc(100% - 1.1rem);
+  padding: 0.36rem 0.54rem;
+  border-radius: 0.42rem;
+  background: rgba(255, 255, 255, 0.82);
+  color: #1f2a33;
+  font-size: clamp(0.75rem, 1.25vw, 0.88rem);
+  font-weight: 820;
+  line-height: 1.18;
+  backdrop-filter: blur(8px);
+}
+
+.side-photo {
+  width: min(100%, 20rem);
+  aspect-ratio: 16 / 9;
+}
+
+.main-photo {
+  width: min(100%, 38rem);
+  aspect-ratio: 16 / 10;
+}
+
+.main-photo.silhouette-photo {
+  width: min(100%, 31rem);
 }
 
 .creature {
@@ -141,11 +366,16 @@ button {
   filter: drop-shadow(0 2.4rem 2.6rem rgba(26, 31, 37, 0.18));
 }
 
+.has-main-photo .creature {
+  display: none;
+}
+
+.main-is-silhouette .creature {
+  display: none;
+}
+
 .caption {
-  position: absolute;
-  right: 2%;
-  bottom: 4%;
-  max-width: 18rem;
+  max-width: min(100%, 32rem);
   padding: 0.7rem 0.86rem;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
@@ -161,7 +391,7 @@ button {
   position: fixed;
   left: 50%;
   bottom: 1.1rem;
-  z-index: 5;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -244,6 +474,17 @@ svg .bone {
     overflow: auto;
   }
 
+  .scheme-nav {
+    top: 0.55rem;
+    width: calc(100% - 0.9rem);
+    gap: 0.3rem;
+  }
+
+  .scheme-button {
+    flex: 1;
+    padding-inline: 0.3rem;
+  }
+
   .deck,
   .slide-shell {
     min-height: 100svh;
@@ -252,10 +493,11 @@ svg .bone {
 
   .slide {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
     align-content: start;
     gap: 1rem;
     min-height: 100svh;
-    padding: 1.15rem;
+    padding: 4.05rem 1.15rem 1.15rem;
     padding-bottom: 5.8rem;
   }
 
@@ -268,15 +510,35 @@ svg .bone {
     min-height: 42svh;
   }
 
+  .timeline {
+    width: calc(100vw - 0.9rem);
+    justify-self: center;
+    padding-inline: 0.58rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
   .creature {
     width: min(100%, 33rem);
   }
 
+  .main-photo {
+    width: min(100%, 36rem);
+  }
+
+  .has-main-photo .creature {
+    display: none;
+  }
+
+  .side-photo {
+    width: min(100%, 28rem);
+  }
+
   .caption {
-    position: static;
     justify-self: end;
     max-width: 100%;
-    margin-top: -0.65rem;
   }
 }
 
@@ -287,6 +549,7 @@ svg .bone {
 
   .controls {
     width: calc(100% - 1.2rem);
+    bottom: 4.25rem;
     justify-content: center;
   }
 }

@@ -1,164 +1,14 @@
-const slides = [
-  {
-    kicker: "Старт большой линии",
-    title: "Клетка с ядром",
-    subtitle: "Среди бактерий и архей появляется эукариотическая клетка: внутри есть ядро и маленькие энергетические станции.",
-    improvement: "ядро + органеллы",
-    side: "Рядом остались бактерии и археи: маленькие, древние и очень успешные.",
-    caption: "Главный герой: эукариотическая клетка",
-    scene: "cell",
-    colors: ["#e9f2da", "#f3dfc2"],
-  },
-  {
-    kicker: "Растения / грибы / животные",
-    title: "Животная ветка",
-    subtitle: "Наша линия выбирает быть животными: искать еду, двигаться и чувствовать мир вокруг.",
-    improvement: "движение + чувства",
-    side: "Растения кормятся светом. Грибы растут нитями и всасывают готовую пищу.",
-    caption: "Представитель: простое морское животное",
-    scene: "sponge",
-    colors: ["#cfe8e1", "#f6d9b8"],
-  },
-  {
-    kicker: "Первичноротые / вторичноротые",
-    title: "Новый план зародыша",
-    subtitle: "У вторичноротых тело собирается по плану, из которого позже выйдут иглокожие, хордовые и мы.",
-    improvement: "другой план развития",
-    side: "Первичноротые дали насекомых, пауков, улиток, осьминогов и множество других животных.",
-    caption: "Представитель: морская звезда",
-    scene: "starfish",
-    colors: ["#d7eef3", "#f7cfbf"],
-  },
-  {
-    kicker: "Членистоногие и моллюски / линия к хордовым",
-    title: "Вдоль тела появляется струна",
-    subtitle: "У хордовых возникает хорда: упругая внутренняя опора вдоль спины, рядом с нервной трубкой.",
-    improvement: "хорда",
-    side: "В стороне сияют панцири членистоногих и раковины моллюсков.",
-    caption: "Представитель: ланцетник",
-    scene: "lancelet",
-    colors: ["#dbeed2", "#c7dfef"],
-  },
-  {
-    kicker: "Бесчерепные / черепные",
-    title: "Появляется черепушка",
-    subtitle: "Передний конец тела получает защиту для мозга и органов чувств. Голова становится важным центром.",
-    improvement: "череп",
-    side: "Бесчерепные вроде ланцетника остаются простыми хордовыми без настоящей головы.",
-    caption: "Представитель: раннее черепное",
-    scene: "craniate",
-    colors: ["#f0dfc6", "#c9e4e2"],
-  },
-  {
-    kicker: "Бесчелюстные / челюстноротые",
-    title: "Появляются челюсти",
-    subtitle: "Рот становится хватательным. Можно кусать, удерживать добычу и есть более разнообразную пищу.",
-    improvement: "челюсти",
-    side: "Бесчелюстные линии похожи на миног: рот есть, но настоящих челюстей нет.",
-    caption: "Представитель: древняя челюстная рыба",
-    scene: "jawfish",
-    colors: ["#d6edf1", "#f2e0b5"],
-  },
-  {
-    kicker: "Хрящевые / костные позвоночные",
-    title: "Костная линия",
-    subtitle: "Наша ветка идет через костных позвоночных: внутри появляется прочная костная опора.",
-    improvement: "кости",
-    side: "Акулы и скаты остались на хрящевой стороне: гибкие, быстрые и очень удачные.",
-    caption: "Представитель: костная рыба",
-    scene: "bonyfish",
-    colors: ["#cce7f2", "#efe0a9"],
-  },
-  {
-    kicker: "Лучеперые / лопастеперые",
-    title: "Плавники на мясистых лопастях",
-    subtitle: "Лопастеперые получают плавники с внутренними костями. Это будущая основа для конечностей.",
-    improvement: "плавник с костями внутри",
-    side: "Лучеперые рыбы стали самой многочисленной рыбной веткой в современных морях и реках.",
-    caption: "Представитель: латимерия",
-    scene: "coelacanth",
-    colors: ["#d0e2f0", "#cfe5c7"],
-  },
-  {
-    kicker: "Водные лопастеперые / четвероногие",
-    title: "Первые шаги на мелководье",
-    subtitle: "У четвероногих плавники превращаются в конечности. Тело уже может опираться на дно.",
-    improvement: "четыре конечности",
-    side: "Часть лопастеперых осталась в воде и продолжила рыбную жизнь.",
-    caption: "Представитель: тиктаалик",
-    scene: "tiktaalik",
-    colors: ["#d9e7cc", "#d8edf0"],
-  },
-  {
-    kicker: "Амфибийная линия / амниоты",
-    title: "Яйцо с защитой",
-    subtitle: "Амниоты получают яйцо и оболочки для зародыша. Размножение меньше зависит от воды.",
-    improvement: "амниотическое яйцо",
-    side: "Амфибии по-прежнему крепко связаны с водой и влажными местами.",
-    caption: "Представитель: ранний амниот",
-    scene: "amniote",
-    colors: ["#f1dfb8", "#d4ead3"],
-  },
-  {
-    kicker: "Синапсиды / завропсиды",
-    title: "Ветка к млекопитающим",
-    subtitle: "Синапсиды постепенно усиливают челюсть, меняют зубы и идут к шерсти, теплу и молоку.",
-    improvement: "разные зубы + теплокровность",
-    side: "Завропсиды дадут ящериц, змей, крокодилов, динозавров и птиц.",
-    caption: "Представитель: цинодонт",
-    scene: "cynodont",
-    colors: ["#eadfca", "#cfe3d8"],
-  },
-  {
-    kicker: "Боковая ветка: завропсиды",
-    title: "Архозавры отделяются",
-    subtitle: "В завропсидной стороне архозавры получают более вертикальную стойку ног и мощный шаг.",
-    improvement: "ноги под телом",
-    side: "Лепидозавры идут к ящерицам, змеям и гаттерии.",
-    caption: "Представитель: ранний архозавр",
-    scene: "archosaur",
-    colors: ["#d5ead0", "#efdab7"],
-  },
-  {
-    kicker: "Псевдозухии / птичья линия архозавров",
-    title: "Линия к динозаврам",
-    subtitle: "Одна архозавровая ветка ведет к крокодилам, другая к птерозаврам, динозаврам и птицам.",
-    improvement: "легкий быстрый скелет",
-    side: "Псевдозухии включают крокодилью линию и их древних родственников.",
-    caption: "Представитель: ранний динозавроморф",
-    scene: "dinoform",
-    colors: ["#e8d7bd", "#c9e6e0"],
-  },
-  {
-    kicker: "Птицетазовые / ящеротазовые динозавры",
-    title: "Динозавры расходятся",
-    subtitle: "Птицетазовые дают стегозавров, трицератопсов и утконосых. Ящеротазовые ведут к завроподам, тероподам и птицам.",
-    improvement: "новые типы таза и ходьбы",
-    side: "Птицы сидят внутри теропод: это живые динозавры.",
-    caption: "Представитель: маленький теропод",
-    scene: "theropod",
-    colors: ["#f0d2bd", "#d3e6f0"],
-  },
-  {
-    kicker: "Финал",
-    title: "Развилки остаются рядом",
-    subtitle: "Эволюция не лестница. На каждой развилке одна линия идет дальше в нашем рассказе, а соседние линии живут своей успешной жизнью.",
-    improvement: "родство вместо лестницы",
-    side: "Для малыша можно повторять: новое не делает старое плохим, оно просто открывает другой путь.",
-    caption: "Главный герой: большое древо жизни",
-    scene: "tree",
-    colors: ["#dfe8c7", "#d7e2ef"],
-  },
-];
+const { decks } = window.EVOL_DATA;
 
 const slideNode = document.getElementById("slide");
+const schemeNavNode = document.getElementById("scheme-nav");
 const currentNode = document.getElementById("current");
 const totalNode = document.getElementById("total");
 const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
 
+let deckIndex = 0;
 let index = 0;
-totalNode.textContent = slides.length;
 
 function iconSvg(kind, caption) {
   const title = escapeHtml(caption);
@@ -244,6 +94,14 @@ function iconSvg(kind, caption) {
       <circle cx="250" cy="260" r="13" class="eye"/>
       <path d="M290 298c42 16 84 17 126 1" class="thin"/>
     `,
+    sailSynapsid: `
+      <path d="M147 337c90-102 264-125 389-62 67 34 82 90 37 137-116 93-331 73-426-75z" fill="#b98559" class="outline"/>
+      <path d="M287 267c23-84 55-134 96-151 54 45 83 99 88 161z" fill="#e36d55" class="outline"/>
+      <circle cx="227" cy="296" r="14" class="eye"/>
+      <path d="M266 359l-49 92M436 362l53 91" class="thin"/>
+      <path d="M188 453h83M468 454h89" class="thin"/>
+      <path d="M268 338c45 19 94 18 146-3" class="thin"/>
+    `,
     cynodont: `
       <path d="M130 321c92-106 266-134 391-69 73 38 81 115 17 160-129 91-317 56-408-91z" fill="#a87955" class="outline"/>
       <path d="M168 307c62-48 137-66 224-54" class="bone"/>
@@ -252,6 +110,73 @@ function iconSvg(kind, caption) {
       <path d="M273 363l-55 78M450 370l54 85" class="thin"/>
       <path d="M205 444h77M489 456h81" class="thin"/>
       <path d="M262 329c33 23 73 24 121 5" class="thin"/>
+    `,
+    smallMammal: `
+      <path d="M147 329c74-91 236-117 361-58 67 32 81 91 33 137-117 86-308 63-394-79z" fill="#a87955" class="outline"/>
+      <circle cx="233" cy="288" r="14" class="eye"/>
+      <path d="M188 244l-43-68M244 236l-18-74" class="thin"/>
+      <path d="M280 362l-54 82M438 365l55 82" class="thin"/>
+      <path d="M206 446h83M475 449h91" class="thin"/>
+      <path d="M270 328c35 22 76 23 124 3" class="thin"/>
+      <path d="M548 327c44 1 76 19 95 55" class="thin"/>
+    `,
+    primate: `
+      <ellipse cx="354" cy="250" rx="122" ry="104" fill="#9c7553" class="outline"/>
+      <circle cx="309" cy="235" r="15" class="eye"/>
+      <circle cx="398" cy="235" r="15" class="eye"/>
+      <path d="M315 290c30 20 62 20 94 0" class="thin"/>
+      <path d="M252 330c-48 42-77 88-86 139M462 330c48 42 77 88 86 139" class="thin"/>
+      <path d="M263 367c-47 5-91 1-131-13M450 366c47 6 91 2 132-12" class="thin"/>
+      <circle cx="247" cy="246" r="29" fill="#b98559" class="outline"/>
+      <circle cx="461" cy="246" r="29" fill="#b98559" class="outline"/>
+    `,
+    human: `
+      <circle cx="360" cy="141" r="55" fill="#c79068" class="outline"/>
+      <path d="M360 198v150M286 258c50 25 99 25 148 0M324 349l-48 105M396 349l50 105" class="thin"/>
+      <path d="M265 454h81M420 454h83" class="thin"/>
+      <circle cx="340" cy="133" r="8" class="eye"/>
+      <circle cx="381" cy="133" r="8" class="eye"/>
+      <path d="M338 163c16 12 32 12 48 0" class="thin"/>
+    `,
+    lizard: `
+      <path d="M122 315c79-112 265-144 421-68 59 29 68 83 23 125-124 93-339 68-444-57z" fill="#6fa36d" class="outline"/>
+      <path d="M522 254c45-52 87-83 126-94 4 62-12 110-48 145" class="thin"/>
+      <circle cx="222" cy="281" r="14" class="eye"/>
+      <path d="M281 369l-56 88M432 370l61 88" class="thin"/>
+      <path d="M206 459h86M478 459h94" class="thin"/>
+      <path d="M258 325c44 20 91 19 142-2" class="thin"/>
+    `,
+    crocodile: `
+      <path d="M91 312c108-96 326-113 491-39 51 23 58 67 16 98-154 72-384 51-507-59z" fill="#688b58" class="outline"/>
+      <path d="M526 277l101-48 36 56-133 22" fill="#688b58" class="outline"/>
+      <circle cx="205" cy="280" r="13" class="eye"/>
+      <path d="M238 329c71 20 154 20 249 0M287 371l-43 67M452 370l53 69" class="thin"/>
+      <path d="M222 439h76M489 441h87" class="thin"/>
+    `,
+    bigDino: `
+      <path d="M135 316c80-111 253-144 394-75 70 34 82 93 29 139-122 97-320 70-423-64z" fill="#b98a55" class="outline"/>
+      <path d="M198 258l-63-70M245 240l-17-83M292 231l31-78" class="thin"/>
+      <circle cx="218" cy="280" r="13" class="eye"/>
+      <path d="M295 365l-50 100M440 365l52 100" class="thin"/>
+      <path d="M222 466h85M472 466h91" class="thin"/>
+      <path d="M261 328c39 20 84 20 134 0" class="thin"/>
+    `,
+    sauropod: `
+      <ellipse cx="389" cy="330" rx="171" ry="91" fill="#7aa56b" class="outline"/>
+      <path d="M245 307c-4-92 28-151 96-178 16 59 3 111-39 158" class="thin"/>
+      <circle cx="329" cy="146" r="31" fill="#7aa56b" class="outline"/>
+      <path d="M538 306c51-39 92-64 124-75 1 57-21 100-66 131" class="thin"/>
+      <path d="M300 397l-18 76M406 408l-10 74M491 394l26 79" class="thin"/>
+      <path d="M259 475h65M374 482h62M499 474h68" class="thin"/>
+      <circle cx="319" cy="139" r="7" class="eye"/>
+    `,
+    bird: `
+      <path d="M192 315c93-105 255-122 374-50-100 112-285 138-374 50z" fill="#5aa7c8" class="outline"/>
+      <path d="M328 299c-64-73-80-136-48-188 75 46 116 108 122 186" fill="#f6c15b" class="outline"/>
+      <path d="M543 263l96-42-34 88z" fill="#f6c15b" class="outline"/>
+      <circle cx="234" cy="284" r="13" class="eye"/>
+      <path d="M327 385l-26 74M402 379l27 80" class="thin"/>
+      <path d="M275 461h67M409 461h71" class="thin"/>
     `,
     archosaur: `
       <path d="M124 319c80-120 256-156 400-82 65 34 76 96 26 144-114 110-323 82-426-62z" fill="#6fa36d" class="outline"/>
@@ -301,22 +226,23 @@ function iconSvg(kind, caption) {
 }
 
 function render() {
-  const slide = slides[index];
+  const deck = decks[deckIndex];
+  const slide = deck.slides[index];
   slideNode.style.setProperty("--bg-a", slide.colors[0]);
   slideNode.style.setProperty("--bg-b", slide.colors[1]);
 
   slideNode.innerHTML = `
     <article class="slide">
+      ${timeline(deck, slide)}
       <div class="copy">
-        <div class="kicker">${escapeHtml(slide.kicker)}</div>
+        <div class="kicker">${escapeHtml(deck.title)} · ${escapeHtml(slide.kicker)}</div>
         <h1 class="title">${escapeHtml(slide.title)}</h1>
         <p class="subtitle">${escapeHtml(slide.subtitle)}</p>
-        <div class="fact-row">
-          <div class="fact"><strong>Новшество</strong> ${escapeHtml(slide.improvement)}</div>
-        </div>
-        <div class="side-note">${escapeHtml(slide.side)}</div>
+        ${infoGrid(slide)}
+        ${photoCard(slide.sidePhoto, "side-photo")}
       </div>
-      <div class="stage">
+      <div class="stage ${slide.mainPhoto ? "has-main-photo" : ""} ${slide.mainPhoto?.silhouette ? "main-is-silhouette" : ""}">
+        ${photoCard(slide.mainPhoto, "main-photo")}
         ${iconSvg(slide.scene, slide.caption)}
         <div class="caption">${escapeHtml(slide.caption)}</div>
       </div>
@@ -324,12 +250,140 @@ function render() {
   `;
 
   currentNode.textContent = String(index + 1);
-  prevButton.disabled = index === 0;
-  nextButton.disabled = index === slides.length - 1;
+  totalNode.textContent = String(deck.slides.length);
+  prevButton.disabled = deckIndex === 0 && index === 0;
+  nextButton.disabled = deckIndex === decks.length - 1 && index === deck.slides.length - 1;
+  renderSchemeNav();
+}
+
+function infoGrid(slide) {
+  const items = [
+    ["Новшество", slide.novelty || slide.improvement],
+    ["Основная ветка", slide.mainBranch || slide.caption],
+    ["Боковая ветка", slide.sideBranch || slide.side],
+    ["Что дало", slide.effect || slide.noveltyDescription || slide.subtitle],
+  ].filter(([, value]) => value);
+
+  return `
+    <div class="info-grid">
+      ${items
+        .map(
+          ([label, value]) => `
+            <div class="info-card">
+              <strong>${escapeHtml(label)}</strong>
+              <span>${escapeHtml(value)}</span>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function photoCard(photo, className) {
+  if (!photo) return "";
+  return `
+    <figure class="photo-card ${className} ${photo.silhouette ? "silhouette-photo" : ""}">
+      <img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.label)}" loading="eager" />
+      <figcaption>${escapeHtml(photo.label)}</figcaption>
+    </figure>
+  `;
+}
+
+function timeline(deck, slide) {
+  const dot = timelinePosition(deck, slide.timeMa);
+  const eras = timelineBands(deck, deck.eras || [], "era-band");
+  const periods = (deck.periods || [])
+    .map((period) => timelineBand(deck, period, "period-band", 3.5))
+    .join("");
+  const ticks = deck.ticks
+    .map(
+      (tick) => `
+        <span class="time-tick" style="left: ${timelinePosition(deck, tick.ma)}%">
+          <i></i><b>${escapeHtml(tick.label)}</b>
+        </span>
+      `,
+    )
+    .join("");
+
+  return `
+    <div class="timeline" aria-label="Ось времени">
+      <div class="timeline-head">
+        <span>примерная точка разделения</span>
+        <strong>${escapeHtml(slide.timeLabel || formatMa(slide.timeMa))}</strong>
+      </div>
+      <div class="era-row" aria-label="Эры">${eras}</div>
+      <div class="period-row" aria-label="Периоды">${periods}</div>
+      <div class="timeline-track">
+        ${ticks}
+        <span class="time-dot" style="left: ${dot}%"></span>
+      </div>
+    </div>
+  `;
+}
+
+function timelineBands(deck, bands, className) {
+  return bands.map((band) => timelineBand(deck, band, className, 5)).join("");
+}
+
+function timelineBand(deck, band, className, minLabelWidth) {
+  const left = timelinePosition(deck, band.start);
+  const right = timelinePosition(deck, band.end);
+  const width = Math.max(1.2, right - left);
+  const label = band.short || band.label;
+  const title = band.full || band.label;
+
+  return `
+    <span class="${className}" title="${escapeHtml(title)}" style="left: ${left}%; width: ${width}%">
+      ${width > minLabelWidth ? `<b>${escapeHtml(label)}</b>` : ""}
+    </span>
+  `;
+}
+
+function timelinePosition(deck, ma) {
+  if (deck.scale === "log") {
+    const start = Math.log(deck.range.start);
+    const end = Math.log(deck.range.end);
+    return Math.max(0, Math.min(100, ((start - Math.log(ma)) / (start - end)) * 100));
+  }
+  const span = deck.range.start - deck.range.end;
+  return Math.max(0, Math.min(100, ((deck.range.start - ma) / span) * 100));
+}
+
+function formatMa(ma) {
+  return ma >= 1000 ? `~${(ma / 1000).toFixed(1)} млрд лет назад` : `~${ma} млн лет назад`;
+}
+
+function renderSchemeNav() {
+  schemeNavNode.innerHTML = decks
+    .map(
+      (deck, i) => `
+        <button class="scheme-button ${i === deckIndex ? "active" : ""}" type="button" data-deck="${i}" aria-pressed="${i === deckIndex}">
+          <span>${escapeHtml(deck.label)}</span>
+        </button>
+      `,
+    )
+    .join("");
+}
+
+function setDeck(nextDeckIndex, nextSlideIndex = 0) {
+  deckIndex = Math.max(0, Math.min(decks.length - 1, nextDeckIndex));
+  index = Math.max(0, Math.min(decks[deckIndex].slides.length - 1, nextSlideIndex));
+  render();
 }
 
 function go(delta) {
-  index = Math.max(0, Math.min(slides.length - 1, index + delta));
+  const deck = decks[deckIndex];
+  const next = index + delta;
+  if (next < 0 && deckIndex > 0) {
+    setDeck(deckIndex - 1, decks[deckIndex - 1].slides.length - 1);
+    return;
+  }
+  if (next >= deck.slides.length && deckIndex < decks.length - 1) {
+    setDeck(deckIndex + 1, 0);
+    return;
+  }
+  index = Math.max(0, Math.min(deck.slides.length - 1, next));
   render();
 }
 
@@ -343,6 +397,11 @@ function escapeHtml(value) {
 
 prevButton.addEventListener("click", () => go(-1));
 nextButton.addEventListener("click", () => go(1));
+schemeNavNode.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-deck]");
+  if (!button) return;
+  setDeck(Number(button.dataset.deck), 0);
+});
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
@@ -355,13 +414,11 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Home") {
     event.preventDefault();
-    index = 0;
-    render();
+    setDeck(deckIndex, 0);
   }
   if (event.key === "End") {
     event.preventDefault();
-    index = slides.length - 1;
-    render();
+    setDeck(deckIndex, decks[deckIndex].slides.length - 1);
   }
 });
 
