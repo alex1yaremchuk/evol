@@ -85,7 +85,7 @@ button {
   display: grid;
   grid-template-columns: minmax(19rem, 0.82fr) minmax(22rem, 1.18fr);
   grid-template-rows: auto 1fr;
-  gap: clamp(1.25rem, 3vw, 3.5rem);
+  gap: clamp(1rem, 2.5vw, 2.4rem);
   align-items: start;
   width: min(100%, 1420px);
   min-height: 100vh;
@@ -97,7 +97,7 @@ button {
 .copy {
   display: grid;
   align-content: start;
-  gap: clamp(1rem, 2vw, 1.55rem);
+  gap: clamp(0.45rem, 0.9vw, 0.72rem);
 }
 
 .kicker {
@@ -248,7 +248,7 @@ button {
   margin: 0;
   max-width: 100%;
   overflow-wrap: anywhere;
-  font-size: clamp(2.1rem, 4.8vw, 4.65rem);
+  font-size: clamp(1.72rem, 3vw, 2.65rem);
   line-height: 0.98;
   letter-spacing: 0;
 }
@@ -257,8 +257,8 @@ button {
   margin: 0;
   max-width: 34rem;
   color: var(--muted);
-  font-size: clamp(1rem, 2vw, 1.32rem);
-  line-height: 1.43;
+  font-size: clamp(0.86rem, 1.35vw, 0.98rem);
+  line-height: 1.26;
 }
 
 .info-grid {
@@ -268,8 +268,8 @@ button {
 }
 
 .info-card {
-  min-height: 3.65rem;
-  padding: 0.56rem 0.66rem;
+  min-height: 2.65rem;
+  padding: 0.38rem 0.48rem;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.58);
@@ -278,18 +278,49 @@ button {
 
 .info-card strong {
   display: block;
-  margin-bottom: 0.24rem;
+  margin-bottom: 0.18rem;
   color: var(--accent);
-  font-size: clamp(0.72rem, 1.2vw, 0.82rem);
+  font-size: clamp(0.64rem, 0.88vw, 0.7rem);
   font-weight: 880;
 }
 
 .info-card span {
   display: block;
   color: #38444e;
-  font-size: clamp(0.82rem, 1.35vw, 0.94rem);
+  font-size: clamp(0.68rem, 0.92vw, 0.74rem);
   font-weight: 660;
-  line-height: 1.28;
+  line-height: 1.14;
+}
+
+.success-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.success-card {
+  min-height: 2.45rem;
+  padding: 0.38rem 0.48rem;
+  border: 1px solid rgba(36, 125, 116, 0.22);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.48);
+  color: #26323c;
+}
+
+.success-card strong {
+  display: block;
+  margin-bottom: 0.16rem;
+  color: var(--accent-2);
+  font-size: clamp(0.62rem, 0.84vw, 0.68rem);
+  font-weight: 880;
+}
+
+.success-card span {
+  display: block;
+  color: #3b474f;
+  font-size: clamp(0.66rem, 0.86vw, 0.72rem);
+  font-weight: 650;
+  line-height: 1.14;
 }
 
 .stage {
@@ -299,6 +330,14 @@ button {
   justify-items: center;
   gap: 0.72rem;
   min-height: 0;
+}
+
+.stage-photos {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.72rem;
+  width: 100%;
 }
 
 .photo-card {
@@ -347,13 +386,13 @@ button {
 }
 
 .side-photo {
-  width: min(100%, 20rem);
-  aspect-ratio: 16 / 9;
+  width: min(31%, 14rem);
+  aspect-ratio: 4 / 3;
 }
 
 .main-photo {
-  width: min(100%, 38rem);
-  aspect-ratio: 16 / 10;
+  width: min(67%, 31rem);
+  aspect-ratio: 16 / 9;
 }
 
 .main-photo.silhouette-photo {
@@ -520,12 +559,21 @@ svg .bone {
     grid-template-columns: 1fr;
   }
 
+  .success-grid {
+    grid-template-columns: 1fr;
+  }
+
   .creature {
     width: min(100%, 33rem);
   }
 
   .main-photo {
     width: min(100%, 36rem);
+  }
+
+  .stage-photos {
+    flex-direction: column;
+    align-items: center;
   }
 
   .has-main-photo .creature {

@@ -235,14 +235,17 @@ function render() {
     <article class="slide">
       ${timeline(deck, slide)}
       <div class="copy">
-        <div class="kicker">${escapeHtml(deck.title)} · ${escapeHtml(slide.kicker)}</div>
+        <div class="kicker">${escapeHtml(slide.kicker)}</div>
         <h1 class="title">${escapeHtml(slide.title)}</h1>
         <p class="subtitle">${escapeHtml(slide.subtitle)}</p>
         ${infoGrid(slide)}
-        ${photoCard(slide.sidePhoto, "side-photo")}
+        ${successGrid(slide)}
       </div>
       <div class="stage ${slide.mainPhoto ? "has-main-photo" : ""} ${slide.mainPhoto?.silhouette ? "main-is-silhouette" : ""}">
-        ${photoCard(slide.mainPhoto, "main-photo")}
+        <div class="stage-photos">
+          ${photoCard(slide.mainPhoto, "main-photo")}
+          ${photoCard(slide.sidePhoto, "side-photo")}
+        </div>
         ${iconSvg(slide.scene, slide.caption)}
         <div class="caption">${escapeHtml(slide.caption)}</div>
       </div>
@@ -270,6 +273,31 @@ function infoGrid(slide) {
         .map(
           ([label, value]) => `
             <div class="info-card">
+              <strong>${escapeHtml(label)}</strong>
+              <span>${escapeHtml(value)}</span>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function successGrid(slide) {
+  if (!slide.success) return "";
+  const items = [
+    ["Основная", slide.success.main],
+    ["Боковая", slide.success.side],
+  ].filter(([, value]) => value);
+
+  if (!items.length) return "";
+
+  return `
+    <div class="success-grid" aria-label="Успешность веток">
+      ${items
+        .map(
+          ([label, value]) => `
+            <div class="success-card">
               <strong>${escapeHtml(label)}</strong>
               <span>${escapeHtml(value)}</span>
             </div>

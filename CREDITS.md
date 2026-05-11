@@ -9,6 +9,8 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `plant.jpg` | [Arabidopsis thaliana.jpg](https://commons.wikimedia.org/wiki/File:Arabidopsis_thaliana.jpg) | see file page | see file page |
 | `sponge.jpg` | [Esponja (Cinachyrella australiensis), Anilao, Filipinas, 2023-08-22, DD 212.jpg](https://commons.wikimedia.org/wiki/File:Esponja_(Cinachyrella_australiensis),_Anilao,_Filipinas,_2023-08-22,_DD_212.jpg) | Diego Delso | CC BY-SA 4.0 |
 | `mushroom.jpg` | [Mushroom on Swedish forest floor.jpg](https://commons.wikimedia.org/wiki/File:Mushroom_on_Swedish_forest_floor.jpg) | Netha Hussain | CC BY-SA 3.0 |
+| `planarian.jpg` | [Hoehlenplanarie-dendrocoelum-cavaticum.jpg](https://commons.wikimedia.org/wiki/File:Hoehlenplanarie-dendrocoelum-cavaticum.jpg) | see file page | see file page |
+| `jellyfish.jpg` | [Moon jellyfish in Rågårdsdal 4.jpg](https://commons.wikimedia.org/wiki/File:Moon_jellyfish_in_R%C3%A5g%C3%A5rdsdal_4.jpg) | see file page | see file page |
 | `starfish.jpg` | [Starfish red komodo.jpg](https://commons.wikimedia.org/wiki/File:Starfish_red_komodo.jpg) | Nhobgood Nick Hobgood | CC BY-SA 3.0 |
 | `octopus.jpg` | [Octopus marginatus.jpg](https://commons.wikimedia.org/wiki/File:Octopus_marginatus.jpg) | Nhobgood Nick Hobgood | CC BY-SA 3.0 |
 | `lancelet.jpg` | [Branchiostoma lanceolatum.jpg](https://commons.wikimedia.org/wiki/File:Branchiostoma_lanceolatum.jpg) | Hans Hillewaert | CC BY-SA 4.0 |
