@@ -321,6 +321,7 @@ function photoCard(photo, className) {
 function timeline(deck, slide) {
   const dot = timelinePosition(deck, slide.timeMa);
   const eras = timelineBands(deck, deck.eras || [], "era-band");
+  const markers = timelineMarkers(deck, slide);
   const periods = (deck.periods || [])
     .map((period) => timelineBand(deck, period, "period-band", 3.5))
     .join("");
@@ -335,7 +336,7 @@ function timeline(deck, slide) {
     .join("");
 
   return `
-    <div class="timeline" aria-label="Ось времени">
+    <div class="timeline ${markers ? "with-markers" : ""}" aria-label="Ось времени">
       <div class="timeline-head">
         <span>примерная точка разделения</span>
         <strong>${escapeHtml(slide.timeLabel || formatMa(slide.timeMa))}</strong>
@@ -343,10 +344,112 @@ function timeline(deck, slide) {
       <div class="era-row" aria-label="Эры">${eras}</div>
       <div class="period-row" aria-label="Периоды">${periods}</div>
       <div class="timeline-track">
+        ${markers}
         ${ticks}
         <span class="time-dot" style="left: ${dot}%"></span>
       </div>
     </div>
+  `;
+}
+
+function timelineMarkers(deck, activeSlide) {
+  if (!deck.showTimelineMarkers) return "";
+  return deck.slides
+    .map((slide, slideIndex) => ({ slide, slideIndex }))
+    .filter(({ slide }) => slide.marker && slide.timeMa)
+    .map(({ slide, slideIndex }, markerIndex) => {
+      const left = timelinePosition(deck, slide.timeMa);
+      const lane = markerLane(left, markerIndex);
+      const isActive = slide === activeSlide;
+      return `
+        <button
+          class="timeline-marker ${isActive ? "active" : ""}"
+          type="button"
+          data-slide="${slideIndex}"
+          style="left: ${left}%; --lane: ${lane}"
+          title="${escapeHtml(slide.title)}: ${escapeHtml(slide.novelty || slide.improvement)}"
+          aria-label="${escapeHtml(slide.title)}"
+        >
+          ${markerSvg(slide.marker)}
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function markerLane(left, markerIndex) {
+  if (left > 83) return markerIndex % 4;
+  if (left > 60) return markerIndex % 3;
+  return 1;
+}
+
+function markerSvg(kind) {
+  const icons = {
+    nucleus: `
+      <circle cx="18" cy="18" r="11" />
+      <circle cx="18" cy="18" r="4" class="mark-accent" />
+      <path d="M8 17c5-4 14-4 20 0M10 24c6 3 12 3 16 0" />
+    `,
+    leaf: `
+      <path d="M8 24c10 1 18-5 20-17C17 8 9 14 8 24z" />
+      <path d="M11 23c5-5 9-8 15-13" />
+    `,
+    fungus: `
+      <path d="M8 17c2-7 17-8 20 0-4 2-15 2-20 0z" />
+      <path d="M16 18h5l2 11h-9z" />
+    `,
+    bilateral: `
+      <path d="M18 6v24" />
+      <path d="M18 9c-8 3-10 9-6 15 3 3 5 4 6 6 1-2 3-3 6-6 4-6 2-12-6-15z" />
+    `,
+    fork: `
+      <path d="M18 29V15" />
+      <path d="M18 15L9 7M18 15l9-8" />
+      <circle cx="9" cy="7" r="2" class="mark-accent" />
+      <circle cx="27" cy="7" r="2" class="mark-accent" />
+    `,
+    chord: `
+      <path d="M7 22c8-7 16-7 22 0" />
+      <path d="M8 17c7 5 14 5 22 0" />
+      <path d="M11 12h14" />
+    `,
+    skull: `
+      <path d="M10 18c0-7 5-11 8-11s8 4 8 11c0 4-2 6-5 7v4h-6v-4c-3-1-5-3-5-7z" />
+      <circle cx="15" cy="18" r="1.7" class="mark-accent" />
+      <circle cx="21" cy="18" r="1.7" class="mark-accent" />
+    `,
+    jaw: `
+      <path d="M8 13c6-5 16-5 21 0" />
+      <path d="M9 15c4 11 13 14 20 6" />
+      <path d="M14 17l2 5M19 18v6M24 17l-2 5" />
+    `,
+    bone: `
+      <path d="M10 13a4 4 0 1 1 5-5l13 13a4 4 0 1 1-5 5L10 13z" />
+      <path d="M8 10l4 4M24 22l4 4" />
+    `,
+    fin: `
+      <path d="M7 19c8-9 18-9 24 0-7 9-17 9-24 0z" />
+      <path d="M18 19l7-8M18 19l8 7" />
+    `,
+    limb: `
+      <path d="M10 9c6 5 9 10 9 18" />
+      <path d="M19 27l-7 3M19 27l3 5M19 27l7-1" />
+    `,
+    egg: `
+      <path d="M18 6c6 0 10 8 10 15 0 6-4 9-10 9S8 27 8 21C8 14 12 6 18 6z" />
+      <path d="M13 22c4 2 7 2 10 0" />
+    `,
+    split: `
+      <path d="M18 30V8" />
+      <path d="M18 16c-4 0-7-2-10-6M18 16c4 0 7-2 10-6" />
+      <path d="M8 10l2-4M28 10l-2-4" />
+    `,
+  };
+
+  return `
+    <svg viewBox="0 0 36 36" aria-hidden="true">
+      ${icons[kind] || icons.fork}
+    </svg>
   `;
 }
 
@@ -429,6 +532,12 @@ schemeNavNode.addEventListener("click", (event) => {
   const button = event.target.closest("[data-deck]");
   if (!button) return;
   setDeck(Number(button.dataset.deck), 0);
+});
+
+slideNode.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-slide]");
+  if (!button) return;
+  setDeck(deckIndex, Number(button.dataset.slide));
 });
 
 document.addEventListener("keydown", (event) => {

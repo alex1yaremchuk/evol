@@ -18,6 +18,7 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `lamprey.jpg` | [Sea Lamprey fish.jpg](https://commons.wikimedia.org/wiki/File:Sea_Lamprey_fish.jpg) | Great Lakes Fishery Commission | Public domain |
 | `lamprey-mouth.jpg` | [Sea lamprey mouth close up.jpg](https://commons.wikimedia.org/wiki/File:Sea_lamprey_mouth_close_up.jpg) | U.S. Fish and Wildlife Service | Public domain |
 | `fish-jaw-fossil.jpg` | [Dunkleosteus sp. fossil fish lower jaw](https://commons.wikimedia.org/wiki/File:Dunkleosteus_sp._(fossil_fish_lower_jaw)_(Ohio_Shale,_Upper_Devonian;_Lorain_County,_Ohio,_USA)_(34131024265).jpg) | James St. John | CC BY 2.0 |
+| `dunkleosteus-jaw.jpg` | [Dunkleosteus terrelli adult jaw - Cleveland Museum of Natural History](https://commons.wikimedia.org/wiki/File:Dunkleosteus_terrelli_adult_jaw_-_Cleveland_Museum_of_Natural_History_(33964524024).jpg) | James St. John | CC BY 2.0 |
 | `lionfish.jpg` | [Lion Fish (27900232215).jpg](https://commons.wikimedia.org/wiki/File:Lion_Fish_(27900232215).jpg) | shankar s. | CC BY 2.0 |
 | `shark.jpg` | [Guadalupe Island Great White Shark Underwater.jpg](https://commons.wikimedia.org/wiki/File:Guadalupe_Island_Great_White_Shark_Underwater.jpg) | Sharkcrew | CC BY-SA 4.0 |
 | `coelacanth.jpg` | [Latimeria Chalumnae - Coelacanth - NHMW.jpg](https://commons.wikimedia.org/wiki/File:Latimeria_Chalumnae_-_Coelacanth_-_NHMW.jpg) | Alberto Fernandez Fernandez | CC BY-SA 3.0 |
