@@ -138,7 +138,7 @@ const slides = [
     caption: "Представитель: древняя челюстная рыба",
     scene: "jawfish",
     marker: "jaw",
-    mainPhoto: { src: "assets/photos/dunkleosteus-jaw.jpg", label: "пример: мощная челюсть дунклеостея" },
+    mainPhoto: { src: "assets/photos/dunkleosteus-jaw.jpg", label: "пример: череп и челюсти дунклеостея" },
     sidePhoto: { src: "assets/photos/lamprey-mouth.jpg", label: "боковая линия: без челюстей" },
     timeMa: 430,
     timeLabel: "~430 млн лет назад",
