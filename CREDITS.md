@@ -46,6 +46,13 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `chimpanzee.jpg` | [Chimpanzee-Head.jpg](https://commons.wikimedia.org/wiki/File:Chimpanzee-Head.jpg) | see file page | see file page |
 | `primate.jpg` | [Lemuroidea.jpg](https://commons.wikimedia.org/wiki/File:Lemuroidea.jpg) | Composite image, derivative work by Maky | CC BY-SA 3.0 |
 | `human.jpg` | [Akha cropped hires.JPG](https://commons.wikimedia.org/wiki/File:Akha_cropped_hires.JPG) | Weltenbummler84 | CC BY-SA 2.0 de |
+| `log-milky-way.jpg` | [Center of the Milky Way Galaxy IV - Composite.jpg](https://commons.wikimedia.org/wiki/File:Center_of_the_Milky_Way_Galaxy_IV_%E2%80%93_Composite.jpg) | see file page | see file page |
+| `log-stromatolites.jpg` | [Shark Bay stromatolites.jpg](https://commons.wikimedia.org/wiki/File:Shark_Bay_stromatolites.jpg) | see file page | see file page |
+| `log-stone-tool.jpg` | [Oldowan Core or Chopper - Early Stone Tool Technology.jpg](https://commons.wikimedia.org/wiki/File:Oldowan_Core_or_Chopper_%E2%80%94_Early_Stone_Tool_Technology.jpg) | see file page | see file page |
+| `log-lascaux.jpg` | [Lascaux painting.jpg](https://commons.wikimedia.org/wiki/File:Lascaux_painting.jpg) | see file page | see file page |
+| `log-wheat.jpg` | [Wheat close-up (50738329476).jpg](https://commons.wikimedia.org/wiki/File:Wheat_close-up_(50738329476).jpg) | see file page | see file page |
+| `log-medieval-city.jpg` | [Medieval city, from the manuscript De Universo](https://commons.wikimedia.org/wiki/File:Medieval_city,_from_the_manuscript_De_Universo_or_%22De_rerum_naturis%22,_Monte_Cassino_MS_Casin_132.jpg) | see file page | see file page |
+| `log-radio.jpg` | [Crystal-Detector Radio Receiver of Exploratory Type 1925.jpg](https://commons.wikimedia.org/wiki/File:Crystal-Detector_Radio_Receiver_of_Exploratory_Type_1925.jpg) | see file page | see file page |
 | `tuatara.jpg` | [Tuatara (5205719005).jpg](https://commons.wikimedia.org/wiki/File:Tuatara_(5205719005).jpg) | Sid Mosdell | CC BY 2.0 |
 | `snake.jpg` | [Banded pit viper](https://commons.wikimedia.org/wiki/File:Trimeresurus_sabahi_fucatus,_Banded_pit_viper_-_Takua_Pa_District,_Phang-nga_Province_(46710893582).jpg) | Rushenb | CC BY-SA 2.0 |
 | `dimetrodon.png` | [Dimetrodon silhouette](https://www.phylopic.org/images/b9b73c89-7609-4524-b068-7c7c7f566979/dimetrodon) | Scott Hartman | CC BY-SA 3.0 |

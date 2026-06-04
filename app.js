@@ -238,10 +238,11 @@ function render() {
         <div class="kicker">${escapeHtml(slide.kicker)}</div>
         <h1 class="title">${escapeHtml(slide.title)}</h1>
         <p class="subtitle">${escapeHtml(slide.subtitle)}</p>
-        ${infoGrid(slide)}
+        ${infoGrid(slide, deck)}
         ${successGrid(slide)}
       </div>
       <div class="stage ${slide.mainPhoto ? "has-main-photo" : ""} ${slide.mainPhoto?.silhouette ? "main-is-silhouette" : ""}">
+        ${memorySymbol(slide, deck)}
         <div class="stage-photos">
           ${photoCard(slide.mainPhoto, "main-photo")}
           ${photoCard(slide.sidePhoto, "side-photo")}
@@ -259,12 +260,13 @@ function render() {
   renderSchemeNav();
 }
 
-function infoGrid(slide) {
+function infoGrid(slide, deck) {
+  const labels = { ...(deck.infoLabels || {}), ...(slide.infoLabels || {}) };
   const items = [
-    ["Новшество", slide.novelty || slide.improvement],
-    ["Основная ветка", slide.mainBranch || slide.caption],
-    ["Боковая ветка", slide.sideBranch || slide.side],
-    ["Что дало", slide.effect || slide.noveltyDescription || slide.subtitle],
+    [labels.novelty || "Новшество", slide.novelty || slide.improvement],
+    [labels.main || "Основная ветка", slide.mainBranch || slide.caption],
+    [labels.side || "Боковая ветка", slide.sideBranch || slide.side],
+    [labels.effect || "Что дало", slide.effect || slide.noveltyDescription || slide.subtitle],
   ].filter(([, value]) => value);
 
   return `
@@ -318,6 +320,17 @@ function photoCard(photo, className) {
   `;
 }
 
+function memorySymbol(slide, deck) {
+  if (!deck.showSlideSymbol || !slide.marker) return "";
+  const label = slide.symbolLabel || slide.novelty || slide.improvement || slide.title;
+  return `
+    <figure class="memory-symbol" aria-label="Символ вехи">
+      <div class="memory-symbol-icon">${markerSvg(slide.marker)}</div>
+      <figcaption>${escapeHtml(label)}</figcaption>
+    </figure>
+  `;
+}
+
 function timeline(deck, slide) {
   const dot = timelinePosition(deck, slide.timeMa);
   const eras = timelineBands(deck, deck.eras || [], "era-band");
@@ -338,7 +351,7 @@ function timeline(deck, slide) {
   return `
     <div class="timeline ${markers ? "with-markers" : ""}" aria-label="Ось времени">
       <div class="timeline-head">
-        <span>примерная точка разделения</span>
+        <span>${escapeHtml(deck.timelineKicker || "примерная точка разделения")}</span>
         <strong>${escapeHtml(slide.timeLabel || formatMa(slide.timeMa))}</strong>
       </div>
       <div class="era-row" aria-label="Эры">${eras}</div>
@@ -444,6 +457,201 @@ function markerSvg(kind) {
       <path d="M18 16c-4 0-7-2-10-6M18 16c4 0 7-2 10-6" />
       <path d="M8 10l2-4M28 10l-2-4" />
     `,
+    star: `
+      <path d="M18 5l3 9 9 3-9 3-3 11-3-11-9-3 9-3z" />
+      <path d="M8 8l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" />
+    `,
+    earth: `
+      <circle cx="18" cy="18" r="12" />
+      <path d="M8 17c5 2 8 1 11-2 3-2 6-2 9 1" />
+      <path d="M13 27c2-4 4-6 8-6 3 0 5-2 7-5" />
+    `,
+    microbe: `
+      <circle cx="18" cy="18" r="9" />
+      <path d="M8 10l3 3M27 10l-3 3M8 26l3-3M27 26l-3-3" />
+      <circle cx="16" cy="17" r="1.8" class="mark-accent" />
+      <circle cx="22" cy="20" r="1.4" class="mark-accent" />
+    `,
+    dino: `
+      <path d="M7 23c4-8 13-11 22-5 2 2 3 4 1 6-6 5-17 4-23-1z" />
+      <path d="M27 17l5-5M13 25l-3 5M23 25l4 5" />
+      <circle cx="13" cy="20" r="1.5" class="mark-accent" />
+    `,
+    ape: `
+      <circle cx="18" cy="14" r="8" />
+      <path d="M10 24c5 4 11 4 16 0M9 15l-4 5M27 15l4 5" />
+      <circle cx="15" cy="13" r="1.3" class="mark-accent" />
+      <circle cx="21" cy="13" r="1.3" class="mark-accent" />
+    `,
+    tool: `
+      <path d="M11 7l14 6-5 17-10-8z" />
+      <path d="M14 12l8 4M12 20l8 5" />
+    `,
+    paint: `
+      <path d="M8 25c5-9 14-15 23-17-2 9-8 17-18 22z" />
+      <path d="M11 24l-4 5M18 18l5 5" />
+    `,
+    fire: `
+      <path d="M18 31c-6-3-8-8-5-13 2-3 5-4 5-10 7 5 10 11 7 17-1 3-3 5-7 6z" />
+      <path d="M18 28c-3-2-4-5-2-8 3 2 5 4 4 7" class="mark-accent" />
+    `,
+    grain: `
+      <path d="M18 30V7" />
+      <path d="M18 12c-5-1-8-4-9-8 5 1 8 4 9 8zM18 17c5-1 8-4 9-8-5 1-8 4-9 8zM18 22c-5-1-8-4-9-8 5 1 8 4 9 8z" />
+    `,
+    city: `
+      <path d="M7 30V14l6-4 6 4v16M19 30V11l5-4 5 4v19" />
+      <path d="M11 18h2M11 23h2M23 16h2M23 22h2" />
+    `,
+    book: `
+      <path d="M7 9h10c2 0 3 1 3 3v20c0-2-1-3-3-3H7z" />
+      <path d="M20 12c0-2 1-3 3-3h9v20h-9c-2 0-3 1-3 3" />
+      <path d="M11 15h5M11 20h5M24 15h4M24 20h4" />
+    `,
+    machine: `
+      <rect x="7" y="11" width="22" height="15" rx="3" />
+      <path d="M12 30h12M18 26v4M11 16h7M11 21h12" />
+      <circle cx="25" cy="17" r="1.7" class="mark-accent" />
+    `,
+    human: `
+      <circle cx="18" cy="9" r="5" />
+      <path d="M18 14v12M11 19h14M15 31l3-5 4 5" />
+    `,
+    ocean: `
+      <path d="M5 24c3-3 6-3 9 0s6 3 9 0 6-3 9 0" />
+      <path d="M6 17c4-4 8-4 12 0s8 4 12 0" />
+      <circle cx="24" cy="10" r="3" class="mark-accent" />
+    `,
+    oxygen: `
+      <circle cx="13" cy="18" r="6" />
+      <circle cx="25" cy="18" r="6" />
+      <path d="M18 18h2M9 8l3 4M28 8l-3 4M18 28v4" />
+    `,
+    animal: `
+      <path d="M8 22c4-7 13-9 20-4 2 2 2 5 0 7-6 5-17 4-20-3z" />
+      <path d="M13 25l-3 5M24 25l4 5M27 17l4-3" />
+      <circle cx="13" cy="19" r="1.5" class="mark-accent" />
+    `,
+    flower: `
+      <circle cx="18" cy="16" r="3" class="mark-accent" />
+      <circle cx="18" cy="8" r="5" />
+      <circle cx="26" cy="16" r="5" />
+      <circle cx="18" cy="24" r="5" />
+      <circle cx="10" cy="16" r="5" />
+      <path d="M18 27v5M18 30c4-1 7-3 9-7" />
+    `,
+    mammal: `
+      <path d="M8 23c4-8 15-10 23-3 2 4-1 8-7 9-8 1-15-1-16-6z" />
+      <path d="M12 16l-3-6M18 15l1-7M14 27l-3 4M25 27l4 4" />
+      <circle cx="13" cy="20" r="1.4" class="mark-accent" />
+    `,
+    monkey: `
+      <circle cx="18" cy="15" r="7" />
+      <circle cx="9" cy="16" r="4" />
+      <circle cx="27" cy="16" r="4" />
+      <path d="M14 22c3 3 7 3 10 0M12 29c5 3 11 3 16 0" />
+      <circle cx="15" cy="14" r="1.3" class="mark-accent" />
+      <circle cx="21" cy="14" r="1.3" class="mark-accent" />
+    `,
+    footprint: `
+      <path d="M14 14c4-5 11-1 10 5-1 7-7 12-12 9-4-3-2-9 2-14z" />
+      <circle cx="12" cy="8" r="2" class="mark-accent" />
+      <circle cx="17" cy="6" r="2" class="mark-accent" />
+      <circle cx="22" cy="8" r="2" class="mark-accent" />
+    `,
+    handaxe: `
+      <path d="M18 5c8 6 10 17 0 30C8 22 10 11 18 5z" />
+      <path d="M18 8v26M13 16l10-4M12 23l12-4" />
+    `,
+    torch: `
+      <path d="M15 16c-2-4 1-7 3-11 5 4 8 8 5 14-2 4-7 4-8 1z" />
+      <path d="M14 18h8l-3 13h-4z" />
+      <path d="M18 18c-2-2-1-5 2-7" class="mark-accent" />
+    `,
+    family: `
+      <circle cx="13" cy="10" r="4" />
+      <circle cx="24" cy="11" r="4" />
+      <circle cx="19" cy="20" r="3" class="mark-accent" />
+      <path d="M13 14v13M24 15v12M19 23v7M8 21h10M21 21h8" />
+    `,
+    migration: `
+      <path d="M7 25c6-8 13-12 22-12" />
+      <path d="M24 8l6 5-6 5" />
+      <circle cx="8" cy="26" r="2" class="mark-accent" />
+      <circle cx="16" cy="18" r="2" class="mark-accent" />
+    `,
+    cave: `
+      <path d="M6 30c1-12 6-20 12-24 7 4 11 12 12 24z" />
+      <path d="M13 30v-8c0-4 10-4 10 0v8" />
+      <path d="M13 15l5 3 5-3" />
+    `,
+    climate: `
+      <path d="M7 23c4 3 8 3 12 0s8-3 12 0" />
+      <path d="M11 10l3 5M21 8v7M29 10l-3 5" />
+      <circle cx="11" cy="28" r="2" class="mark-accent" />
+      <circle cx="24" cy="28" r="2" class="mark-accent" />
+    `,
+    village: `
+      <path d="M7 18l8-7 8 7v12H7z" />
+      <path d="M21 20l5-4 5 4v10h-8" />
+      <path d="M12 30v-7h6v7M8 13h24" />
+    `,
+    bronze: `
+      <path d="M18 6v24" />
+      <path d="M10 14h16l-4 5h-8z" />
+      <path d="M13 30h10M15 8h6" />
+      <circle cx="18" cy="14" r="2" class="mark-accent" />
+    `,
+    empire: `
+      <path d="M7 30h26M10 26V14M18 26V14M26 26V14" />
+      <path d="M6 14l12-8 12 8z" />
+      <path d="M12 30v-4h16v4" />
+    `,
+    print: `
+      <path d="M9 9h18v10H9z" />
+      <path d="M7 19h22v9H7z" />
+      <path d="M11 28h14v4H11zM13 13h10M12 23h16" />
+    `,
+    factory: `
+      <path d="M6 30V18l8 5v-5l8 5v-8h8v15z" />
+      <path d="M22 15V8h6v7M10 27h2M17 27h2M24 27h2" />
+      <path d="M9 11c2-4 5-4 7 0" />
+    `,
+    computer: `
+      <rect x="7" y="8" width="22" height="16" rx="2" />
+      <path d="M14 30h8M18 24v6M12 14h5M12 18h12" />
+    `,
+    radio: `
+      <rect x="7" y="14" width="22" height="14" rx="3" />
+      <path d="M12 14L25 6M12 20h8M12 24h6" />
+      <circle cx="24" cy="22" r="3" class="mark-accent" />
+    `,
+    network: `
+      <circle cx="18" cy="18" r="3" class="mark-accent" />
+      <circle cx="8" cy="10" r="3" />
+      <circle cx="29" cy="11" r="3" />
+      <circle cx="10" cy="28" r="3" />
+      <circle cx="29" cy="28" r="3" />
+      <path d="M11 12l5 4M26 13l-6 4M12 26l5-5M27 26l-7-5" />
+    `,
+    phone: `
+      <rect x="12" y="5" width="12" height="28" rx="3" />
+      <path d="M16 9h4M17 29h2" />
+    `,
+    cloud: `
+      <path d="M11 26c-4 0-6-3-5-7 1-3 4-5 8-4 2-5 10-5 12 1 4 0 7 3 7 7s-3 6-7 6H11z" />
+      <path d="M14 21h14" />
+    `,
+    ai: `
+      <rect x="9" y="9" width="18" height="18" rx="4" />
+      <path d="M14 21l3-8h2l3 8M15 18h6M26 5v4M26 27v4M10 5v4M10 27v4M5 10h4M27 10h4M5 26h4M27 26h4" />
+      <circle cx="18" cy="25" r="1.8" class="mark-accent" />
+    `,
+    child: `
+      <circle cx="18" cy="9" r="5" />
+      <path d="M18 14v10M12 18h12M15 30l3-6 4 6" />
+      <path d="M10 8c3-4 6-5 8-5s5 1 8 5" class="mark-accent" />
+    `,
   };
 
   return `
@@ -482,7 +690,10 @@ function timelinePosition(deck, ma) {
 }
 
 function formatMa(ma) {
-  return ma >= 1000 ? `~${(ma / 1000).toFixed(1)} млрд лет назад` : `~${ma} млн лет назад`;
+  if (ma >= 1000) return `~${(ma / 1000).toFixed(1).replace(".", ",")} млрд лет назад`;
+  if (ma >= 1) return `~${ma} млн лет назад`;
+  if (ma >= 0.001) return `~${Math.round(ma * 1000).toLocaleString("ru-RU")} тыс. лет назад`;
+  return `~${Math.round(ma * 1000000).toLocaleString("ru-RU")} лет назад`;
 }
 
 function renderSchemeNav() {
