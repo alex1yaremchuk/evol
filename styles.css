@@ -71,6 +71,32 @@ button {
   color: #fff;
 }
 
+.contact-link {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9;
+  max-width: 13.5rem;
+  padding: 0.44rem 0.68rem;
+  border: 1px solid rgba(24, 33, 43, 0.12);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: 0 0.7rem 1.6rem rgba(24, 33, 43, 0.08);
+  color: #25313b;
+  font-size: 0.78rem;
+  font-weight: 740;
+  line-height: 1.22;
+  text-align: right;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+}
+
+.contact-link:hover,
+.contact-link:focus-visible {
+  background: rgba(255, 255, 255, 0.9);
+  color: #142027;
+}
+
 .slide-shell {
   min-height: 100vh;
   display: grid;
@@ -654,6 +680,14 @@ svg .bone {
     min-width: 0;
     padding-inline: 0.3rem;
     font-size: clamp(0.66rem, 2.8vw, 0.82rem);
+  }
+
+  .contact-link {
+    top: 3.45rem;
+    right: 0.55rem;
+    max-width: min(14.5rem, calc(100% - 1.1rem));
+    padding: 0.32rem 0.5rem;
+    font-size: 0.68rem;
   }
 
   .deck,
