@@ -647,6 +647,95 @@ function markerSvg(kind) {
       <path d="M14 21l3-8h2l3 8M15 18h6M26 5v4M26 27v4M10 5v4M10 27v4M5 10h4M27 10h4M5 26h4M27 26h4" />
       <circle cx="18" cy="25" r="1.8" class="mark-accent" />
     `,
+    worm: `
+      <path d="M6 24c5-8 12-11 19-9 5 1 7 5 5 9-3 5-12 6-21 1" />
+      <path d="M12 20l3 5M18 17l3 8M24 17l2 6" />
+      <circle cx="10" cy="23" r="1.4" class="mark-accent" />
+    `,
+    slug: `
+      <path d="M7 25c5-8 16-10 24-3 0 5-5 8-14 8H7z" />
+      <path d="M13 18L9 10M17 17l2-8M9 10h-3M19 9h3" />
+      <circle cx="9" cy="10" r="1.2" class="mark-accent" />
+      <circle cx="19" cy="9" r="1.2" class="mark-accent" />
+    `,
+    insect: `
+      <ellipse cx="18" cy="18" rx="5" ry="8" />
+      <circle cx="18" cy="8" r="4" />
+      <path d="M13 16L7 12M13 20L6 20M13 23L8 29M23 16l6-4M23 20h7M23 23l5 6M15 5l-3-4M21 5l3-4" />
+    `,
+    spider: `
+      <circle cx="18" cy="18" r="5" />
+      <ellipse cx="18" cy="25" rx="6" ry="5" />
+      <path d="M13 17L6 12M13 20L5 20M14 23L7 28M23 17l7-5M23 20h8M22 23l7 5" />
+      <circle cx="16" cy="16" r="1.2" class="mark-accent" />
+      <circle cx="20" cy="16" r="1.2" class="mark-accent" />
+    `,
+    fish: `
+      <path d="M6 19c7-7 17-7 25 0-8 7-18 7-25 0z" />
+      <path d="M28 19l5-6v12zM16 19l5-6M16 19l5 6" />
+      <circle cx="12" cy="17" r="1.3" class="mark-accent" />
+    `,
+    frog: `
+      <ellipse cx="18" cy="20" rx="9" ry="7" />
+      <circle cx="13" cy="13" r="4" />
+      <circle cx="23" cy="13" r="4" />
+      <path d="M11 24l-5 5M25 24l5 5M14 22c3 2 6 2 9 0" />
+      <circle cx="13" cy="12" r="1.2" class="mark-accent" />
+      <circle cx="23" cy="12" r="1.2" class="mark-accent" />
+    `,
+    bird: `
+      <path d="M7 22c6-8 16-9 24-3-6 8-17 10-24 3z" />
+      <path d="M24 18l7-5-2 8M15 23c-2 4-4 6-7 8M20 24l3 7" />
+      <circle cx="12" cy="20" r="1.3" class="mark-accent" />
+    `,
+    exoskeleton: `
+      <path d="M18 5c7 3 10 8 10 15 0 6-4 10-10 12C12 30 8 26 8 20c0-7 3-12 10-15z" />
+      <path d="M18 6v25M10 17h16M12 24h12" />
+    `,
+    sixlegs: `
+      <circle cx="18" cy="16" r="5" />
+      <path d="M18 21v8M13 15L7 11M13 18L6 19M13 21L8 27M23 15l6-4M23 18l7 1M23 21l5 6" />
+      <circle cx="18" cy="8" r="3" class="mark-accent" />
+    `,
+    wing: `
+      <path d="M18 18C12 8 6 7 5 15c-1 7 6 10 13 3z" />
+      <path d="M18 18c6-10 12-11 13-3 1 7-6 10-13 3z" />
+      <path d="M18 18v12" />
+    `,
+    molt: `
+      <path d="M10 12c5-6 14-6 19 0-4 5-14 5-19 0z" />
+      <path d="M18 13v18M10 25c5 4 11 4 16 0" />
+      <path d="M7 8l4 4M29 8l-4 4" />
+    `,
+    metamorphosis: `
+      <path d="M6 24c4-5 8-6 12-3" />
+      <path d="M18 21c4-9 10-12 15-8-2 7-7 11-15 8z" />
+      <circle cx="9" cy="24" r="2" class="mark-accent" />
+      <path d="M15 12h7M19 8v8" />
+    `,
+    beetle: `
+      <ellipse cx="18" cy="20" rx="7" ry="9" />
+      <path d="M18 11v18M11 18H7M25 18h4M12 23H7M24 23h5M14 11l-3-5M22 11l3-5" />
+      <circle cx="18" cy="8" r="3" class="mark-accent" />
+    `,
+    mosquito: `
+      <path d="M12 20h10M22 20l10-5" />
+      <ellipse cx="17" cy="18" rx="4" ry="7" />
+      <path d="M15 14L8 7M19 14l7-7M14 22l-6 6M20 22l6 6" />
+      <circle cx="11" cy="20" r="2" class="mark-accent" />
+    `,
+    butterfly: `
+      <path d="M18 18C12 7 5 8 6 17c1 7 7 8 12 1z" />
+      <path d="M18 18c6-11 13-10 12-1-1 7-7 8-12 1z" />
+      <path d="M18 18v12M15 8l-3-4M21 8l3-4" />
+    `,
+    ant: `
+      <circle cx="10" cy="19" r="4" />
+      <circle cx="18" cy="18" r="4" />
+      <circle cx="26" cy="17" r="4" />
+      <path d="M14 20L8 27M18 22v8M22 20l6 7M24 13l5-5M9 15L5 9" />
+      <circle cx="28" cy="16" r="1.1" class="mark-accent" />
+    `,
     child: `
       <circle cx="18" cy="9" r="5" />
       <path d="M18 14v10M12 18h12M15 30l3-6 4 6" />

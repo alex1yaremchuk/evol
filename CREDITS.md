@@ -53,6 +53,15 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `log-wheat.jpg` | [Wheat close-up (50738329476).jpg](https://commons.wikimedia.org/wiki/File:Wheat_close-up_(50738329476).jpg) | see file page | see file page |
 | `log-medieval-city.jpg` | [Medieval city, from the manuscript De Universo](https://commons.wikimedia.org/wiki/File:Medieval_city,_from_the_manuscript_De_Universo_or_%22De_rerum_naturis%22,_Monte_Cassino_MS_Casin_132.jpg) | see file page | see file page |
 | `log-radio.jpg` | [Crystal-Detector Radio Receiver of Exploratory Type 1925.jpg](https://commons.wikimedia.org/wiki/File:Crystal-Detector_Radio_Receiver_of_Exploratory_Type_1925.jpg) | see file page | see file page |
+| `local-earthworm.jpg` | [Common Earthworm tunnel](https://commons.wikimedia.org/wiki/File:Common_Earthworm_(Lumbricus_terrestris)_Cast_and_tunnel,_Chapeltoun,_North_Ayrshire,_Scotland.jpg) | see file page | see file page |
+| `local-slug.jpg` | [Black slug (Arion ater).jpg](https://commons.wikimedia.org/wiki/File:Black_slug_(Arion_ater).jpg) | see file page | see file page |
+| `local-spider.jpg` | [Araneus diadematus (Clerck, 1757).JPG](https://commons.wikimedia.org/wiki/File:Araneus_diadematus_(Clerck,_1757).JPG) | see file page | see file page |
+| `local-perch.jpg` | [European perch cropped](https://commons.wikimedia.org/wiki/File:Perca_fluviatilis_-_Perche_commune_-_European_perch_Cropped.jpg) | see file page | see file page |
+| `local-ant.jpg` | [Formica rufa standing.jpg](https://commons.wikimedia.org/wiki/File:Formica_rufa_standing.jpg) | see file page | see file page |
+| `local-butterfly.jpg` | [Butterfly Red Admiral - Vanessa atalanta 01.jpg](https://commons.wikimedia.org/wiki/File:Butterfly_Red_Admiral_-_Vanessa_atalanta_01.jpg) | see file page | see file page |
+| `local-mosquito.jpg` | [Diptera - Mosquito - Culex cf pipiens](https://commons.wikimedia.org/wiki/File:Diptera_-_Mosquito_-_Culex_cf_pipiens_(3470380619).jpg) | see file page | see file page |
+| `local-bee.jpg` | [Apis mellifera flying.jpg](https://commons.wikimedia.org/wiki/File:Apis_mellifera_flying.jpg) | see file page | see file page |
+| `local-crayfish.jpg` | [European crayfish (Astacus astacus).jpg](https://commons.wikimedia.org/wiki/File:European_crayfish_(Astacus_astacus).jpg) | see file page | see file page |
 | `tuatara.jpg` | [Tuatara (5205719005).jpg](https://commons.wikimedia.org/wiki/File:Tuatara_(5205719005).jpg) | Sid Mosdell | CC BY 2.0 |
 | `snake.jpg` | [Banded pit viper](https://commons.wikimedia.org/wiki/File:Trimeresurus_sabahi_fucatus,_Banded_pit_viper_-_Takua_Pa_District,_Phang-nga_Province_(46710893582).jpg) | Rushenb | CC BY-SA 2.0 |
 | `dimetrodon.png` | [Dimetrodon silhouette](https://www.phylopic.org/images/b9b73c89-7609-4524-b068-7c7c7f566979/dimetrodon) | Scott Hartman | CC BY-SA 3.0 |
