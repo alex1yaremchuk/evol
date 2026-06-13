@@ -71,13 +71,22 @@ button {
   color: #fff;
 }
 
-.language-switch {
+.top-tools {
   position: fixed;
-  top: 4.45rem;
+  top: 4rem;
   right: 1rem;
   z-index: 9;
   display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  max-width: min(44rem, calc(100% - 2rem));
+}
+
+.language-switch {
+  display: flex;
+  flex: 0 0 auto;
   gap: 0.18rem;
+  min-height: 2.45rem;
   padding: 0.22rem;
   border: 1px solid rgba(24, 33, 43, 0.12);
   border-radius: 0.6rem;
@@ -105,14 +114,12 @@ button {
 }
 
 .contact-link {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 9;
-  display: grid;
-  gap: 0.12rem;
-  max-width: 13.5rem;
-  padding: 0.44rem 0.68rem;
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-height: 2.45rem;
+  max-width: min(23rem, 46vw);
+  padding: 0.42rem 0.68rem;
   border: 1px solid rgba(24, 33, 43, 0.12);
   border-radius: 0.6rem;
   background: rgba(255, 255, 255, 0.66);
@@ -127,11 +134,15 @@ button {
 }
 
 .contact-email {
+  overflow: hidden;
   color: #142027;
   font-weight: 840;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .contact-link a {
+  flex: 0 0 auto;
   width: fit-content;
   justify-self: end;
   color: #247d74;
@@ -169,6 +180,7 @@ button {
   min-height: 100vh;
   margin: 0 auto;
   padding: clamp(1.5rem, 4vw, 4.5rem);
+  padding-top: clamp(7rem, 9vw, 8rem);
   padding-bottom: clamp(5.5rem, 8vw, 7rem);
 }
 
@@ -741,22 +753,24 @@ svg .bone {
     font-size: clamp(0.66rem, 2.8vw, 0.82rem);
   }
 
-  .contact-link {
+  .top-tools {
     top: 3.35rem;
     right: 0.55rem;
-    display: flex;
-    align-items: center;
+    left: 0.55rem;
+    justify-content: space-between;
     gap: 0.42rem;
-    max-width: min(14.5rem, calc(100% - 1.1rem));
+    max-width: calc(100% - 1.1rem);
+  }
+
+  .contact-link {
+    min-width: 0;
+    max-width: none;
     padding: 0.32rem 0.5rem;
     font-size: 0.68rem;
     white-space: nowrap;
   }
 
   .language-switch {
-    top: 3.35rem;
-    left: 0.55rem;
-    right: auto;
     padding: 0.18rem;
   }
 
@@ -788,7 +802,7 @@ svg .bone {
     align-content: start;
     gap: 1rem;
     min-height: 100svh;
-    padding: 5.05rem 1.15rem 1.15rem;
+    padding: 6.15rem 1.15rem 1.15rem;
     padding-bottom: 5.8rem;
   }
 

@@ -1446,5 +1446,6 @@ Object.assign(window.EVOL_I18N.en, {
   "Архепластиды": "Archaeplastids",
   "архепластиды": "archaeplastids",
   "воротничковые жгутиконосцы": "choanoflagellates",
+  "Пишите:": "Write:",
   "нет ядра; часто одна маленькая клетка, химия жизни очень разнообразна": "no nucleus; often one small cell, with very diverse life chemistry"
 });

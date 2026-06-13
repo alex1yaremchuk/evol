@@ -80,7 +80,7 @@ function updateStaticText() {
   contactNode?.setAttribute("aria-label", t("Контакт"));
   const contactLead = contactNode?.querySelector("span:first-child");
   const contactAction = contactNode?.querySelector("a");
-  if (contactLead) contactLead.textContent = t("Предложения и возражения:");
+  if (contactLead) contactLead.textContent = t("Пишите:");
   if (contactAction) contactAction.textContent = t("Написать");
   languageButtons.forEach((button) => {
     const isActive = button.dataset.lang === language;
