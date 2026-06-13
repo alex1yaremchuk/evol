@@ -1,4 +1,4 @@
-const { decks } = window.EVOL_DATA;
+const sourceDecks = window.EVOL_DATA.decks;
 
 const slideNode = document.getElementById("slide");
 const schemeNavNode = document.getElementById("scheme-nav");
@@ -6,9 +6,89 @@ const currentNode = document.getElementById("current");
 const totalNode = document.getElementById("total");
 const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
+const languageButtons = document.querySelectorAll("[data-lang]");
+const languageSwitchNode = document.querySelector(".language-switch");
+const contactNode = document.querySelector(".contact-link");
 
+let language = initialLanguage();
+let decks = localizeDecks(sourceDecks);
 let deckIndex = 0;
 let index = 0;
+
+function initialLanguage() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = normalizeLanguage(params.get("lang"));
+  if (fromUrl) return fromUrl;
+
+  try {
+    return normalizeLanguage(window.localStorage.getItem("evol-lang")) || "ru";
+  } catch {
+    return "ru";
+  }
+}
+
+function normalizeLanguage(value) {
+  return value === "en" || value === "ru" ? value : null;
+}
+
+function t(value) {
+  if (language !== "en") return value;
+  return window.EVOL_I18N?.en?.[value] || value;
+}
+
+function localizeDecks(rawDecks) {
+  return localizeValue(rawDecks);
+}
+
+function localizeValue(value) {
+  if (typeof value === "string") return t(value);
+  if (Array.isArray(value)) return value.map(localizeValue);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, localizeValue(item)]));
+}
+
+function setLanguage(nextLanguage, updateUrl = true) {
+  const normalized = normalizeLanguage(nextLanguage) || "ru";
+  language = normalized;
+  decks = localizeDecks(sourceDecks);
+  index = Math.max(0, Math.min(decks[deckIndex].slides.length - 1, index));
+
+  document.documentElement.lang = language;
+  try {
+    window.localStorage.setItem("evol-lang", language);
+  } catch {
+    // The site still works if storage is unavailable.
+  }
+
+  if (updateUrl) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", language);
+    window.history.replaceState({}, "", url);
+  }
+
+  updateStaticText();
+  render();
+}
+
+function updateStaticText() {
+  document.title = language === "en" ? "Major Forks in Evolution" : "Основные развилки эволюции";
+  languageSwitchNode?.setAttribute("aria-label", language === "en" ? "Language" : "Язык");
+  schemeNavNode.setAttribute("aria-label", t("Схемы"));
+  prevButton.setAttribute("aria-label", t("Предыдущий слайд"));
+  nextButton.setAttribute("aria-label", t("Следующий слайд"));
+  document.querySelector(".progress")?.setAttribute("aria-label", t("Номер слайда"));
+  contactNode?.setAttribute("aria-label", t("Контакт"));
+  const contactLead = contactNode?.querySelector("span:first-child");
+  const contactAction = contactNode?.querySelector("a");
+  if (contactLead) contactLead.textContent = t("Предложения и возражения:");
+  if (contactAction) contactAction.textContent = t("Написать");
+  languageButtons.forEach((button) => {
+    const isActive = button.dataset.lang === language;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+    button.setAttribute("aria-label", button.dataset.lang === "en" ? t("английский") : t("русский"));
+  });
+}
 
 function iconSvg(kind, caption) {
   const title = escapeHtml(caption);
@@ -263,10 +343,10 @@ function render() {
 function infoGrid(slide, deck) {
   const labels = { ...(deck.infoLabels || {}), ...(slide.infoLabels || {}) };
   const items = [
-    [labels.novelty || "Новшество", slide.novelty || slide.improvement],
-    [labels.main || "Основная ветка", slide.mainBranch || slide.caption],
-    [labels.side || "Боковая ветка", slide.sideBranch || slide.side],
-    [labels.effect || "Что дало", slide.effect || slide.noveltyDescription || slide.subtitle],
+    [labels.novelty || t("Новшество"), slide.novelty || slide.improvement],
+    [labels.main || t("Основная ветка"), slide.mainBranch || slide.caption],
+    [labels.side || t("Боковая ветка"), slide.sideBranch || slide.side],
+    [labels.effect || t("Что дало"), slide.effect || slide.noveltyDescription || slide.subtitle],
   ].filter(([, value]) => value);
 
   return `
@@ -288,8 +368,8 @@ function infoGrid(slide, deck) {
 function successGrid(slide) {
   if (!slide.success) return "";
   const items = [
-    ["Основная", slide.success.main],
-    ["Боковая", slide.success.side],
+    [t("Основная"), slide.success.main],
+    [t("Боковая"), slide.success.side],
   ].filter(([, value]) => value);
 
   if (!items.length) return "";
@@ -324,7 +404,7 @@ function memorySymbol(slide, deck) {
   if (!deck.showSlideSymbol || !slide.marker) return "";
   const label = slide.symbolLabel || slide.novelty || slide.improvement || slide.title;
   return `
-    <figure class="memory-symbol" aria-label="Символ вехи">
+    <figure class="memory-symbol" aria-label="${escapeHtml(t("Символ вехи"))}">
       <div class="memory-symbol-icon">${markerSvg(slide.marker)}</div>
       <figcaption>${escapeHtml(label)}</figcaption>
     </figure>
@@ -349,9 +429,9 @@ function timeline(deck, slide) {
     .join("");
 
   return `
-    <div class="timeline ${markers ? "with-markers" : ""}" aria-label="Ось времени">
+    <div class="timeline ${markers ? "with-markers" : ""}" aria-label="${escapeHtml(t("Ось времени"))}">
       <div class="timeline-head">
-        <span>${escapeHtml(deck.timelineKicker || "примерная точка разделения")}</span>
+        <span>${escapeHtml(deck.timelineKicker || t("примерная точка разделения"))}</span>
         <strong>${escapeHtml(slide.timeLabel || formatMa(slide.timeMa))}</strong>
       </div>
       <div class="era-row" aria-label="Эры">${eras}</div>
@@ -406,6 +486,62 @@ function markerSvg(kind) {
     leaf: `
       <path d="M8 24c10 1 18-5 20-17C17 8 9 14 8 24z" />
       <path d="M11 23c5-5 9-8 15-13" />
+    `,
+    chloroplast: `
+      <ellipse cx="18" cy="18" rx="12" ry="8" />
+      <path d="M8 18c5-4 15-4 20 0M9 21c5 3 13 3 18 0M10 15c5-3 11-3 16 0" />
+      <circle cx="25" cy="13" r="2" class="mark-accent" />
+    `,
+    algae: `
+      <circle cx="18" cy="18" r="11" />
+      <circle cx="14" cy="14" r="2" class="mark-accent" />
+      <circle cx="22" cy="14" r="2" class="mark-accent" />
+      <circle cx="13" cy="22" r="2" class="mark-accent" />
+      <circle cx="23" cy="22" r="2" class="mark-accent" />
+      <path d="M18 7v22M7 18h22" />
+    `,
+    chara: `
+      <path d="M18 6v25" />
+      <path d="M18 12c-5-2-8-1-11 2M18 12c5-2 8-1 11 2" />
+      <path d="M18 19c-5-2-8-1-11 2M18 19c5-2 8-1 11 2" />
+      <circle cx="18" cy="12" r="1.7" class="mark-accent" />
+      <circle cx="18" cy="19" r="1.7" class="mark-accent" />
+    `,
+    spore: `
+      <circle cx="18" cy="18" r="8" />
+      <circle cx="11" cy="11" r="3" class="mark-accent" />
+      <circle cx="27" cy="12" r="2.5" />
+      <circle cx="10" cy="27" r="2.5" />
+      <circle cx="28" cy="26" r="3" class="mark-accent" />
+    `,
+    vascular: `
+      <path d="M18 31V7" />
+      <path d="M12 31V14M24 31V14" />
+      <path d="M12 17c-4-2-6-5-5-9 5 0 8 3 11 9" />
+      <path d="M24 17c4-2 6-5 5-9-5 0-8 3-11 9" />
+      <circle cx="18" cy="10" r="2" class="mark-accent" />
+    `,
+    fern: `
+      <path d="M18 31C17 20 20 12 28 6" />
+      <path d="M19 25c-4-1-7 0-10 3M20 21c-5-2-8-1-11 1M21 17c-5-2-8-2-12-1" />
+      <path d="M22 14c3-1 6-1 9 1M24 11c2-2 5-3 8-3" />
+      <circle cx="18" cy="30" r="1.6" class="mark-accent" />
+    `,
+    seed: `
+      <path d="M18 6c8 6 9 18 0 27C9 24 10 12 18 6z" />
+      <path d="M18 9c-1 8-1 14 0 21M13 20c3-1 7-1 10 0" />
+      <circle cx="18" cy="15" r="2" class="mark-accent" />
+    `,
+    fruit: `
+      <circle cx="18" cy="20" r="9" />
+      <path d="M18 11c1-4 3-6 6-7M18 11c-3-4-6-5-9-4" />
+      <path d="M21 7c3-1 6 0 8 3-4 2-7 1-8-3z" />
+      <circle cx="15" cy="18" r="1.5" class="mark-accent" />
+    `,
+    grass: `
+      <path d="M18 31V8M13 31c1-9 2-15 5-23M23 31c-1-9-2-15-5-23" />
+      <path d="M12 13c-3 2-5 5-6 9M24 13c3 2 5 5 6 9" />
+      <path d="M18 9l-3-4M18 9l3-4" class="mark-accent" />
     `,
     fungus: `
       <path d="M8 17c2-7 17-8 20 0-4 2-15 2-20 0z" />
@@ -779,6 +915,12 @@ function timelinePosition(deck, ma) {
 }
 
 function formatMa(ma) {
+  if (language === "en") {
+    if (ma >= 1000) return `~${(ma / 1000).toFixed(1)} billion years ago`;
+    if (ma >= 1) return `~${ma} million years ago`;
+    if (ma >= 0.001) return `~${Math.round(ma * 1000).toLocaleString("en-US")} thousand years ago`;
+    return `~${Math.round(ma * 1000000).toLocaleString("en-US")} years ago`;
+  }
   if (ma >= 1000) return `~${(ma / 1000).toFixed(1).replace(".", ",")} млрд лет назад`;
   if (ma >= 1) return `~${ma} млн лет назад`;
   if (ma >= 0.001) return `~${Math.round(ma * 1000).toLocaleString("ru-RU")} тыс. лет назад`;
@@ -834,6 +976,12 @@ schemeNavNode.addEventListener("click", (event) => {
   setDeck(Number(button.dataset.deck), 0);
 });
 
+languageButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setLanguage(button.dataset.lang);
+  });
+});
+
 slideNode.addEventListener("click", (event) => {
   const button = event.target.closest("[data-slide]");
   if (!button) return;
@@ -859,4 +1007,4 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-render();
+setLanguage(language);

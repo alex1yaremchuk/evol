@@ -8,9 +8,15 @@
   </head>
   <body>
     <header class="scheme-nav" id="scheme-nav" aria-label="Схемы"></header>
-    <a class="contact-link" href="mailto:alexander.yaremchuk@gmail.com">
-      Предложения и возражения: alexander.yaremchuk@gmail.com
-    </a>
+    <div class="language-switch" role="group" aria-label="Язык">
+      <button class="language-button" type="button" data-lang="ru" aria-pressed="true">RUS</button>
+      <button class="language-button" type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <aside class="contact-link" aria-label="Контакт">
+      <span>Предложения и возражения:</span>
+      <span class="contact-email">alexander.yaremchuk@gmail.com</span>
+      <a href="mailto:alexander.yaremchuk@gmail.com">Написать</a>
+    </aside>
 
     <main class="deck" id="deck" aria-live="polite">
       <section class="slide-shell" id="slide"></section>
@@ -31,6 +37,7 @@
     </nav>
 
     <script src="data.js"></script>
+    <script src="i18n-en.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

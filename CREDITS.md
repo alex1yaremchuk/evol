@@ -62,6 +62,15 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `local-mosquito.jpg` | [Diptera - Mosquito - Culex cf pipiens](https://commons.wikimedia.org/wiki/File:Diptera_-_Mosquito_-_Culex_cf_pipiens_(3470380619).jpg) | see file page | see file page |
 | `local-bee.jpg` | [Apis mellifera flying.jpg](https://commons.wikimedia.org/wiki/File:Apis_mellifera_flying.jpg) | see file page | see file page |
 | `local-crayfish.jpg` | [European crayfish (Astacus astacus).jpg](https://commons.wikimedia.org/wiki/File:European_crayfish_(Astacus_astacus).jpg) | see file page | see file page |
+| `plant-green-algae.jpg` | [Volvox Aureus 400x.jpg](https://commons.wikimedia.org/wiki/File:Volvox_Aureus_400x.jpg) | see file page | see file page |
+| `plant-red-algae.jpg` | [Chondrus crispus illustration](https://commons.wikimedia.org/wiki/File:FMIB_53629_Rhodophycees_ou_Floridees_(Algues_rouges)_Gigartinees,_Chondrus_crispus_(L)_Lyngb.jpeg) | see file page | see file page |
+| `plant-chara.jpg` | [Chara2.jpg](https://commons.wikimedia.org/wiki/File:Chara2.jpg) | see file page | see file page |
+| `plant-moss.jpg` | [Polytrichum commune .jpg](https://commons.wikimedia.org/wiki/File:Polytrichum_commune_.jpg) | see file page | see file page |
+| `plant-lycopod.jpg` | [Lycopodium clavatum](https://commons.wikimedia.org/wiki/File:Lycopodium_clavatum_-_Keulen-B%C3%A4rlapp_171441363.jpg) | see file page | see file page |
+| `plant-fern.jpg` | [Dryopteris filix-mas young leaf](https://commons.wikimedia.org/wiki/File:Prachtig_uitrollend_jong_blad_van_mannetjesvaren_(Dryopteris_filix-mas)._Locatie,_Tuinreservaat_Jonkervallei.jpg) | see file page | see file page |
+| `plant-pine-cone.jpg` | [Pinus sylvestris 2026 G1.jpg](https://commons.wikimedia.org/wiki/File:Pinus_sylvestris_2026_G1.jpg) | see file page | see file page |
+| `plant-magnolia.jpg` | [Magnolia x soulangeana blossom.jpg](https://commons.wikimedia.org/wiki/File:Magnolia_%C3%97_soulangeana_blossom.jpg) | see file page | see file page |
+| `plant-grass.jpg` | [Grass flower 3.jpg](https://commons.wikimedia.org/wiki/File:Grass_flower_3.jpg) | see file page | see file page |
 | `tuatara.jpg` | [Tuatara (5205719005).jpg](https://commons.wikimedia.org/wiki/File:Tuatara_(5205719005).jpg) | Sid Mosdell | CC BY 2.0 |
 | `snake.jpg` | [Banded pit viper](https://commons.wikimedia.org/wiki/File:Trimeresurus_sabahi_fucatus,_Banded_pit_viper_-_Takua_Pa_District,_Phang-nga_Province_(46710893582).jpg) | Rushenb | CC BY-SA 2.0 |
 | `dimetrodon.png` | [Dimetrodon silhouette](https://www.phylopic.org/images/b9b73c89-7609-4524-b068-7c7c7f566979/dimetrodon) | Scott Hartman | CC BY-SA 3.0 |
