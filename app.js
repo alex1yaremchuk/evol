@@ -78,10 +78,8 @@ function updateStaticText() {
   nextButton.setAttribute("aria-label", t("Следующий слайд"));
   document.querySelector(".progress")?.setAttribute("aria-label", t("Номер слайда"));
   contactNode?.setAttribute("aria-label", t("Контакт"));
-  const contactLead = contactNode?.querySelector("span:first-child");
-  const contactAction = contactNode?.querySelector("a");
-  if (contactLead) contactLead.textContent = t("Пишите:");
-  if (contactAction) contactAction.textContent = t("Написать");
+  const contactText = contactNode?.querySelector(".contact-text");
+  if (contactText) contactText.textContent = t("Написать");
   languageButtons.forEach((button) => {
     const isActive = button.dataset.lang === language;
     button.classList.toggle("active", isActive);
