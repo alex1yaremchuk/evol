@@ -62,6 +62,10 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `local-mosquito.jpg` | [Diptera - Mosquito - Culex cf pipiens](https://commons.wikimedia.org/wiki/File:Diptera_-_Mosquito_-_Culex_cf_pipiens_(3470380619).jpg) | see file page | see file page |
 | `local-bee.jpg` | [Apis mellifera flying.jpg](https://commons.wikimedia.org/wiki/File:Apis_mellifera_flying.jpg) | see file page | see file page |
 | `local-crayfish.jpg` | [European crayfish (Astacus astacus).jpg](https://commons.wikimedia.org/wiki/File:European_crayfish_(Astacus_astacus).jpg) | see file page | see file page |
+| `choanoflagellate.jpg` | [Salpingoeca rosetta video thumbnail](https://commons.wikimedia.org/wiki/File:Prey-Capture-and-Phagocytosis-in-the-Choanoflagellate-Salpingoeca-rosetta-pone.0095577.s005.ogv) | see file page | see file page |
+| `sea-urchin.jpg` | [Sea urchin on Fjærvollsanden beach](https://commons.wikimedia.org/wiki/File:Sea_urchin_on_Fj%C3%A6rvollsanden_beach,_B%C3%B8,_Vester%C3%A5len,_Norway.jpg) | see file page | see file page |
+| `lancelet-alt.jpg` | [Branchiostoma lanceolatum.jpg](https://commons.wikimedia.org/wiki/File:Branchiostoma_lanceolatum.jpg) | Hans Hillewaert | CC BY-SA 4.0 |
+| `lungfish.jpg` | [Lungfish (39845621294).jpg](https://commons.wikimedia.org/wiki/File:Lungfish_(39845621294).jpg) | see file page | see file page |
 | `plant-green-algae.jpg` | [Volvox Aureus 400x.jpg](https://commons.wikimedia.org/wiki/File:Volvox_Aureus_400x.jpg) | see file page | see file page |
 | `plant-red-algae.jpg` | [Chondrus crispus illustration](https://commons.wikimedia.org/wiki/File:FMIB_53629_Rhodophycees_ou_Floridees_(Algues_rouges)_Gigartinees,_Chondrus_crispus_(L)_Lyngb.jpeg) | see file page | see file page |
 | `plant-chara.jpg` | [Chara2.jpg](https://commons.wikimedia.org/wiki/File:Chara2.jpg) | see file page | see file page |
@@ -71,6 +75,35 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `plant-pine-cone.jpg` | [Pinus sylvestris 2026 G1.jpg](https://commons.wikimedia.org/wiki/File:Pinus_sylvestris_2026_G1.jpg) | see file page | see file page |
 | `plant-magnolia.jpg` | [Magnolia x soulangeana blossom.jpg](https://commons.wikimedia.org/wiki/File:Magnolia_%C3%97_soulangeana_blossom.jpg) | see file page | see file page |
 | `plant-grass.jpg` | [Grass flower 3.jpg](https://commons.wikimedia.org/wiki/File:Grass_flower_3.jpg) | see file page | see file page |
+| `plant-chlorophyte.jpg` | [Chlorophyte figure thumbnail](https://commons.wikimedia.org/wiki/File:41467_2023_40657_Fig1.webp) | see file page | see file page |
+| `plant-ulva.jpg` | [Sea lettuce illustration](https://commons.wikimedia.org/wiki/File:FMIB_41756_Sea_lettuce_(Ulva_latissima).jpeg) | see file page | see file page |
+| `plant-liverwort.jpg` | [Thallose liverwort](https://commons.wikimedia.org/wiki/File:Thallose_liverwort_(Marchantia_and_Lunularia_spp.)_showing_clonal_plantlets_in_gemma_cups.jpg) | see file page | see file page |
+| `plant-horsetail.jpg` | [Equisetum arvense fertile stem](https://commons.wikimedia.org/wiki/File:Equisetum_arvense_fertile_spore-bearing_stem_-_Keila.jpg) | see file page | see file page |
+| `plant-bracken.jpg` | [Maple leaf and bracken fern](https://commons.wikimedia.org/wiki/File:HNF_maple_leaf_and_bracken_fern_(30163357262).jpg) | see file page | see file page |
+| `plant-ginkgo.jpg` | [Ginkgo-Blatt -- 2024 -- 6855.jpg](https://commons.wikimedia.org/wiki/File:Ginkgo-Blatt_--_2024_--_6855.jpg) | see file page | see file page |
+| `plant-oak.jpg` | [Acorns and oak leaves](https://commons.wikimedia.org/wiki/File:Acorns_and_oak_leaves_-_geograph.org.uk_-_7265155.jpg) | see file page | see file page |
+| `arthropod-springtail.jpg` | [Plump Springtail](https://commons.wikimedia.org/wiki/File:Plump_Springtail_(Poduromorpha)_-_H%C3%A5,_Norway_2021-08-08.jpg) | see file page | see file page |
+| `arthropod-dragonfly.jpg` | [Hairy dragonfly male close up](https://commons.wikimedia.org/wiki/File:Hairy_dragonfly_(Brachytron_pratense)_male_close_up.jpg) | see file page | see file page |
+| `arthropod-grasshopper.jpg` | [Red-legged grasshopper](https://commons.wikimedia.org/wiki/File:Red-legged_grasshopper_(72625).jpg) | see file page | see file page |
+| `arthropod-ladybird.jpg` | [Ladybird beetle larva](https://commons.wikimedia.org/wiki/File:Ladybird_beetle_larva_on_a_leaf,_by_baby-bear.org.jpg) | see file page | see file page |
+| `arthropod-fly.jpg` | [Sarcophagid fly portrait](https://commons.wikimedia.org/wiki/File:Sarcophagid_fly_Portrait.jpg) | see file page | see file page |
+| `arthropod-silverfish.jpg` | [Long-tailed silverfish](https://commons.wikimedia.org/wiki/File:Long-tailed_Silverfish_(Ctenolepisma_longicaudata)_-_Oslo,_Norway_2020-11-27.jpg) | see file page | see file page |
+| `arthropod-peacock-butterfly.jpg` | [Peacock butterfly](https://commons.wikimedia.org/wiki/File:Peacock_butterfly_(Aglais_io)_2.jpg) | see file page | see file page |
+| `arthropod-wasp.jpg` | [Wasp colony](https://commons.wikimedia.org/wiki/File:Wasp_colony.jpg) | see file page | see file page |
+| `squirrel.jpg` | [Squirrel posing.jpg](https://commons.wikimedia.org/wiki/File:Squirrel_posing.jpg) | see file page | see file page |
+| `rabbit.jpg` | [Rabbit - Hong Kong](https://commons.wikimedia.org/wiki/File:Rabbit_-_Hong_Kong_-_20091004_6729.jpg) | see file page | see file page |
+| `baboon.jpg` | [Olive baboon with juvenile](https://commons.wikimedia.org/wiki/File:Olive_baboon_(Papio_anubis)_with_juvenile.jpg) | see file page | see file page |
+| `orangutan.jpg` | [Orangutan Kalimantan.jpg](https://commons.wikimedia.org/wiki/File:Orangutan_Kalimantan.jpg) | see file page | see file page |
+| `alligator.jpg` | [Albino Alligator 2008.jpg](https://commons.wikimedia.org/wiki/File:Albino_Alligator_2008.jpg) | see file page | see file page |
+| `crocodile-skull.jpg` | [Crocodile skull](https://commons.wikimedia.org/wiki/File:Crocodile_skull_(24592702724).jpg) | see file page | see file page |
+| `tyrannosaurus.jpg` | [Skeleton of Tyrannosaurus 2.jpg](https://commons.wikimedia.org/wiki/File:Skeleton_of_Tyrannosaurus_2.jpg) | see file page | see file page |
+| `deinonychus.jpg` | [Deinonychus antirrhopus complet.JPG](https://commons.wikimedia.org/wiki/File:Deinonychus_antirrhopus_complet.JPG) | see file page | see file page |
+| `log-telegraph.jpg` | [Morse's telegraph station](https://commons.wikimedia.org/wiki/File:Morse%27s_telegraph_station_(PTT_museum_in_Belgrade,_Serbia)_05.jpg) | see file page | see file page |
+| `log-computer.jpg` | [ENIAC on a Chip](https://commons.wikimedia.org/wiki/File:ENIAC_on_a_Chip,_University_of_Pennsylvania_(1995)_-_Computer_History_Museum.jpg) | see file page | see file page |
+| `log-smartphone.jpg` | [Girl listening to music with a smartphone](https://commons.wikimedia.org/wiki/File:Girl_listening_to_music_with_a_smartphone.jpg) | see file page | see file page |
+| `log-printing-press.jpg` | [Printing press 03.jpg](https://commons.wikimedia.org/wiki/File:Printing_press_03.jpg) | see file page | see file page |
+| `log-manuscript.jpg` | [HMML-Renovated.jpg](https://commons.wikimedia.org/wiki/File:HMML-Renovated.jpg) | see file page | see file page |
+| `log-steam-engine.jpg` | [Steam engine near the Grand Transept](https://commons.wikimedia.org/wiki/File:Philip_Henry_Delamotte,_Steam_Engine_near_the_Grand_Transept,_Crystal_Palace,_1851,_NGA_212223.jpg) | see file page | see file page |
 | `tuatara.jpg` | [Tuatara (5205719005).jpg](https://commons.wikimedia.org/wiki/File:Tuatara_(5205719005).jpg) | Sid Mosdell | CC BY 2.0 |
 | `snake.jpg` | [Banded pit viper](https://commons.wikimedia.org/wiki/File:Trimeresurus_sabahi_fucatus,_Banded_pit_viper_-_Takua_Pa_District,_Phang-nga_Province_(46710893582).jpg) | Rushenb | CC BY-SA 2.0 |
 | `dimetrodon.png` | [Dimetrodon silhouette](https://www.phylopic.org/images/b9b73c89-7609-4524-b068-7c7c7f566979/dimetrodon) | Scott Hartman | CC BY-SA 3.0 |
