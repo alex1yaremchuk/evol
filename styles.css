@@ -699,6 +699,233 @@ button {
   font-weight: 800;
 }
 
+.controls.hidden {
+  display: none;
+}
+
+.game-screen {
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  width: min(100%, 1280px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(4.4rem, 6vw, 5.4rem) clamp(1.2rem, 4vw, 3.5rem) 1.4rem;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.game-title {
+  margin: 0.12rem 0 0;
+  color: #0f1d2b;
+  font-size: clamp(1.9rem, 4.1vw, 3.55rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.game-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: 0 0.7rem 1.6rem rgba(24, 33, 43, 0.08);
+  font-size: 1.05rem;
+  font-weight: 860;
+}
+
+.game-modes {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+  scrollbar-width: none;
+}
+
+.game-modes::-webkit-scrollbar {
+  display: none;
+}
+
+.game-mode-button,
+.game-answer,
+.chain-button,
+.game-next {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.66);
+  color: #26323c;
+  cursor: pointer;
+  font-weight: 840;
+}
+
+.game-mode-button {
+  flex: 0 0 auto;
+  min-height: 2.35rem;
+  padding: 0.42rem 0.7rem;
+}
+
+.game-mode-button.active {
+  background: rgba(36, 125, 116, 0.94);
+  color: #fff;
+}
+
+.game-panel {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.82rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow: 0 1rem 2.2rem rgba(24, 33, 43, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.game-question {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #26323c;
+}
+
+.game-question strong {
+  font-size: clamp(1.2rem, 2.3vw, 1.8rem);
+  line-height: 1.05;
+}
+
+.game-question span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 760;
+}
+
+.game-creatures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.68rem;
+}
+
+.game-creature-card {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgba(24, 33, 43, 0.16);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 0.8rem 1.7rem rgba(24, 33, 43, 0.1);
+}
+
+.game-creature-card img {
+  display: block;
+  width: 100%;
+  height: clamp(8.8rem, 31vh, 17rem);
+  object-fit: cover;
+}
+
+.game-creature-card figcaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.48rem 0.62rem;
+  color: #26323c;
+}
+
+.game-creature-card strong {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.game-creature-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 720;
+}
+
+.game-answers,
+.chain-options,
+.game-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.game-answer,
+.chain-button,
+.game-next {
+  min-height: 2.28rem;
+  padding: 0.42rem 0.65rem;
+}
+
+.game-answer.correct,
+.game-feedback.correct {
+  border-color: rgba(36, 125, 116, 0.34);
+  background: rgba(213, 234, 211, 0.82);
+}
+
+.game-answer.wrong,
+.game-feedback.wrong {
+  border-color: rgba(209, 79, 63, 0.34);
+  background: rgba(240, 214, 203, 0.82);
+}
+
+.chain-target {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  min-height: 2.45rem;
+  padding: 0.55rem;
+  border: 1px dashed rgba(24, 33, 43, 0.22);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.36);
+}
+
+.chain-target span,
+.chain-button {
+  font-size: 0.9rem;
+}
+
+.chain-target span {
+  padding: 0.34rem 0.52rem;
+  border-radius: 0.45rem;
+  background: rgba(36, 125, 116, 0.12);
+  color: #24313b;
+  font-weight: 780;
+}
+
+.chain-button.used {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.game-feedback {
+  display: grid;
+  gap: 0.34rem;
+  padding: 0.58rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  color: #24313b;
+}
+
+.game-feedback strong {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.game-feedback span {
+  color: #34414b;
+  font-size: 0.92rem;
+  font-weight: 690;
+  line-height: 1.25;
+}
+
 svg .thin {
   stroke: rgba(24, 33, 43, 0.32);
   stroke-width: 8;
@@ -905,6 +1132,86 @@ svg .bone {
     min-width: 4.45rem;
     font-size: 0.88rem;
   }
+
+  .game-screen {
+    gap: 0.5rem;
+    padding: 3.55rem 4vw 0.75rem;
+  }
+
+  .game-title {
+    font-size: clamp(1.55rem, 3vw, 2.35rem);
+  }
+
+  .game-header p {
+    max-width: 54rem;
+    font-size: 0.9rem;
+  }
+
+  .game-score {
+    min-height: 2.25rem;
+    padding: 0.32rem 0.55rem;
+    font-size: 0.88rem;
+  }
+
+  .game-modes {
+    gap: 0.32rem;
+  }
+
+  .game-mode-button {
+    min-height: 2rem;
+    padding: 0.3rem 0.54rem;
+    font-size: 0.82rem;
+  }
+
+  .game-panel {
+    gap: 0.45rem;
+    padding: 0.55rem;
+  }
+
+  .game-question strong {
+    font-size: 1.1rem;
+  }
+
+  .game-question span {
+    font-size: 0.78rem;
+  }
+
+  .game-creatures {
+    gap: 0.48rem;
+  }
+
+  .game-creature-card img {
+    height: clamp(7rem, 25vh, 10.4rem);
+  }
+
+  .game-creature-card figcaption {
+    padding: 0.36rem 0.48rem;
+  }
+
+  .game-creature-card strong {
+    font-size: 0.9rem;
+  }
+
+  .game-creature-card span {
+    font-size: 0.74rem;
+  }
+
+  .game-answer,
+  .chain-button,
+  .game-next {
+    min-height: 2rem;
+    padding: 0.3rem 0.54rem;
+    font-size: 0.82rem;
+  }
+
+  .game-feedback {
+    padding: 0.44rem 0.55rem;
+  }
+
+  .game-feedback span {
+    font-size: 0.82rem;
+    line-height: 1.18;
+  }
 }
 
 @media (max-width: 880px) {
@@ -1014,6 +1321,34 @@ svg .bone {
   .caption {
     justify-self: end;
     max-width: 100%;
+  }
+
+  .game-screen {
+    min-height: 100svh;
+    padding: 6.05rem 1.15rem 1.15rem;
+  }
+
+  .game-header {
+    align-items: start;
+  }
+
+  .game-title {
+    font-size: clamp(2.2rem, 11vw, 3.8rem);
+  }
+
+  .game-panel {
+    padding: 0.72rem;
+  }
+
+  .game-question,
+  .game-creature-card figcaption {
+    align-items: start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .game-creatures {
+    grid-template-columns: 1fr;
   }
 }
 

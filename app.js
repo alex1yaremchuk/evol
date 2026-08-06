@@ -1,4 +1,5 @@
 const sourceDecks = window.EVOL_DATA.decks;
+const sourceGames = window.EVOL_GAMES;
 
 const slideNode = document.getElementById("slide");
 const schemeNavNode = document.getElementById("scheme-nav");
@@ -12,8 +13,14 @@ const contactNode = document.querySelector(".contact-link");
 
 let language = initialLanguage();
 let decks = localizeDecks(sourceDecks);
+let games = localizeGames(sourceGames);
+let section = initialSection();
 let deckIndex = 0;
 let index = 0;
+let gameModeId = "closer";
+let currentGame = null;
+let gameScore = { correct: 0, total: 0 };
+let chainSelection = [];
 
 function initialLanguage() {
   const params = new URLSearchParams(window.location.search);
@@ -25,6 +32,11 @@ function initialLanguage() {
   } catch {
     return "ru";
   }
+}
+
+function initialSection() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("section") === "games" ? "games" : "slides";
 }
 
 function normalizeLanguage(value) {
@@ -40,6 +52,10 @@ function localizeDecks(rawDecks) {
   return localizeValue(rawDecks);
 }
 
+function localizeGames(rawGames) {
+  return localizeValue(rawGames);
+}
+
 function localizeValue(value) {
   if (typeof value === "string") return t(value);
   if (Array.isArray(value)) return value.map(localizeValue);
@@ -51,6 +67,9 @@ function setLanguage(nextLanguage, updateUrl = true) {
   const normalized = normalizeLanguage(nextLanguage) || "ru";
   language = normalized;
   decks = localizeDecks(sourceDecks);
+  games = localizeGames(sourceGames);
+  currentGame = null;
+  chainSelection = [];
   index = Math.max(0, Math.min(decks[deckIndex].slides.length - 1, index));
 
   document.documentElement.lang = language;
@@ -61,9 +80,7 @@ function setLanguage(nextLanguage, updateUrl = true) {
   }
 
   if (updateUrl) {
-    const url = new URL(window.location.href);
-    url.searchParams.set("lang", language);
-    window.history.replaceState({}, "", url);
+    updateSectionUrl();
   }
 
   updateStaticText();
@@ -304,6 +321,11 @@ function iconSvg(kind, caption) {
 }
 
 function render() {
+  if (section === "games") {
+    renderGames();
+    return;
+  }
+
   const deck = decks[deckIndex];
   const slide = deck.slides[index];
   slideNode.style.setProperty("--bg-a", slide.colors[0]);
@@ -335,6 +357,7 @@ function render() {
   totalNode.textContent = String(deck.slides.length);
   prevButton.disabled = deckIndex === 0 && index === 0;
   nextButton.disabled = deckIndex === decks.length - 1 && index === deck.slides.length - 1;
+  document.querySelector(".controls")?.classList.remove("hidden");
   renderSchemeNav();
 }
 
@@ -441,6 +464,209 @@ function timeline(deck, slide) {
       </div>
     </div>
   `;
+}
+
+function renderGames() {
+  if (!currentGame || currentGame.modeId !== gameModeId) {
+    nextGameQuestion();
+  }
+
+  slideNode.style.setProperty("--bg-a", "#d9e8d2");
+  slideNode.style.setProperty("--bg-b", "#eadcc4");
+  document.querySelector(".controls")?.classList.add("hidden");
+  renderSchemeNav();
+
+  const mode = games.modes.find((item) => item.id === gameModeId) || games.modes[0];
+  const modeButtons = games.modes
+    .map(
+      (item) => `
+        <button class="game-mode-button ${item.id === gameModeId ? "active" : ""}" type="button" data-game-mode="${escapeHtml(item.id)}" aria-pressed="${item.id === gameModeId}">
+          ${escapeHtml(item.title)}
+        </button>
+      `,
+    )
+    .join("");
+
+  slideNode.innerHTML = `
+    <article class="game-screen">
+      <header class="game-header">
+        <div>
+          <div class="kicker">${escapeHtml(t("Тренировка"))}</div>
+          <h1 class="game-title">${escapeHtml(t("Игры про эволюцию"))}</h1>
+          <p class="subtitle">${escapeHtml(mode.hint)}</p>
+        </div>
+        <div class="game-score" aria-label="${escapeHtml(t("Счет"))}">
+          <strong>${gameScore.correct}</strong><span>/</span><strong>${gameScore.total}</strong>
+        </div>
+      </header>
+      <nav class="game-modes" aria-label="${escapeHtml(t("Режимы игры"))}">
+        ${modeButtons}
+      </nav>
+      ${gameModeId === "chain" ? chainGameMarkup(mode) : choiceGameMarkup(mode)}
+    </article>
+  `;
+}
+
+function choiceGameMarkup(mode) {
+  const question = currentGame.question;
+  const pair = question.pair.map((id) => games.cards[id]);
+  const answers = currentGame.answers;
+
+  return `
+    <section class="game-panel">
+      <div class="game-question">
+        <strong>${escapeHtml(question.prompt)}</strong>
+        <span>${escapeHtml(t("Выбери ответ"))}</span>
+      </div>
+      <div class="game-creatures">
+        ${pair.map((card) => creatureChoiceCard(card)).join("")}
+      </div>
+      <div class="game-answers">
+        ${answers.map((answer) => answerButton(answer)).join("")}
+      </div>
+      ${gameFeedbackMarkup()}
+    </section>
+  `;
+}
+
+function chainGameMarkup(mode) {
+  const question = currentGame.question;
+  const selected = new Set(chainSelection);
+
+  return `
+    <section class="game-panel">
+      <div class="game-question">
+        <strong>${escapeHtml(question.prompt)}</strong>
+        <span>${escapeHtml(t("Нажимай по порядку"))}</span>
+      </div>
+      <div class="chain-target">
+        ${chainSelection.map((item, i) => `<span>${i + 1}. ${escapeHtml(item)}</span>`).join("") || `<span>${escapeHtml(t("Цепочка пока пустая"))}</span>`}
+      </div>
+      <div class="chain-options">
+        ${currentGame.shuffled
+          .map(
+            (item) => `
+              <button class="chain-button ${selected.has(item) ? "used" : ""}" type="button" data-chain-item="${escapeHtml(item)}" ${selected.has(item) ? "disabled" : ""}>
+                ${escapeHtml(item)}
+              </button>
+            `,
+          )
+          .join("")}
+      </div>
+      ${gameFeedbackMarkup()}
+    </section>
+  `;
+}
+
+function creatureChoiceCard(card) {
+  return `
+    <figure class="game-creature-card">
+      <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" />
+      <figcaption>
+        <strong>${escapeHtml(card.name)}</strong>
+        <span>${escapeHtml(card.note)}</span>
+      </figcaption>
+    </figure>
+  `;
+}
+
+function answerButton(answer) {
+  const isAnswered = Boolean(currentGame.result);
+  const isCorrect = currentGame.correctValue === answer.value;
+  const className = isAnswered ? (isCorrect ? "correct" : currentGame.chosen === answer.value ? "wrong" : "") : "";
+  return `
+    <button class="game-answer ${className}" type="button" data-game-answer="${escapeHtml(answer.value)}" ${isAnswered ? "disabled" : ""}>
+      ${escapeHtml(answer.label)}
+    </button>
+  `;
+}
+
+function gameFeedbackMarkup() {
+  if (!currentGame.result) {
+    return `
+      <div class="game-actions">
+        <button class="game-next" type="button" data-game-next>${escapeHtml(t("Новый вопрос"))}</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="game-feedback ${currentGame.result}">
+      <strong>${escapeHtml(currentGame.result === "correct" ? t("Верно") : t("Пока нет"))}</strong>
+      <span>${escapeHtml(currentGame.question.explanation)}</span>
+      <button class="game-next" type="button" data-game-next>${escapeHtml(t("Следующий вопрос"))}</button>
+    </div>
+  `;
+}
+
+function setGameMode(modeId) {
+  gameModeId = modeId;
+  currentGame = null;
+  chainSelection = [];
+  render();
+}
+
+function nextGameQuestion() {
+  const questions = games.questions[gameModeId] || games.questions.closer;
+  const question = sample(questions);
+  chainSelection = [];
+  currentGame = {
+    modeId: gameModeId,
+    question,
+    answers: gameAnswers(gameModeId, question),
+    correctValue: gameCorrectValue(gameModeId, question),
+    result: null,
+    chosen: null,
+    shuffled: question.items ? shuffle(question.items) : [],
+  };
+}
+
+function gameAnswers(modeId, question) {
+  if (modeId === "ancestor") {
+    return shuffle(question.options).map((option) => ({ value: option, label: option }));
+  }
+  if (modeId === "chain") return [];
+  return shuffle(question.pair).map((id) => ({ value: id, label: games.cards[id].name }));
+}
+
+function gameCorrectValue(modeId, question) {
+  if (modeId === "chain") return question.items.join("|");
+  return question.answer;
+}
+
+function chooseGameAnswer(value) {
+  if (!currentGame || currentGame.result) return;
+  currentGame.chosen = value;
+  currentGame.result = value === currentGame.correctValue ? "correct" : "wrong";
+  gameScore.total += 1;
+  if (currentGame.result === "correct") gameScore.correct += 1;
+  render();
+}
+
+function chooseChainItem(value) {
+  if (!currentGame || currentGame.result || chainSelection.includes(value)) return;
+  chainSelection.push(value);
+  if (chainSelection.length === currentGame.question.items.length) {
+    const chosen = chainSelection.join("|");
+    currentGame.chosen = chosen;
+    currentGame.result = chosen === currentGame.correctValue ? "correct" : "wrong";
+    gameScore.total += 1;
+    if (currentGame.result === "correct") gameScore.correct += 1;
+  }
+  render();
+}
+
+function sample(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function shuffle(items) {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
 }
 
 function timelineMarkers(deck, activeSlide) {
@@ -926,24 +1152,51 @@ function formatMa(ma) {
 }
 
 function renderSchemeNav() {
-  schemeNavNode.innerHTML = decks
+  const deckButtons = decks
     .map(
       (deck, i) => `
-        <button class="scheme-button ${i === deckIndex ? "active" : ""}" type="button" data-deck="${i}" aria-pressed="${i === deckIndex}">
+        <button class="scheme-button ${section === "slides" && i === deckIndex ? "active" : ""}" type="button" data-deck="${i}" aria-pressed="${section === "slides" && i === deckIndex}">
           <span>${escapeHtml(deck.label)}</span>
         </button>
       `,
     )
     .join("");
+
+  schemeNavNode.innerHTML = `
+    ${deckButtons}
+    <button class="scheme-button ${section === "games" ? "active" : ""}" type="button" data-section="games" aria-pressed="${section === "games"}">
+      <span>${escapeHtml(t("Игры"))}</span>
+    </button>
+  `;
 }
 
 function setDeck(nextDeckIndex, nextSlideIndex = 0) {
+  section = "slides";
   deckIndex = Math.max(0, Math.min(decks.length - 1, nextDeckIndex));
   index = Math.max(0, Math.min(decks[deckIndex].slides.length - 1, nextSlideIndex));
+  updateSectionUrl();
   render();
 }
 
+function setGamesSection() {
+  section = "games";
+  updateSectionUrl();
+  render();
+}
+
+function updateSectionUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("lang", language);
+  if (section === "games") {
+    url.searchParams.set("section", "games");
+  } else {
+    url.searchParams.delete("section");
+  }
+  window.history.replaceState({}, "", url);
+}
+
 function go(delta) {
+  if (section === "games") return;
   const deck = decks[deckIndex];
   const next = index + delta;
   if (next < 0 && deckIndex > 0) {
@@ -969,6 +1222,12 @@ function escapeHtml(value) {
 prevButton.addEventListener("click", () => go(-1));
 nextButton.addEventListener("click", () => go(1));
 schemeNavNode.addEventListener("click", (event) => {
+  const sectionButton = event.target.closest("[data-section='games']");
+  if (sectionButton) {
+    setGamesSection();
+    return;
+  }
+
   const button = event.target.closest("[data-deck]");
   if (!button) return;
   setDeck(Number(button.dataset.deck), 0);
@@ -981,12 +1240,37 @@ languageButtons.forEach((button) => {
 });
 
 slideNode.addEventListener("click", (event) => {
+  const modeButton = event.target.closest("[data-game-mode]");
+  if (modeButton) {
+    setGameMode(modeButton.dataset.gameMode);
+    return;
+  }
+
+  const answerButton = event.target.closest("[data-game-answer]");
+  if (answerButton) {
+    chooseGameAnswer(answerButton.dataset.gameAnswer);
+    return;
+  }
+
+  const chainButton = event.target.closest("[data-chain-item]");
+  if (chainButton) {
+    chooseChainItem(chainButton.dataset.chainItem);
+    return;
+  }
+
+  if (event.target.closest("[data-game-next]")) {
+    nextGameQuestion();
+    render();
+    return;
+  }
+
   const button = event.target.closest("[data-slide]");
   if (!button) return;
   setDeck(deckIndex, Number(button.dataset.slide));
 });
 
 document.addEventListener("keydown", (event) => {
+  if (section === "games") return;
   if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
     event.preventDefault();
     go(1);
