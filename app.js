@@ -23,6 +23,8 @@ let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
 let selectedGameLevels = new Set(["easy", "medium", "hard"]);
 let gameProgress = {};
+let chainPointerDrag = null;
+let suppressChainClick = false;
 
 function initialLanguage() {
   const params = new URLSearchParams(window.location.search);
@@ -550,6 +552,7 @@ function chainGameMarkup(mode) {
   const question = currentGame.question;
   if (!question) return emptyGameMarkup();
   const selected = new Set(chainSelection);
+  const bankItems = currentGame.shuffled.filter((item) => !selected.has(item));
 
   return `
     <section class="game-panel">
@@ -557,22 +560,51 @@ function chainGameMarkup(mode) {
         <strong>${escapeHtml(question.prompt)}</strong>
         <span>${escapeHtml(gameStatusText() || t("Нажимай по порядку"))}</span>
       </div>
-      <div class="chain-target">
-        ${chainSelection.map((item, i) => `<span>${i + 1}. ${escapeHtml(item)}</span>`).join("") || `<span>${escapeHtml(t("Цепочка пока пустая"))}</span>`}
-      </div>
-      <div class="chain-options">
-        ${currentGame.shuffled
-          .map(
-            (item) => `
-              <button class="chain-button ${selected.has(item) ? "used" : ""}" type="button" data-chain-item="${escapeHtml(item)}" ${selected.has(item) ? "disabled" : ""}>
-                ${escapeHtml(item)}
-              </button>
-            `,
-          )
-          .join("")}
+      <div class="chain-board">
+        <div class="chain-zone chain-target" data-chain-drop="chain">
+          <strong>${escapeHtml(t("Цепочка"))}</strong>
+          <div class="chain-items">
+            ${chainDropSlot(0)}
+            ${
+              chainSelection.length
+                ? chainSelection.map((item, i) => `${chainPlacedItem(item, i)}${chainDropSlot(i + 1)}`).join("")
+                : `<span class="chain-empty">${escapeHtml(t("Перетащи сюда первый шаг"))}</span>`
+            }
+          </div>
+        </div>
+        <div class="chain-zone chain-bank" data-chain-drop="bank">
+          <strong>${escapeHtml(t("Варианты"))}</strong>
+          <div class="chain-options">
+            ${
+              bankItems.length
+                ? bankItems.map((item) => chainBankItem(item)).join("")
+                : `<span class="chain-empty">${escapeHtml(t("Все шаги уже в цепочке"))}</span>`
+            }
+          </div>
+        </div>
       </div>
       ${gameFeedbackMarkup()}
     </section>
+  `;
+}
+
+function chainDropSlot(index) {
+  return `<span class="chain-drop-slot" data-chain-insert="${index}" aria-label="${escapeHtml(t("Место в цепочке"))}"></span>`;
+}
+
+function chainPlacedItem(item, index) {
+  return `
+    <button class="chain-button chain-placed" type="button" data-chain-index="${index}" data-chain-value="${escapeHtml(item)}" data-chain-remove="${index}" ${currentGame.result ? "disabled" : ""}>
+      <span>${index + 1}.</span> ${escapeHtml(item)}
+    </button>
+  `;
+}
+
+function chainBankItem(item) {
+  return `
+    <button class="chain-button" type="button" data-chain-item="${escapeHtml(item)}" data-chain-value="${escapeHtml(item)}" ${currentGame.result ? "disabled" : ""}>
+      ${escapeHtml(item)}
+    </button>
   `;
 }
 
@@ -678,7 +710,149 @@ function nextQuestionForCurrentSettings() {
 
 function eligibleQuestions() {
   const levels = selectedGameLevels.size ? selectedGameLevels : new Set(games.levels.map((level) => level.id));
-  return (games.questions[gameModeId] || games.questions.closer).filter((question) => levels.has(question.level || "easy"));
+  return generatedGameQuestions(gameModeId).filter((question) => levels.has(question.level || "easy"));
+}
+
+function generatedGameQuestions(modeId) {
+  if (modeId === "ancestor") return generatedAncestorQuestions();
+  if (modeId === "chain") return generatedChainQuestions();
+  return generatedCloserQuestions();
+}
+
+function gameCards() {
+  return Object.entries(games.cards)
+    .map(([id, card]) => ({ id, ...card }))
+    .filter((card) => Array.isArray(card.path) && card.path.length);
+}
+
+function generatedCloserQuestions() {
+  const targetId = games.target || "human";
+  const target = games.cards[targetId];
+  if (!target) return [];
+  const cards = gameCards().filter((card) => card.id !== targetId);
+  const questions = [];
+
+  for (let i = 0; i < cards.length; i += 1) {
+    for (let j = i + 1; j < cards.length; j += 1) {
+      const a = cards[i];
+      const b = cards[j];
+      const aDepth = commonPrefix(a.path, target.path).length;
+      const bDepth = commonPrefix(b.path, target.path).length;
+      if (aDepth === bDepth) continue;
+      const answer = aDepth > bDepth ? a : b;
+      const other = answer === a ? b : a;
+      const answerAncestor = lastCommonRank(answer.path, target.path);
+      const otherAncestor = lastCommonRank(other.path, target.path);
+      questions.push({
+        id: `closer:${a.id}:${b.id}`,
+        level: hardestLevel(a.level, b.level),
+        pair: [a.id, b.id],
+        answer: answer.id,
+        prompt: t("Кто ближе к человеку?"),
+        explanation: `${answer.name} ${t("ближе к человеку")}: ${t("общий предок")} - ${answerAncestor}. ${other.name}: ${t("более ранняя развилка")} - ${otherAncestor}.`,
+      });
+    }
+  }
+
+  return questions;
+}
+
+function generatedAncestorQuestions() {
+  const cards = gameCards();
+  const questions = [];
+
+  for (let i = 0; i < cards.length; i += 1) {
+    for (let j = i + 1; j < cards.length; j += 1) {
+      const a = cards[i];
+      const b = cards[j];
+      const answer = lastCommonRank(a.path, b.path);
+      if (!answer || answer === "жизнь" || answer === "life") continue;
+      questions.push({
+        id: `ancestor:${a.id}:${b.id}`,
+        level: hardestLevel(a.level, b.level),
+        pair: [a.id, b.id],
+        prompt: t("Где последний общий предок?"),
+        options: ancestorOptions(answer, a.path, b.path),
+        answer,
+        explanation: `${a.name} ${t("и")} ${b.name}: ${t("последний общий предок")} - ${answer}.`,
+      });
+    }
+  }
+
+  return questions;
+}
+
+function generatedChainQuestions() {
+  return gameCards()
+    .filter((card) => card.id !== "bacteria")
+    .map((card) => {
+      const items = chainItemsForCard(card);
+      return {
+        id: `chain:${card.id}:${items.length}`,
+        level: card.level || "easy",
+        prompt: `${t("Собери путь")}: ${card.name}`,
+        items,
+        explanation: `${t("Правильный путь")}: ${items.join(" → ")}.`,
+      };
+    })
+    .filter((question) => question.items.length >= 3);
+}
+
+function chainItemsForCard(card) {
+  const level = selectedChainLevel();
+  const limit = games.levels.find((item) => item.id === level)?.maxRankCount || 8;
+  const source = level === "easy" && card.keyRanks ? card.keyRanks : card.path;
+  return reducePath(source, limit);
+}
+
+function selectedChainLevel() {
+  const order = ["easy", "medium", "hard"];
+  return order.filter((level) => selectedGameLevels.has(level)).pop() || "easy";
+}
+
+function reducePath(path, limit) {
+  const unique = [...new Set(path)];
+  if (unique.length <= limit) return unique;
+  const result = [unique[0]];
+  const middleSlots = Math.max(0, limit - 2);
+  for (let i = 1; i <= middleSlots; i += 1) {
+    const index = Math.round((i * (unique.length - 1)) / (middleSlots + 1));
+    if (!result.includes(unique[index])) result.push(unique[index]);
+  }
+  const last = unique[unique.length - 1];
+  if (!result.includes(last)) result.push(last);
+  return result;
+}
+
+function ancestorOptions(answer, firstPath, secondPath) {
+  const pool = [...new Set([...firstPath, ...secondPath])].filter((item) => item !== answer);
+  const answerIndex = Math.max(firstPath.indexOf(answer), secondPath.indexOf(answer));
+  const nearby = pool
+    .map((item) => ({ item, distance: Math.abs(Math.max(firstPath.indexOf(item), secondPath.indexOf(item)) - answerIndex) }))
+    .filter(({ item }) => item !== "жизнь" && item !== "life")
+    .sort((a, b) => a.distance - b.distance)
+    .map(({ item }) => item);
+  return shuffle([answer, ...nearby.slice(0, 3)]);
+}
+
+function commonPrefix(first, second) {
+  const result = [];
+  const length = Math.min(first.length, second.length);
+  for (let i = 0; i < length; i += 1) {
+    if (first[i] !== second[i]) break;
+    result.push(first[i]);
+  }
+  return result;
+}
+
+function lastCommonRank(first, second) {
+  const prefix = commonPrefix(first, second);
+  return prefix[prefix.length - 1] || "";
+}
+
+function hardestLevel(...levels) {
+  const order = ["easy", "medium", "hard"];
+  return levels.reduce((hardest, level) => (order.indexOf(level) > order.indexOf(hardest) ? level : hardest), "easy");
 }
 
 function progressState() {
@@ -725,15 +899,34 @@ function chooseGameAnswer(value) {
 function chooseChainItem(value) {
   if (!currentGame || currentGame.result || chainSelection.includes(value)) return;
   chainSelection.push(value);
-  if (chainSelection.length === currentGame.question.items.length) {
-    const chosen = chainSelection.join("|");
-    currentGame.chosen = chosen;
-    currentGame.result = chosen === currentGame.correctValue ? "correct" : "wrong";
-    rememberGameResult(currentGame);
-    gameScore.total += 1;
-    if (currentGame.result === "correct") gameScore.correct += 1;
-  }
+  checkChainIfComplete();
   render();
+}
+
+function moveChainItem(value, nextIndex) {
+  if (!currentGame || currentGame.result) return;
+  const previousIndex = chainSelection.indexOf(value);
+  if (previousIndex !== -1) chainSelection.splice(previousIndex, 1);
+  const boundedIndex = Math.max(0, Math.min(chainSelection.length, nextIndex));
+  chainSelection.splice(boundedIndex, 0, value);
+  checkChainIfComplete();
+  render();
+}
+
+function removeChainItem(index) {
+  if (!currentGame || currentGame.result) return;
+  chainSelection.splice(index, 1);
+  render();
+}
+
+function checkChainIfComplete() {
+  if (!currentGame?.question || chainSelection.length !== currentGame.question.items.length) return;
+  const chosen = chainSelection.join("|");
+  currentGame.chosen = chosen;
+  currentGame.result = chosen === currentGame.correctValue ? "correct" : "wrong";
+  rememberGameResult(currentGame);
+  gameScore.total += 1;
+  if (currentGame.result === "correct") gameScore.correct += 1;
 }
 
 function rememberGameResult(game) {
@@ -1340,6 +1533,11 @@ languageButtons.forEach((button) => {
 });
 
 slideNode.addEventListener("click", (event) => {
+  if (suppressChainClick && event.target.closest("[data-chain-value]")) {
+    event.preventDefault();
+    return;
+  }
+
   const modeButton = event.target.closest("[data-game-mode]");
   if (modeButton) {
     setGameMode(modeButton.dataset.gameMode);
@@ -1361,6 +1559,12 @@ slideNode.addEventListener("click", (event) => {
   const chainButton = event.target.closest("[data-chain-item]");
   if (chainButton) {
     chooseChainItem(chainButton.dataset.chainItem);
+    return;
+  }
+
+  const chainRemoveButton = event.target.closest("[data-chain-remove]");
+  if (chainRemoveButton) {
+    removeChainItem(Number(chainRemoveButton.dataset.chainRemove));
     return;
   }
 
@@ -1394,5 +1598,155 @@ document.addEventListener("keydown", (event) => {
     setDeck(deckIndex, decks[deckIndex].slides.length - 1);
   }
 });
+
+slideNode.addEventListener("pointerdown", (event) => {
+  const item = event.target.closest("[data-chain-value]");
+  if (!item || currentGame?.result || event.button !== 0) return;
+  chainPointerDrag = {
+    value: item.dataset.chainValue,
+    startX: event.clientX,
+    startY: event.clientY,
+    pointerId: event.pointerId,
+    item,
+    ghost: null,
+    moved: false,
+  };
+  item.setPointerCapture?.(event.pointerId);
+});
+
+slideNode.addEventListener("pointermove", (event) => {
+  if (!chainPointerDrag || chainPointerDrag.pointerId !== event.pointerId) return;
+  const dx = event.clientX - chainPointerDrag.startX;
+  const dy = event.clientY - chainPointerDrag.startY;
+  if (!chainPointerDrag.moved && Math.hypot(dx, dy) < 6) return;
+
+  event.preventDefault();
+  chainPointerDrag.moved = true;
+  ensureChainDragGhost(event);
+  moveChainDragGhost(event);
+  updateChainDropHighlight(event.clientX, event.clientY);
+});
+
+slideNode.addEventListener("pointerup", (event) => {
+  finishChainPointerDrag(event);
+});
+
+slideNode.addEventListener("pointercancel", () => {
+  clearChainPointerDrag();
+});
+
+slideNode.addEventListener("dragstart", (event) => {
+  const item = event.target.closest("[data-chain-value]");
+  if (!item || currentGame?.result) return;
+  event.dataTransfer.setData("text/plain", item.dataset.chainValue);
+  event.dataTransfer.effectAllowed = "move";
+  item.classList.add("dragging");
+});
+
+slideNode.addEventListener("dragend", (event) => {
+  event.target.closest("[data-chain-value]")?.classList.remove("dragging");
+  slideNode.querySelectorAll(".drag-over").forEach((node) => node.classList.remove("drag-over"));
+});
+
+slideNode.addEventListener("dragover", (event) => {
+  const dropTarget = event.target.closest("[data-chain-insert], [data-chain-drop]");
+  if (!dropTarget || currentGame?.result) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "move";
+  slideNode.querySelectorAll(".drag-over").forEach((node) => {
+    if (node !== dropTarget) node.classList.remove("drag-over");
+  });
+  dropTarget.classList.add("drag-over");
+});
+
+slideNode.addEventListener("dragleave", (event) => {
+  event.target.closest("[data-chain-insert], [data-chain-drop]")?.classList.remove("drag-over");
+});
+
+slideNode.addEventListener("drop", (event) => {
+  const value = event.dataTransfer.getData("text/plain");
+  if (!value || currentGame?.result) return;
+  const insertTarget = event.target.closest("[data-chain-insert]");
+  const bankTarget = event.target.closest("[data-chain-drop='bank']");
+  if (!insertTarget && !bankTarget) return;
+
+  event.preventDefault();
+  slideNode.querySelectorAll(".drag-over").forEach((node) => node.classList.remove("drag-over"));
+
+  if (bankTarget) {
+    const previousIndex = chainSelection.indexOf(value);
+    if (previousIndex !== -1) removeChainItem(previousIndex);
+    return;
+  }
+
+  moveChainItem(value, Number(insertTarget.dataset.chainInsert));
+});
+
+function ensureChainDragGhost(event) {
+  if (chainPointerDrag.ghost) return;
+  const ghost = chainPointerDrag.item.cloneNode(true);
+  ghost.classList.add("chain-drag-ghost");
+  ghost.style.width = `${chainPointerDrag.item.getBoundingClientRect().width}px`;
+  document.body.appendChild(ghost);
+  chainPointerDrag.ghost = ghost;
+  chainPointerDrag.item.classList.add("dragging");
+  document.body.classList.add("chain-dragging");
+  moveChainDragGhost(event);
+}
+
+function moveChainDragGhost(event) {
+  if (!chainPointerDrag?.ghost) return;
+  chainPointerDrag.ghost.style.transform = `translate(${event.clientX + 10}px, ${event.clientY + 10}px)`;
+}
+
+function finishChainPointerDrag(event) {
+  if (!chainPointerDrag || chainPointerDrag.pointerId !== event.pointerId) return;
+  const drag = chainPointerDrag;
+  const moved = drag.moved;
+  const target = moved ? chainDropTargetAt(event.clientX, event.clientY) : null;
+
+  clearChainPointerDrag();
+
+  if (!moved) return;
+  event.preventDefault();
+  suppressChainClick = true;
+  window.setTimeout(() => {
+    suppressChainClick = false;
+  }, 0);
+
+  if (!target) return;
+  if (target.type === "bank") {
+    const previousIndex = chainSelection.indexOf(drag.value);
+    if (previousIndex !== -1) removeChainItem(previousIndex);
+    return;
+  }
+  moveChainItem(drag.value, target.index);
+}
+
+function clearChainPointerDrag() {
+  if (!chainPointerDrag) return;
+  chainPointerDrag.item.classList.remove("dragging");
+  chainPointerDrag.ghost?.remove();
+  chainPointerDrag = null;
+  document.body.classList.remove("chain-dragging");
+  slideNode.querySelectorAll(".drag-over").forEach((node) => node.classList.remove("drag-over"));
+}
+
+function updateChainDropHighlight(x, y) {
+  const target = chainDropTargetAt(x, y);
+  slideNode.querySelectorAll(".drag-over").forEach((node) => node.classList.remove("drag-over"));
+  target?.node.classList.add("drag-over");
+}
+
+function chainDropTargetAt(x, y) {
+  const node = document.elementFromPoint(x, y);
+  const insert = node?.closest("[data-chain-insert]");
+  if (insert) return { type: "chain", index: Number(insert.dataset.chainInsert), node: insert };
+  const bank = node?.closest("[data-chain-drop='bank']");
+  if (bank) return { type: "bank", node: bank };
+  const chain = node?.closest("[data-chain-drop='chain']");
+  if (chain) return { type: "chain", index: chainSelection.length, node: chain };
+  return null;
+}
 
 setLanguage(language);

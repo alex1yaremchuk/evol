@@ -873,7 +873,8 @@ button {
 
 .game-answers,
 .chain-options,
-.game-actions {
+.game-actions,
+.chain-items {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -898,33 +899,87 @@ button {
   background: rgba(240, 214, 203, 0.82);
 }
 
-.chain-target {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.42rem;
-  min-height: 2.45rem;
+.chain-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 0.65rem;
+}
+
+.chain-zone {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  min-height: 5.4rem;
   padding: 0.55rem;
-  border: 1px dashed rgba(24, 33, 43, 0.22);
+  border: 1px dashed rgba(24, 33, 43, 0.24);
   border-radius: 0.55rem;
   background: rgba(255, 255, 255, 0.36);
 }
 
-.chain-target span,
+.chain-zone.drag-over,
+.chain-drop-slot.drag-over {
+  border-color: rgba(36, 125, 116, 0.66);
+  background: rgba(36, 125, 116, 0.12);
+}
+
+.chain-zone > strong {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.chain-items {
+  align-items: center;
+  min-height: 2.8rem;
+}
+
+.chain-drop-slot {
+  align-self: stretch;
+  width: 0.7rem;
+  min-height: 2rem;
+  border: 1px dashed rgba(36, 125, 116, 0.24);
+  border-radius: 999px;
+}
+
+.chain-drop-slot:first-child:last-child {
+  width: 100%;
+}
+
+.chain-empty {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 760;
+}
+
+.chain-placed span {
+  color: rgba(36, 125, 116, 0.92);
+}
+
+.chain-placed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.chain-button.dragging {
+  opacity: 0.45;
+}
+
+.chain-dragging {
+  user-select: none;
+}
+
+.chain-drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 80;
+  pointer-events: none;
+  box-shadow: 0 1rem 2rem rgba(24, 33, 43, 0.18);
+}
+
 .chain-button {
   font-size: 0.9rem;
-}
-
-.chain-target span {
-  padding: 0.34rem 0.52rem;
-  border-radius: 0.45rem;
-  background: rgba(36, 125, 116, 0.12);
-  color: #24313b;
-  font-weight: 780;
-}
-
-.chain-button.used {
-  opacity: 0.45;
-  cursor: default;
 }
 
 .game-feedback {
