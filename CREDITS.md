@@ -15,7 +15,7 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `octopus.jpg` | [Octopus marginatus.jpg](https://commons.wikimedia.org/wiki/File:Octopus_marginatus.jpg) | Nhobgood Nick Hobgood | CC BY-SA 3.0 |
 | `lancelet.jpg` | [Branchiostoma lanceolatum.jpg](https://commons.wikimedia.org/wiki/File:Branchiostoma_lanceolatum.jpg) | Hans Hillewaert | CC BY-SA 4.0 |
 | `beetle.jpg` | [Xylotrupes socrates (Siamese rhinoceros beetle).jpg](https://commons.wikimedia.org/wiki/File:Xylotrupes_socrates_(Siamese_rhinoceros_beetle).jpg) | Basile Morin | CC BY-SA 4.0 |
-| `lamprey.jpg` | [Sea Lamprey fish.jpg](https://commons.wikimedia.org/wiki/File:Sea_Lamprey_fish.jpg) | Great Lakes Fishery Commission | Public domain |
+| `lamprey.jpg` | [Sea lamprey mouth close up.jpg](https://commons.wikimedia.org/wiki/File:Sea_lamprey_mouth_close_up.jpg) | U.S. Fish and Wildlife Service | Public domain |
 | `lamprey-mouth.jpg` | [Sea lamprey mouth close up.jpg](https://commons.wikimedia.org/wiki/File:Sea_lamprey_mouth_close_up.jpg) | U.S. Fish and Wildlife Service | Public domain |
 | `fish-jaw-fossil.jpg` | [Dunkleosteus sp. fossil fish lower jaw](https://commons.wikimedia.org/wiki/File:Dunkleosteus_sp._(fossil_fish_lower_jaw)_(Ohio_Shale,_Upper_Devonian;_Lorain_County,_Ohio,_USA)_(34131024265).jpg) | James St. John | CC BY 2.0 |
 | `dunkleosteus-jaw.jpg` | [Dunkleosteus skull QM email.jpg](https://commons.wikimedia.org/wiki/File:Dunkleosteus_skull_QM_email.jpg) | see file page | see file page |
@@ -65,7 +65,7 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `choanoflagellate.jpg` | [Salpingoeca rosetta video thumbnail](https://commons.wikimedia.org/wiki/File:Prey-Capture-and-Phagocytosis-in-the-Choanoflagellate-Salpingoeca-rosetta-pone.0095577.s005.ogv) | see file page | see file page |
 | `sea-urchin.jpg` | [Sea urchin on Fjærvollsanden beach](https://commons.wikimedia.org/wiki/File:Sea_urchin_on_Fj%C3%A6rvollsanden_beach,_B%C3%B8,_Vester%C3%A5len,_Norway.jpg) | see file page | see file page |
 | `lancelet-alt.jpg` | [Branchiostoma lanceolatum.jpg](https://commons.wikimedia.org/wiki/File:Branchiostoma_lanceolatum.jpg) | Hans Hillewaert | CC BY-SA 4.0 |
-| `lungfish.jpg` | [Lungfish (39845621294).jpg](https://commons.wikimedia.org/wiki/File:Lungfish_(39845621294).jpg) | see file page | see file page |
+| `lungfish.jpg` | [Queensland Lungfish (Neoceratodus forsteri).jpg](https://commons.wikimedia.org/wiki/File:Queensland_Lungfish_(Neoceratodus_forsteri).jpg) | see file page | see file page |
 | `plant-green-algae.jpg` | [Volvox Aureus 400x.jpg](https://commons.wikimedia.org/wiki/File:Volvox_Aureus_400x.jpg) | see file page | see file page |
 | `plant-red-algae.jpg` | [Chondrus crispus illustration](https://commons.wikimedia.org/wiki/File:FMIB_53629_Rhodophycees_ou_Floridees_(Algues_rouges)_Gigartinees,_Chondrus_crispus_(L)_Lyngb.jpeg) | see file page | see file page |
 | `plant-chara.jpg` | [Chara2.jpg](https://commons.wikimedia.org/wiki/File:Chara2.jpg) | see file page | see file page |
