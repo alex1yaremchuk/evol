@@ -22,9 +22,11 @@ let gameModeId = "closer";
 let currentGame = null;
 let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
+let branchSelection = { left: [], right: [] };
 let selectedGameLevels = new Set(["easy", "medium", "hard"]);
 let gameProgress = {};
 let chainPointerDrag = null;
+let branchPointerDrag = null;
 let suppressChainClick = false;
 let presentationMode = initialPresentationMode();
 let gameFocusIndex = 0;
@@ -83,6 +85,7 @@ function setLanguage(nextLanguage, updateUrl = true) {
   games = localizeGames(sourceGames);
   currentGame = null;
   chainSelection = [];
+  branchSelection = { left: [], right: [] };
   gameProgress = {};
   index = Math.max(0, Math.min(decks[deckIndex].slides.length - 1, index));
 
@@ -539,10 +542,16 @@ function renderGames() {
         <span>${escapeHtml(t("Уровень"))}</span>
         ${levelButtons}
       </div>
-      ${gameModeId === "chain" ? chainGameMarkup(mode) : choiceGameMarkup(mode)}
+      ${gameMarkup(mode)}
     </article>
   `;
   updateGameFocus();
+}
+
+function gameMarkup(mode) {
+  if (gameModeId === "chain") return chainGameMarkup(mode);
+  if (gameModeId === "branches") return branchesGameMarkup(mode);
+  return choiceGameMarkup(mode);
 }
 
 function choiceGameMarkup(mode) {
@@ -558,13 +567,59 @@ function choiceGameMarkup(mode) {
         <span>${escapeHtml(gameStatusText() || t("Выбери ответ"))}</span>
       </div>
       <div class="game-creatures">
-        ${pair.map((card) => creatureChoiceCard(card)).join("")}
+        ${pair.map((card) => creatureChoiceCard(card, gameModeId === "closer" ? question : null)).join("")}
       </div>
       <div class="game-answers">
         ${answers.map((answer) => answerButton(answer)).join("")}
       </div>
       ${gameFeedbackMarkup()}
     </section>
+  `;
+}
+
+function branchesGameMarkup(mode) {
+  const question = currentGame.question;
+  if (!question) return emptyGameMarkup();
+  const used = new Set([...branchSelection.left, ...branchSelection.right]);
+  const bankItems = currentGame.shuffled.filter((item) => !used.has(item));
+
+  return `
+    <section class="game-panel">
+      <div class="game-question">
+        <strong>${escapeHtml(question.prompt)}</strong>
+        <span>${escapeHtml(gameStatusText() || t("Разложи по веткам"))}</span>
+      </div>
+      <div class="branch-board">
+        ${branchZone("left", question.branches.left.label, branchSelection.left)}
+        ${branchZone("right", question.branches.right.label, branchSelection.right)}
+      </div>
+      <div class="chain-zone branch-bank" data-branch-drop="bank">
+        <strong>${escapeHtml(t("Варианты"))}</strong>
+        <div class="chain-options">
+          ${bankItems.length ? bankItems.map((item) => branchItem(item)).join("") : `<span class="chain-empty">${escapeHtml(t("Все шаги уже в ветках"))}</span>`}
+        </div>
+      </div>
+      ${gameFeedbackMarkup()}
+    </section>
+  `;
+}
+
+function branchZone(side, label, items) {
+  return `
+    <div class="chain-zone branch-zone" data-branch-drop="${side}">
+      <strong>${escapeHtml(label)}</strong>
+      <div class="chain-options">
+        ${items.length ? items.map((item, index) => branchItem(item, side, index)).join("") : `<span class="chain-empty">${escapeHtml(t("Перетащи сюда узлы ветки"))}</span>`}
+      </div>
+    </div>
+  `;
+}
+
+function branchItem(item, side = "", index = null) {
+  return `
+    <button class="chain-button branch-button" type="button" data-branch-item="${escapeHtml(item)}" data-branch-value="${escapeHtml(item)}" ${side ? `data-branch-side="${side}" data-branch-index="${index}"` : ""} ${currentGame.result ? "disabled" : ""}>
+      ${escapeHtml(item)}
+    </button>
   `;
 }
 
@@ -639,7 +694,20 @@ function emptyGameMarkup() {
   `;
 }
 
-function creatureChoiceCard(card) {
+function creatureChoiceCard(card, question = null) {
+  const answerable = question?.pair && !currentGame.result;
+  const value = Object.entries(games.cards).find(([, item]) => item === card)?.[0] || "";
+  if (answerable && value) {
+    return `
+      <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}">
+        <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" />
+        <span>
+          <strong>${escapeHtml(card.name)}</strong>
+          <em>${escapeHtml(card.note)}</em>
+        </span>
+      </button>
+    `;
+  }
   return `
     <figure class="game-creature-card">
       <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" />
@@ -671,6 +739,11 @@ function gameFeedbackMarkup() {
             ? `<button class="game-next chain-check" type="button" data-chain-check ${chainSelection.length === currentGame.question.items.length ? "" : "disabled"}>${escapeHtml(t("Проверить цепочку"))}</button>`
             : ""
         }
+        ${
+          gameModeId === "branches"
+            ? `<button class="game-next chain-check" type="button" data-branch-check ${branchReady() ? "" : "disabled"}>${escapeHtml(t("Проверить ветки"))}</button>`
+            : ""
+        }
         <button class="game-next" type="button" data-game-next>${escapeHtml(t("Новый вопрос"))}</button>
       </div>
     `;
@@ -689,6 +762,7 @@ function setGameMode(modeId) {
   gameModeId = modeId;
   currentGame = null;
   chainSelection = [];
+  branchSelection = { left: [], right: [] };
   preferredGameFocus = presentationMode ? gameQuestionFocusSelector() : "[data-game-mode].active";
   render();
 }
@@ -696,6 +770,7 @@ function setGameMode(modeId) {
 function nextGameQuestion() {
   const question = nextQuestionForCurrentSettings();
   chainSelection = [];
+  branchSelection = { left: [], right: [] };
   currentGame = {
     modeId: gameModeId,
     question,
@@ -742,6 +817,7 @@ function eligibleQuestions() {
 function generatedGameQuestions(modeId) {
   if (modeId === "ancestor") return generatedAncestorQuestions();
   if (modeId === "chain") return generatedChainQuestions();
+  if (modeId === "branches") return generatedBranchQuestions();
   return generatedCloserQuestions();
 }
 
@@ -826,6 +902,39 @@ function generatedChainQuestions() {
     .filter((question) => question.items.length >= 3);
 }
 
+function generatedBranchQuestions() {
+  const cards = gameCards();
+  const questions = [];
+  for (let i = 0; i < cards.length; i += 1) {
+    for (let j = i + 1; j < cards.length; j += 1) {
+      const a = cards[i];
+      const b = cards[j];
+      const prefix = commonPrefix(a.path, b.path);
+      if (prefix.length < 3) continue;
+      const leftItems = branchItemsAfterPrefix(a.path, prefix.length);
+      const rightItems = branchItemsAfterPrefix(b.path, prefix.length);
+      if (leftItems.length < 2 || rightItems.length < 2 || leftItems[0] === rightItems[0]) continue;
+      const ancestor = prefix[prefix.length - 1];
+      questions.push({
+        id: `branches:${a.id}:${b.id}`,
+        level: hardestLevel(a.level, b.level),
+        prompt: `${t("Собери две ветки")}: ${ancestor}`,
+        branches: {
+          left: { label: `${a.name}: ${leftItems[0]}`, items: leftItems },
+          right: { label: `${b.name}: ${rightItems[0]}`, items: rightItems },
+        },
+        items: shuffle([...leftItems, ...rightItems]),
+        explanation: `${t("Общий предок")} - ${ancestor}. ${a.name}: ${leftItems.join(" → ")}. ${b.name}: ${rightItems.join(" → ")}.`,
+      });
+    }
+  }
+  return questions;
+}
+
+function branchItemsAfterPrefix(path, prefixLength) {
+  return reducePath(path.slice(prefixLength), selectedChainLevel() === "hard" ? 7 : 5);
+}
+
 function chainItemsForCard(card) {
   const level = selectedChainLevel();
   const limit = games.levels.find((item) => item.id === level)?.maxRankCount || 8;
@@ -905,12 +1014,13 @@ function gameAnswers(modeId, question) {
   if (modeId === "ancestor") {
     return shuffle(question.options).map((option) => ({ value: option, label: option }));
   }
-  if (modeId === "chain") return [];
+  if (modeId === "chain" || modeId === "branches") return [];
   return shuffle(question.pair).map((id) => ({ value: id, label: games.cards[id].name }));
 }
 
 function gameCorrectValue(modeId, question) {
   if (modeId === "chain") return question.items.join("|");
+  if (modeId === "branches") return "";
   return question.answer;
 }
 
@@ -962,6 +1072,50 @@ function checkChainAnswer() {
   render();
 }
 
+function moveBranchItem(value, nextSide, nextIndex = null) {
+  if (!currentGame || currentGame.result) return;
+  branchSelection.left = branchSelection.left.filter((item) => item !== value);
+  branchSelection.right = branchSelection.right.filter((item) => item !== value);
+  if (nextSide === "left" || nextSide === "right") {
+    const index = nextIndex === null ? branchSelection[nextSide].length : Math.max(0, Math.min(branchSelection[nextSide].length, nextIndex));
+    branchSelection[nextSide].splice(index, 0, value);
+  }
+  preferredGameFocus = `[data-branch-value="${cssEscape(value)}"]`;
+  render();
+}
+
+function cycleBranchItem(value) {
+  if (branchSelection.left.includes(value)) {
+    moveBranchItem(value, "right");
+  } else if (branchSelection.right.includes(value)) {
+    moveBranchItem(value, "bank");
+  } else {
+    moveBranchItem(value, "left");
+  }
+}
+
+function branchReady() {
+  if (!currentGame?.question?.branches) return false;
+  return branchSelection.left.length + branchSelection.right.length === currentGame.question.items.length;
+}
+
+function checkBranchAnswer() {
+  if (!branchReady() || currentGame.result) return;
+  const left = currentGame.question.branches.left.items;
+  const right = currentGame.question.branches.right.items;
+  const ok = sameOrdered(left, branchSelection.left) && sameOrdered(right, branchSelection.right);
+  currentGame.result = ok ? "correct" : "wrong";
+  rememberGameResult(currentGame);
+  gameScore.total += 1;
+  if (ok) gameScore.correct += 1;
+  preferredGameFocus = "[data-game-next]";
+  render();
+}
+
+function sameOrdered(first, second) {
+  return first.length === second.length && first.every((item, index) => second[index] === item);
+}
+
 function rememberGameResult(game) {
   if (!game.question?.id || game.result !== "wrong") return;
   const state = progressState();
@@ -979,6 +1133,7 @@ function toggleGameLevel(levelId) {
   }
   currentGame = null;
   chainSelection = [];
+  branchSelection = { left: [], right: [] };
   preferredGameFocus = `[data-game-level="${cssEscape(levelId)}"]`;
   render();
 }
@@ -1000,7 +1155,9 @@ function setPresentationMode(nextValue, requestFullscreen = false) {
 }
 
 function gameQuestionFocusSelector() {
-  return gameModeId === "chain" ? ".chain-bank .chain-button, .chain-target .chain-placed, [data-game-next]" : ".game-answer, [data-game-next]";
+  if (gameModeId === "chain") return ".chain-bank .chain-button, .chain-target .chain-placed, [data-game-next]";
+  if (gameModeId === "branches") return ".branch-bank .branch-button, .branch-zone .branch-button, [data-branch-check], [data-game-next]";
+  return ".game-answer, .creature-choice, [data-game-next]";
 }
 
 function updatePresentationState() {
@@ -1055,6 +1212,17 @@ function moveFocusedChainItem(delta) {
   const value = chainSelection[index];
   if (!value) return false;
   moveChainItem(value, index + delta);
+  return true;
+}
+
+function moveFocusedBranchItem(delta) {
+  const active = document.activeElement?.closest("[data-branch-side][data-branch-index]");
+  if (!active || currentGame?.result) return false;
+  const side = active.dataset.branchSide;
+  const index = Number(active.dataset.branchIndex);
+  const value = branchSelection[side]?.[index];
+  if (!value) return false;
+  moveBranchItem(value, side, index + delta);
   return true;
 }
 
@@ -1654,7 +1822,7 @@ languageButtons.forEach((button) => {
 });
 
 slideNode.addEventListener("click", (event) => {
-  if (suppressChainClick && event.target.closest("[data-chain-value]")) {
+  if (suppressChainClick && event.target.closest("[data-chain-value], [data-branch-value]")) {
     event.preventDefault();
     return;
   }
@@ -1694,9 +1862,20 @@ slideNode.addEventListener("click", (event) => {
     return;
   }
 
+  const branchButton = event.target.closest("[data-branch-item]");
+  if (branchButton) {
+    cycleBranchItem(branchButton.dataset.branchItem);
+    return;
+  }
+
+  if (event.target.closest("[data-branch-check]")) {
+    checkBranchAnswer();
+    return;
+  }
+
   if (event.target.closest("[data-game-next]")) {
     nextGameQuestion();
-    preferredGameFocus = gameModeId === "chain" ? ".chain-bank .chain-button" : ".game-answer";
+    preferredGameFocus = gameQuestionFocusSelector();
     render();
     return;
   }
@@ -1725,12 +1904,12 @@ document.addEventListener("keydown", (event) => {
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      if (!moveFocusedChainItem(-1)) moveGameFocus(-1);
+      if (!moveFocusedBranchItem(-1) && !moveFocusedChainItem(-1)) moveGameFocus(-1);
       return;
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      if (!moveFocusedChainItem(1)) moveGameFocus(1);
+      if (!moveFocusedBranchItem(1) && !moveFocusedChainItem(1)) moveGameFocus(1);
       return;
     }
     if (event.key === "ArrowUp") {
@@ -1744,10 +1923,15 @@ document.addEventListener("keydown", (event) => {
       return;
     }
     if (event.key === "Backspace" || event.key === "Delete") {
-      const active = document.activeElement?.closest("[data-chain-index]");
-      if (active) {
+      const activeChain = document.activeElement?.closest("[data-chain-index]");
+      if (activeChain) {
         event.preventDefault();
-        removeChainItem(Number(active.dataset.chainIndex));
+        removeChainItem(Number(activeChain.dataset.chainIndex));
+      }
+      const activeBranch = document.activeElement?.closest("[data-branch-value]");
+      if (activeBranch) {
+        event.preventDefault();
+        moveBranchItem(activeBranch.dataset.branchValue, "bank");
       }
     }
     return;
@@ -1777,6 +1961,21 @@ document.addEventListener("fullscreenchange", () => {
 });
 
 slideNode.addEventListener("pointerdown", (event) => {
+  const branchItem = event.target.closest("[data-branch-value]");
+  if (branchItem && !currentGame?.result && event.button === 0) {
+    branchPointerDrag = {
+      value: branchItem.dataset.branchValue,
+      startX: event.clientX,
+      startY: event.clientY,
+      pointerId: event.pointerId,
+      item: branchItem,
+      ghost: null,
+      moved: false,
+    };
+    branchItem.setPointerCapture?.(event.pointerId);
+    return;
+  }
+
   const item = event.target.closest("[data-chain-value]");
   if (!item || currentGame?.result || event.button !== 0) return;
   chainPointerDrag = {
@@ -1792,6 +1991,18 @@ slideNode.addEventListener("pointerdown", (event) => {
 });
 
 slideNode.addEventListener("pointermove", (event) => {
+  if (branchPointerDrag && branchPointerDrag.pointerId === event.pointerId) {
+    const dx = event.clientX - branchPointerDrag.startX;
+    const dy = event.clientY - branchPointerDrag.startY;
+    if (!branchPointerDrag.moved && Math.hypot(dx, dy) < 6) return;
+    event.preventDefault();
+    branchPointerDrag.moved = true;
+    ensureBranchDragGhost(event);
+    moveBranchDragGhost(event);
+    updateBranchDropHighlight(event.clientX, event.clientY);
+    return;
+  }
+
   if (!chainPointerDrag || chainPointerDrag.pointerId !== event.pointerId) return;
   const dx = event.clientX - chainPointerDrag.startX;
   const dy = event.clientY - chainPointerDrag.startY;
@@ -1805,10 +2016,12 @@ slideNode.addEventListener("pointermove", (event) => {
 });
 
 slideNode.addEventListener("pointerup", (event) => {
+  finishBranchPointerDrag(event);
   finishChainPointerDrag(event);
 });
 
 slideNode.addEventListener("pointercancel", () => {
+  clearBranchPointerDrag();
   clearChainPointerDrag();
 });
 
@@ -1924,6 +2137,71 @@ function chainDropTargetAt(x, y) {
   const chain = node?.closest("[data-chain-drop='chain']");
   if (chain) return { type: "chain", index: chainSelection.length, node: chain };
   return null;
+}
+
+function ensureBranchDragGhost(event) {
+  if (branchPointerDrag.ghost) return;
+  const ghost = branchPointerDrag.item.cloneNode(true);
+  ghost.classList.add("chain-drag-ghost");
+  ghost.style.width = `${branchPointerDrag.item.getBoundingClientRect().width}px`;
+  document.body.appendChild(ghost);
+  branchPointerDrag.ghost = ghost;
+  branchPointerDrag.item.classList.add("dragging");
+  document.body.classList.add("chain-dragging");
+  moveBranchDragGhost(event);
+}
+
+function moveBranchDragGhost(event) {
+  if (!branchPointerDrag?.ghost) return;
+  branchPointerDrag.ghost.style.transform = `translate(${event.clientX + 10}px, ${event.clientY + 10}px)`;
+}
+
+function finishBranchPointerDrag(event) {
+  if (!branchPointerDrag || branchPointerDrag.pointerId !== event.pointerId) return;
+  const drag = branchPointerDrag;
+  const moved = drag.moved;
+  const target = moved ? branchDropTargetAt(event.clientX, event.clientY) : null;
+  clearBranchPointerDrag();
+  if (!moved) return;
+  event.preventDefault();
+  suppressChainClick = true;
+  window.setTimeout(() => {
+    suppressChainClick = false;
+  }, 0);
+  if (!target) return;
+  moveBranchItem(drag.value, target.side, target.index ?? null);
+}
+
+function clearBranchPointerDrag() {
+  if (!branchPointerDrag) return;
+  branchPointerDrag.item.classList.remove("dragging");
+  branchPointerDrag.ghost?.remove();
+  branchPointerDrag = null;
+  document.body.classList.remove("chain-dragging");
+  slideNode.querySelectorAll(".drag-over").forEach((node) => node.classList.remove("drag-over"));
+}
+
+function updateBranchDropHighlight(x, y) {
+  const target = branchDropTargetAt(x, y);
+  slideNode.querySelectorAll(".drag-over").forEach((node) => node.classList.remove("drag-over"));
+  target?.node.classList.add("drag-over");
+}
+
+function branchDropTargetAt(x, y) {
+  const node = document.elementFromPoint(x, y);
+  const item = node?.closest("[data-branch-side][data-branch-index]");
+  if (item) {
+    return {
+      side: item.dataset.branchSide,
+      index: Number(item.dataset.branchIndex),
+      node: item,
+    };
+  }
+  const drop = node?.closest("[data-branch-drop]");
+  if (!drop) return null;
+  const side = drop.dataset.branchDrop;
+  const index = side === "left" || side === "right" ? branchSelection[side].length : null;
+  return { side, index, node: drop };
 }
 
 setLanguage(language);

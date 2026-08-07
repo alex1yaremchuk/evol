@@ -898,6 +898,33 @@ button {
   font-weight: 720;
 }
 
+.creature-choice {
+  display: grid;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.creature-choice:hover,
+.creature-choice:focus-visible {
+  border-color: rgba(36, 125, 116, 0.5);
+  box-shadow: 0 0 0 3px rgba(36, 125, 116, 0.16);
+}
+
+.creature-choice span {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.48rem 0.62rem;
+}
+
+.creature-choice em {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 720;
+}
+
 .game-answers,
 .chain-options,
 .game-actions,
@@ -934,6 +961,12 @@ button {
 .chain-board {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 0.65rem;
+}
+
+.branch-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
 }
 
@@ -1012,6 +1045,11 @@ button {
 
 .chain-button {
   font-size: 0.9rem;
+}
+
+.branch-button[data-branch-side] {
+  border-color: rgba(36, 125, 116, 0.28);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .game-feedback {
@@ -1102,6 +1140,10 @@ body.game-presentation .game-next {
 
 body.game-presentation .chain-board {
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+}
+
+body.game-presentation .branch-board {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 body.game-presentation .chain-zone {
@@ -1393,6 +1435,10 @@ svg .bone {
 
   .game-creature-card span {
     font-size: 0.74rem;
+  }
+
+  .branch-board {
+    grid-template-columns: 1fr;
   }
 
   .game-answer,
