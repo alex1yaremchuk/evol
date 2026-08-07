@@ -799,14 +799,52 @@ function nextQuestionForCurrentSettings() {
   }
 
   let phase = "fresh";
-  let id = state.freshQueue.shift();
+  let id = takeQuestionId(state.freshQueue, byId, state);
   if (!id && state.retryQueue.length) {
     phase = "retry";
-    id = state.retryQueue.shift();
+    id = takeQuestionId(state.retryQueue, byId, state);
   }
   if (!id) return null;
 
-  return { ...byId[id], phase };
+  const question = { ...byId[id], phase };
+  rememberShownQuestion(state, question);
+  return question;
+}
+
+function takeQuestionId(queue, byId, state) {
+  if (!queue.length) return null;
+  const bestIndex = bestQuestionIndex(queue, byId, state.lastCards || []);
+  return queue.splice(bestIndex, 1)[0];
+}
+
+function bestQuestionIndex(queue, byId, recentCards) {
+  if (!recentCards.length) return 0;
+  let bestIndex = 0;
+  let bestScore = Infinity;
+  for (let index = 0; index < queue.length; index += 1) {
+    const score = questionRepeatScore(byId[queue[index]], recentCards);
+    if (score < bestScore) {
+      bestScore = score;
+      bestIndex = index;
+      if (score === 0) break;
+    }
+  }
+  return bestIndex;
+}
+
+function questionRepeatScore(question, recentCards) {
+  const cards = questionCardIds(question);
+  if (!cards.length) return 0;
+  return cards.filter((id) => recentCards.includes(id)).length;
+}
+
+function questionCardIds(question) {
+  return Array.isArray(question?.pair) ? question.pair : [];
+}
+
+function rememberShownQuestion(state, question) {
+  const cards = questionCardIds(question);
+  state.lastCards = cards.length ? cards : [];
 }
 
 function eligibleQuestions() {
@@ -995,7 +1033,7 @@ function hardestLevel(...levels) {
 function progressState() {
   const key = `${gameModeId}:${[...selectedGameLevels].sort().join(",")}`;
   if (!gameProgress[key]) {
-    gameProgress[key] = { freshQueue: [], retryQueue: [], rounds: 0, completedOnce: false };
+    gameProgress[key] = { freshQueue: [], retryQueue: [], rounds: 0, completedOnce: false, lastCards: [] };
   }
   return gameProgress[key];
 }
