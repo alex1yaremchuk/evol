@@ -742,6 +742,12 @@ button {
   font-weight: 860;
 }
 
+.game-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .game-modes {
   display: flex;
   gap: 0.45rem;
@@ -756,6 +762,7 @@ button {
 
 .game-mode-button,
 .game-level-button,
+.game-fullscreen-button,
 .game-answer,
 .chain-button,
 .game-next {
@@ -767,6 +774,11 @@ button {
   font-weight: 840;
 }
 
+.game-fullscreen-button {
+  min-height: 2.35rem;
+  padding: 0.42rem 0.7rem;
+}
+
 .game-mode-button {
   flex: 0 0 auto;
   min-height: 2.35rem;
@@ -776,6 +788,12 @@ button {
 .game-mode-button.active {
   background: rgba(36, 125, 116, 0.94);
   color: #fff;
+}
+
+.game-screen button:focus-visible {
+  outline: 4px solid rgba(246, 217, 120, 0.95);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px rgba(36, 125, 116, 0.34), 0 1rem 2rem rgba(24, 33, 43, 0.18);
 }
 
 .game-levels {
@@ -1001,6 +1019,78 @@ button {
   font-size: 0.92rem;
   font-weight: 690;
   line-height: 1.25;
+}
+
+body.game-presentation {
+  overflow: hidden;
+}
+
+body.game-presentation .scheme-nav,
+body.game-presentation .top-tools,
+body.game-presentation .controls {
+  display: none;
+}
+
+body.game-presentation .game-screen {
+  width: 100%;
+  min-height: 100svh;
+  padding: clamp(0.9rem, 2.2vw, 1.6rem);
+  gap: clamp(0.75rem, 1.6vw, 1.2rem);
+}
+
+body.game-presentation .game-header {
+  justify-content: end;
+}
+
+body.game-presentation .game-header > div:first-child,
+body.game-presentation .game-modes,
+body.game-presentation .game-levels {
+  display: none;
+}
+
+body.game-presentation .game-score,
+body.game-presentation .game-fullscreen-button {
+  min-height: 2.8rem;
+  font-size: 1rem;
+}
+
+body.game-presentation .game-panel {
+  gap: clamp(0.9rem, 1.8vw, 1.35rem);
+  padding: clamp(1rem, 2vw, 1.6rem);
+}
+
+body.game-presentation .game-question strong {
+  font-size: clamp(2rem, 4.2vw, 4.6rem);
+}
+
+body.game-presentation .game-question span {
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
+}
+
+body.game-presentation .game-creature-card img {
+  height: clamp(13rem, 35vh, 24rem);
+}
+
+body.game-presentation .game-creature-card figcaption,
+body.game-presentation .game-answer,
+body.game-presentation .chain-button,
+body.game-presentation .game-next {
+  font-size: clamp(1.05rem, 1.6vw, 1.45rem);
+}
+
+body.game-presentation .game-answer,
+body.game-presentation .chain-button,
+body.game-presentation .game-next {
+  min-height: clamp(3rem, 4.8vw, 4.3rem);
+  padding: 0.62rem 0.95rem;
+}
+
+body.game-presentation .chain-board {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+}
+
+body.game-presentation .chain-zone {
+  min-height: clamp(9rem, 22vh, 16rem);
 }
 
 svg .thin {

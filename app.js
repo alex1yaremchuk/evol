@@ -10,6 +10,7 @@ const nextButton = document.getElementById("next");
 const languageButtons = document.querySelectorAll("[data-lang]");
 const languageSwitchNode = document.querySelector(".language-switch");
 const contactNode = document.querySelector(".contact-link");
+const topToolsNode = document.querySelector(".top-tools");
 
 let language = initialLanguage();
 let decks = localizeDecks(sourceDecks);
@@ -25,6 +26,9 @@ let selectedGameLevels = new Set(["easy", "medium", "hard"]);
 let gameProgress = {};
 let chainPointerDrag = null;
 let suppressChainClick = false;
+let presentationMode = initialPresentationMode();
+let gameFocusIndex = 0;
+let preferredGameFocus = null;
 
 function initialLanguage() {
   const params = new URLSearchParams(window.location.search);
@@ -41,6 +45,11 @@ function initialLanguage() {
 function initialSection() {
   const params = new URLSearchParams(window.location.search);
   return params.get("section") === "games" ? "games" : "slides";
+}
+
+function initialPresentationMode() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("play") === "full";
 }
 
 function normalizeLanguage(value) {
@@ -89,6 +98,7 @@ function setLanguage(nextLanguage, updateUrl = true) {
   }
 
   updateStaticText();
+  updatePresentationState();
   render();
 }
 
@@ -326,6 +336,7 @@ function iconSvg(kind, caption) {
 }
 
 function render() {
+  updatePresentationState();
   if (section === "games") {
     renderGames();
     return;
@@ -475,6 +486,9 @@ function renderGames() {
   if (!currentGame || currentGame.modeId !== gameModeId) {
     nextGameQuestion();
   }
+  if (presentationMode && !preferredGameFocus && !document.activeElement?.closest(".game-screen")) {
+    preferredGameFocus = gameQuestionFocusSelector();
+  }
 
   slideNode.style.setProperty("--bg-a", "#d9e8d2");
   slideNode.style.setProperty("--bg-b", "#eadcc4");
@@ -509,8 +523,13 @@ function renderGames() {
           <h1 class="game-title">${escapeHtml(t("Игры про эволюцию"))}</h1>
           <p class="subtitle">${escapeHtml(mode.hint)}</p>
         </div>
-        <div class="game-score" aria-label="${escapeHtml(t("Счет"))}">
-          <strong>${gameScore.correct}</strong><span>/</span><strong>${gameScore.total}</strong>
+        <div class="game-header-actions">
+          <button class="game-fullscreen-button" type="button" data-game-fullscreen>
+            ${escapeHtml(presentationMode ? t("Обычный режим") : t("Во весь экран"))}
+          </button>
+          <div class="game-score" aria-label="${escapeHtml(t("Счет"))}">
+            <strong>${gameScore.correct}</strong><span>/</span><strong>${gameScore.total}</strong>
+          </div>
         </div>
       </header>
       <nav class="game-modes" aria-label="${escapeHtml(t("Режимы игры"))}">
@@ -523,6 +542,7 @@ function renderGames() {
       ${gameModeId === "chain" ? chainGameMarkup(mode) : choiceGameMarkup(mode)}
     </article>
   `;
+  updateGameFocus();
 }
 
 function choiceGameMarkup(mode) {
@@ -636,7 +656,7 @@ function answerButton(answer) {
   const isCorrect = currentGame.correctValue === answer.value;
   const className = isAnswered ? (isCorrect ? "correct" : currentGame.chosen === answer.value ? "wrong" : "") : "";
   return `
-    <button class="game-answer ${className}" type="button" data-game-answer="${escapeHtml(answer.value)}" ${isAnswered ? "disabled" : ""}>
+    <button class="game-answer ${className}" type="button" data-game-answer="${escapeHtml(answer.value)}" data-focus-value="${escapeHtml(answer.value)}" ${isAnswered ? "disabled" : ""}>
       ${escapeHtml(answer.label)}
     </button>
   `;
@@ -664,6 +684,7 @@ function setGameMode(modeId) {
   gameModeId = modeId;
   currentGame = null;
   chainSelection = [];
+  preferredGameFocus = presentationMode ? gameQuestionFocusSelector() : "[data-game-mode].active";
   render();
 }
 
@@ -893,6 +914,7 @@ function chooseGameAnswer(value) {
   rememberGameResult(currentGame);
   gameScore.total += 1;
   if (currentGame.result === "correct") gameScore.correct += 1;
+  preferredGameFocus = "[data-game-next]";
   render();
 }
 
@@ -900,6 +922,7 @@ function chooseChainItem(value) {
   if (!currentGame || currentGame.result || chainSelection.includes(value)) return;
   chainSelection.push(value);
   checkChainIfComplete();
+  preferredGameFocus = `[data-chain-value="${cssEscape(value)}"]`;
   render();
 }
 
@@ -910,12 +933,15 @@ function moveChainItem(value, nextIndex) {
   const boundedIndex = Math.max(0, Math.min(chainSelection.length, nextIndex));
   chainSelection.splice(boundedIndex, 0, value);
   checkChainIfComplete();
+  preferredGameFocus = `[data-chain-value="${cssEscape(value)}"]`;
   render();
 }
 
 function removeChainItem(index) {
   if (!currentGame || currentGame.result) return;
+  const value = chainSelection[index];
   chainSelection.splice(index, 1);
+  preferredGameFocus = value ? `[data-chain-value="${cssEscape(value)}"]` : null;
   render();
 }
 
@@ -946,7 +972,88 @@ function toggleGameLevel(levelId) {
   }
   currentGame = null;
   chainSelection = [];
+  preferredGameFocus = `[data-game-level="${cssEscape(levelId)}"]`;
   render();
+}
+
+function setPresentationMode(nextValue, requestFullscreen = false) {
+  presentationMode = Boolean(nextValue);
+  if (presentationMode) preferredGameFocus = gameQuestionFocusSelector();
+  updateSectionUrl();
+  updatePresentationState();
+  if (requestFullscreen && presentationMode && document.fullscreenEnabled && !document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {
+      // The browser may reject fullscreen outside a trusted click; CSS presentation mode still works.
+    });
+  }
+  if (!presentationMode && document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  }
+  render();
+}
+
+function gameQuestionFocusSelector() {
+  return gameModeId === "chain" ? ".chain-bank .chain-button, .chain-target .chain-placed, [data-game-next]" : ".game-answer, [data-game-next]";
+}
+
+function updatePresentationState() {
+  document.body.classList.toggle("game-presentation", section === "games" && presentationMode);
+}
+
+function updateGameFocus() {
+  if (section !== "games") return;
+  const focusables = gameFocusables();
+  focusables.forEach((item) => item.setAttribute("tabindex", "-1"));
+  if (!focusables.length) return;
+
+  let nextIndex = Math.min(gameFocusIndex, focusables.length - 1);
+  if (preferredGameFocus) {
+    const preferredIndex = focusables.findIndex((item) => item.matches(preferredGameFocus));
+    if (preferredIndex !== -1) nextIndex = preferredIndex;
+    preferredGameFocus = null;
+  }
+
+  gameFocusIndex = Math.max(0, nextIndex);
+  const active = focusables[gameFocusIndex];
+  active.setAttribute("tabindex", "0");
+  if (presentationMode || document.activeElement?.closest(".game-screen")) {
+    active.focus({ preventScroll: true });
+  }
+}
+
+function gameFocusables() {
+  return [...slideNode.querySelectorAll(".game-screen button:not(:disabled)")].filter((item) => item.offsetParent !== null);
+}
+
+function moveGameFocus(delta) {
+  const focusables = gameFocusables();
+  if (!focusables.length) return;
+  const currentIndex = focusables.indexOf(document.activeElement);
+  gameFocusIndex = currentIndex === -1 ? gameFocusIndex : currentIndex;
+  gameFocusIndex = (gameFocusIndex + delta + focusables.length) % focusables.length;
+  focusables.forEach((item) => item.setAttribute("tabindex", "-1"));
+  focusables[gameFocusIndex].setAttribute("tabindex", "0");
+  focusables[gameFocusIndex].focus({ preventScroll: true });
+}
+
+function activateGameFocus() {
+  const active = document.activeElement?.closest(".game-screen button:not(:disabled)");
+  if (active) active.click();
+}
+
+function moveFocusedChainItem(delta) {
+  const active = document.activeElement?.closest("[data-chain-index]");
+  if (!active || currentGame?.result) return false;
+  const index = Number(active.dataset.chainIndex);
+  const value = chainSelection[index];
+  if (!value) return false;
+  moveChainItem(value, index + delta);
+  return true;
+}
+
+function cssEscape(value) {
+  if (window.CSS?.escape) return window.CSS.escape(String(value));
+  return String(value).replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
 function sample(items) {
@@ -1468,12 +1575,14 @@ function setDeck(nextDeckIndex, nextSlideIndex = 0) {
   deckIndex = Math.max(0, Math.min(decks.length - 1, nextDeckIndex));
   index = Math.max(0, Math.min(decks[deckIndex].slides.length - 1, nextSlideIndex));
   updateSectionUrl();
+  updatePresentationState();
   render();
 }
 
 function setGamesSection() {
   section = "games";
   updateSectionUrl();
+  updatePresentationState();
   render();
 }
 
@@ -1484,6 +1593,11 @@ function updateSectionUrl() {
     url.searchParams.set("section", "games");
   } else {
     url.searchParams.delete("section");
+  }
+  if (section === "games" && presentationMode) {
+    url.searchParams.set("play", "full");
+  } else {
+    url.searchParams.delete("play");
   }
   window.history.replaceState({}, "", url);
 }
@@ -1570,7 +1684,13 @@ slideNode.addEventListener("click", (event) => {
 
   if (event.target.closest("[data-game-next]")) {
     nextGameQuestion();
+    preferredGameFocus = gameModeId === "chain" ? ".chain-bank .chain-button" : ".game-answer";
     render();
+    return;
+  }
+
+  if (event.target.closest("[data-game-fullscreen]")) {
+    setPresentationMode(!presentationMode, true);
     return;
   }
 
@@ -1580,7 +1700,46 @@ slideNode.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (section === "games") return;
+  if (section === "games") {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setPresentationMode(false);
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      activateGameFocus();
+      return;
+    }
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      if (!moveFocusedChainItem(-1)) moveGameFocus(-1);
+      return;
+    }
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      if (!moveFocusedChainItem(1)) moveGameFocus(1);
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveGameFocus(-1);
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveGameFocus(1);
+      return;
+    }
+    if (event.key === "Backspace" || event.key === "Delete") {
+      const active = document.activeElement?.closest("[data-chain-index]");
+      if (active) {
+        event.preventDefault();
+        removeChainItem(Number(active.dataset.chainIndex));
+      }
+    }
+    return;
+  }
   if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
     event.preventDefault();
     go(1);
@@ -1596,6 +1755,12 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "End") {
     event.preventDefault();
     setDeck(deckIndex, decks[deckIndex].slides.length - 1);
+  }
+});
+
+document.addEventListener("fullscreenchange", () => {
+  if (presentationMode && !document.fullscreenElement) {
+    setPresentationMode(false);
   }
 });
 

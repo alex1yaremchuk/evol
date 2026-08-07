@@ -1491,6 +1491,8 @@ Object.assign(window.EVOL_I18N.en, {
   "Игры про эволюцию": "Evolution games",
   "Счет": "Score",
   "Режимы игры": "Game modes",
+  "Во весь экран": "Fullscreen",
+  "Обычный режим": "Exit fullscreen",
   "Уровни вопросов": "Question levels",
   "Уровень": "Level",
   "легкий": "easy",
