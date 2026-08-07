@@ -1503,6 +1503,7 @@ Object.assign(window.EVOL_I18N.en, {
   "Цепочка пока пустая": "The chain is empty",
   "Новый вопрос": "New question",
   "Следующий вопрос": "Next question",
+  "Проверить цепочку": "Check chain",
   "Верно": "Correct",
   "Пока нет": "Not yet",
   "Нет вопросов для выбранных уровней": "No questions for the selected levels",

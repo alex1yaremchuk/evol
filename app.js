@@ -521,7 +521,7 @@ function renderGames() {
         <div>
           <div class="kicker">${escapeHtml(t("Тренировка"))}</div>
           <h1 class="game-title">${escapeHtml(t("Игры про эволюцию"))}</h1>
-          <p class="subtitle">${escapeHtml(mode.hint)}</p>
+          <p class="game-subtitle">${escapeHtml(mode.hint)}</p>
         </div>
         <div class="game-header-actions">
           <button class="game-fullscreen-button" type="button" data-game-fullscreen>
@@ -666,6 +666,11 @@ function gameFeedbackMarkup() {
   if (!currentGame.result) {
     return `
       <div class="game-actions">
+        ${
+          gameModeId === "chain"
+            ? `<button class="game-next chain-check" type="button" data-chain-check ${chainSelection.length === currentGame.question.items.length ? "" : "disabled"}>${escapeHtml(t("Проверить цепочку"))}</button>`
+            : ""
+        }
         <button class="game-next" type="button" data-game-next>${escapeHtml(t("Новый вопрос"))}</button>
       </div>
     `;
@@ -759,6 +764,8 @@ function generatedCloserQuestions() {
       const b = cards[j];
       const aDepth = commonPrefix(a.path, target.path).length;
       const bDepth = commonPrefix(b.path, target.path).length;
+      // Equal depth means both branches split from the human line at the same fork.
+      // Example: lizards and crocodiles are both sauropsids relative to humans.
       if (aDepth === bDepth) continue;
       const answer = aDepth > bDepth ? a : b;
       const other = answer === a ? b : a;
@@ -921,8 +928,7 @@ function chooseGameAnswer(value) {
 function chooseChainItem(value) {
   if (!currentGame || currentGame.result || chainSelection.includes(value)) return;
   chainSelection.push(value);
-  checkChainIfComplete();
-  preferredGameFocus = `[data-chain-value="${cssEscape(value)}"]`;
+  preferredGameFocus = chainSelection.length === currentGame.question.items.length ? "[data-chain-check]" : `[data-chain-value="${cssEscape(value)}"]`;
   render();
 }
 
@@ -932,7 +938,6 @@ function moveChainItem(value, nextIndex) {
   if (previousIndex !== -1) chainSelection.splice(previousIndex, 1);
   const boundedIndex = Math.max(0, Math.min(chainSelection.length, nextIndex));
   chainSelection.splice(boundedIndex, 0, value);
-  checkChainIfComplete();
   preferredGameFocus = `[data-chain-value="${cssEscape(value)}"]`;
   render();
 }
@@ -945,14 +950,16 @@ function removeChainItem(index) {
   render();
 }
 
-function checkChainIfComplete() {
-  if (!currentGame?.question || chainSelection.length !== currentGame.question.items.length) return;
+function checkChainAnswer() {
+  if (!currentGame?.question || currentGame.result || chainSelection.length !== currentGame.question.items.length) return;
   const chosen = chainSelection.join("|");
   currentGame.chosen = chosen;
   currentGame.result = chosen === currentGame.correctValue ? "correct" : "wrong";
   rememberGameResult(currentGame);
   gameScore.total += 1;
   if (currentGame.result === "correct") gameScore.correct += 1;
+  preferredGameFocus = "[data-game-next]";
+  render();
 }
 
 function rememberGameResult(game) {
@@ -1679,6 +1686,11 @@ slideNode.addEventListener("click", (event) => {
   const chainRemoveButton = event.target.closest("[data-chain-remove]");
   if (chainRemoveButton) {
     removeChainItem(Number(chainRemoveButton.dataset.chainRemove));
+    return;
+  }
+
+  if (event.target.closest("[data-chain-check]")) {
+    checkChainAnswer();
     return;
   }
 
