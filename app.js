@@ -21,6 +21,8 @@ let gameModeId = "closer";
 let currentGame = null;
 let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
+let selectedGameLevels = new Set(["easy", "medium", "hard"]);
+let gameProgress = {};
 
 function initialLanguage() {
   const params = new URLSearchParams(window.location.search);
@@ -70,6 +72,7 @@ function setLanguage(nextLanguage, updateUrl = true) {
   games = localizeGames(sourceGames);
   currentGame = null;
   chainSelection = [];
+  gameProgress = {};
   index = Math.max(0, Math.min(decks[deckIndex].slides.length - 1, index));
 
   document.documentElement.lang = language;
@@ -486,6 +489,15 @@ function renderGames() {
       `,
     )
     .join("");
+  const levelButtons = games.levels
+    .map(
+      (level) => `
+        <button class="game-level-button ${selectedGameLevels.has(level.id) ? "active" : ""}" type="button" data-game-level="${escapeHtml(level.id)}" aria-pressed="${selectedGameLevels.has(level.id)}">
+          ${escapeHtml(level.title)}
+        </button>
+      `,
+    )
+    .join("");
 
   slideNode.innerHTML = `
     <article class="game-screen">
@@ -502,6 +514,10 @@ function renderGames() {
       <nav class="game-modes" aria-label="${escapeHtml(t("Режимы игры"))}">
         ${modeButtons}
       </nav>
+      <div class="game-levels" aria-label="${escapeHtml(t("Уровни вопросов"))}">
+        <span>${escapeHtml(t("Уровень"))}</span>
+        ${levelButtons}
+      </div>
       ${gameModeId === "chain" ? chainGameMarkup(mode) : choiceGameMarkup(mode)}
     </article>
   `;
@@ -509,6 +525,7 @@ function renderGames() {
 
 function choiceGameMarkup(mode) {
   const question = currentGame.question;
+  if (!question) return emptyGameMarkup();
   const pair = question.pair.map((id) => games.cards[id]);
   const answers = currentGame.answers;
 
@@ -516,7 +533,7 @@ function choiceGameMarkup(mode) {
     <section class="game-panel">
       <div class="game-question">
         <strong>${escapeHtml(question.prompt)}</strong>
-        <span>${escapeHtml(t("Выбери ответ"))}</span>
+        <span>${escapeHtml(gameStatusText() || t("Выбери ответ"))}</span>
       </div>
       <div class="game-creatures">
         ${pair.map((card) => creatureChoiceCard(card)).join("")}
@@ -531,13 +548,14 @@ function choiceGameMarkup(mode) {
 
 function chainGameMarkup(mode) {
   const question = currentGame.question;
+  if (!question) return emptyGameMarkup();
   const selected = new Set(chainSelection);
 
   return `
     <section class="game-panel">
       <div class="game-question">
         <strong>${escapeHtml(question.prompt)}</strong>
-        <span>${escapeHtml(t("Нажимай по порядку"))}</span>
+        <span>${escapeHtml(gameStatusText() || t("Нажимай по порядку"))}</span>
       </div>
       <div class="chain-target">
         ${chainSelection.map((item, i) => `<span>${i + 1}. ${escapeHtml(item)}</span>`).join("") || `<span>${escapeHtml(t("Цепочка пока пустая"))}</span>`}
@@ -554,6 +572,17 @@ function chainGameMarkup(mode) {
           .join("")}
       </div>
       ${gameFeedbackMarkup()}
+    </section>
+  `;
+}
+
+function emptyGameMarkup() {
+  return `
+    <section class="game-panel">
+      <div class="game-question">
+        <strong>${escapeHtml(t("Нет вопросов для выбранных уровней"))}</strong>
+        <span>${escapeHtml(t("Выбери другой уровень"))}</span>
+      </div>
     </section>
   `;
 }
@@ -607,18 +636,67 @@ function setGameMode(modeId) {
 }
 
 function nextGameQuestion() {
-  const questions = games.questions[gameModeId] || games.questions.closer;
-  const question = sample(questions);
+  const question = nextQuestionForCurrentSettings();
   chainSelection = [];
   currentGame = {
     modeId: gameModeId,
     question,
-    answers: gameAnswers(gameModeId, question),
-    correctValue: gameCorrectValue(gameModeId, question),
+    answers: question ? gameAnswers(gameModeId, question) : [],
+    correctValue: question ? gameCorrectValue(gameModeId, question) : null,
     result: null,
     chosen: null,
-    shuffled: question.items ? shuffle(question.items) : [],
+    shuffled: question?.items ? shuffle(question.items) : [],
+    phase: question?.phase,
   };
+}
+
+function nextQuestionForCurrentSettings() {
+  const questions = eligibleQuestions();
+  if (!questions.length) return null;
+  const byId = Object.fromEntries(questions.map((question) => [question.id, question]));
+  const state = progressState();
+
+  while (state.freshQueue.length && !byId[state.freshQueue[0]]) state.freshQueue.shift();
+  while (state.retryQueue.length && !byId[state.retryQueue[0]]) state.retryQueue.shift();
+
+  if (!state.freshQueue.length && !state.retryQueue.length) {
+    state.freshQueue = shuffle(questions.map((question) => question.id));
+    state.completedOnce = state.completedOnce || state.rounds > 0;
+    state.rounds += 1;
+  }
+
+  let phase = "fresh";
+  let id = state.freshQueue.shift();
+  if (!id && state.retryQueue.length) {
+    phase = "retry";
+    id = state.retryQueue.shift();
+  }
+  if (!id) return null;
+
+  return { ...byId[id], phase };
+}
+
+function eligibleQuestions() {
+  const levels = selectedGameLevels.size ? selectedGameLevels : new Set(games.levels.map((level) => level.id));
+  return (games.questions[gameModeId] || games.questions.closer).filter((question) => levels.has(question.level || "easy"));
+}
+
+function progressState() {
+  const key = `${gameModeId}:${[...selectedGameLevels].sort().join(",")}`;
+  if (!gameProgress[key]) {
+    gameProgress[key] = { freshQueue: [], retryQueue: [], rounds: 0, completedOnce: false };
+  }
+  return gameProgress[key];
+}
+
+function gameStatusText() {
+  if (!currentGame?.question) return "";
+  if (currentGame.phase === "retry") return t("Повторяем ошибку");
+  const state = progressState();
+  const total = eligibleQuestions().length;
+  const done = Math.max(0, total - state.freshQueue.length);
+  if (state.rounds > 1) return t("Все вопросы уже были, пошел новый круг");
+  return `${t("Новые вопросы")}: ${done}/${total}`;
 }
 
 function gameAnswers(modeId, question) {
@@ -638,6 +716,7 @@ function chooseGameAnswer(value) {
   if (!currentGame || currentGame.result) return;
   currentGame.chosen = value;
   currentGame.result = value === currentGame.correctValue ? "correct" : "wrong";
+  rememberGameResult(currentGame);
   gameScore.total += 1;
   if (currentGame.result === "correct") gameScore.correct += 1;
   render();
@@ -650,9 +729,30 @@ function chooseChainItem(value) {
     const chosen = chainSelection.join("|");
     currentGame.chosen = chosen;
     currentGame.result = chosen === currentGame.correctValue ? "correct" : "wrong";
+    rememberGameResult(currentGame);
     gameScore.total += 1;
     if (currentGame.result === "correct") gameScore.correct += 1;
   }
+  render();
+}
+
+function rememberGameResult(game) {
+  if (!game.question?.id || game.result !== "wrong") return;
+  const state = progressState();
+  if (!state.retryQueue.includes(game.question.id)) {
+    state.retryQueue.push(game.question.id);
+  }
+}
+
+function toggleGameLevel(levelId) {
+  if (selectedGameLevels.has(levelId)) {
+    if (selectedGameLevels.size === 1) return;
+    selectedGameLevels.delete(levelId);
+  } else {
+    selectedGameLevels.add(levelId);
+  }
+  currentGame = null;
+  chainSelection = [];
   render();
 }
 
@@ -1243,6 +1343,12 @@ slideNode.addEventListener("click", (event) => {
   const modeButton = event.target.closest("[data-game-mode]");
   if (modeButton) {
     setGameMode(modeButton.dataset.gameMode);
+    return;
+  }
+
+  const levelButton = event.target.closest("[data-game-level]");
+  if (levelButton) {
+    toggleGameLevel(levelButton.dataset.gameLevel);
     return;
   }
 

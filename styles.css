@@ -755,6 +755,7 @@ button {
 }
 
 .game-mode-button,
+.game-level-button,
 .game-answer,
 .chain-button,
 .game-next {
@@ -774,6 +775,27 @@ button {
 
 .game-mode-button.active {
   background: rgba(36, 125, 116, 0.94);
+  color: #fff;
+}
+
+.game-levels {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 820;
+}
+
+.game-level-button {
+  min-height: 1.85rem;
+  padding: 0.24rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.game-level-button.active {
+  background: rgba(229, 111, 93, 0.92);
   color: #fff;
 }
 
@@ -1161,6 +1183,17 @@ svg .bone {
     min-height: 2rem;
     padding: 0.3rem 0.54rem;
     font-size: 0.82rem;
+  }
+
+  .game-levels {
+    gap: 0.28rem;
+    font-size: 0.74rem;
+  }
+
+  .game-level-button {
+    min-height: 1.65rem;
+    padding: 0.18rem 0.42rem;
+    font-size: 0.72rem;
   }
 
   .game-panel {
