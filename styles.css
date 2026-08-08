@@ -871,6 +871,17 @@ button {
   box-shadow: 0 0.8rem 1.7rem rgba(24, 33, 43, 0.1);
 }
 
+.game-creature-card.correct {
+  border-color: rgba(36, 125, 116, 0.5);
+  background: rgba(213, 234, 211, 0.86);
+  box-shadow: 0 0.8rem 1.7rem rgba(36, 125, 116, 0.18);
+}
+
+.game-creature-card.wrong {
+  border-color: rgba(209, 79, 63, 0.38);
+  background: rgba(240, 214, 203, 0.78);
+}
+
 .game-creature-card img {
   display: block;
   width: 100%;
@@ -944,6 +955,17 @@ button {
 .chain-check:not(:disabled) {
   background: rgba(36, 125, 116, 0.94);
   color: #fff;
+}
+
+.game-dont-know {
+  border-color: rgba(179, 108, 42, 0.28);
+  background: rgba(246, 227, 190, 0.72);
+}
+
+.game-dont-know:hover,
+.game-dont-know:focus-visible {
+  border-color: rgba(179, 108, 42, 0.5);
+  background: rgba(246, 227, 190, 0.95);
 }
 
 .game-answer.correct,

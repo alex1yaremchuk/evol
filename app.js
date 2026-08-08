@@ -794,6 +794,10 @@ function emptyGameMarkup() {
 function creatureChoiceCard(card, question = null) {
   const answerable = question?.pair && !currentGame.result;
   const value = Object.entries(games.cards).find(([, item]) => item === card)?.[0] || "";
+  const isAnswered = Boolean(currentGame.result);
+  const isCorrect = isAnswered && value && currentGame.correctValue === value;
+  const isWrongChoice = isAnswered && value && currentGame.chosen === value && currentGame.result === "wrong";
+  const resultClass = isCorrect ? "correct" : isWrongChoice ? "wrong" : "";
   if (answerable && value) {
     return `
       <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}">
@@ -806,7 +810,7 @@ function creatureChoiceCard(card, question = null) {
     `;
   }
   return `
-    <figure class="game-creature-card">
+    <figure class="game-creature-card ${resultClass}">
       <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
       <figcaption>
         <strong>${escapeHtml(card.name)}</strong>
@@ -842,17 +846,23 @@ function gameFeedbackMarkup() {
             : ""
         }
         <button class="game-next" type="button" data-game-next>${escapeHtml(t("Новый вопрос"))}</button>
+        <button class="game-next game-dont-know" type="button" data-game-dont-know>${escapeHtml(t("Не знаю!"))}</button>
       </div>
     `;
   }
 
   return `
     <div class="game-feedback ${currentGame.result}">
-      <strong>${escapeHtml(currentGame.result === "correct" ? t("Верно") : t("Пока нет"))}</strong>
+      <strong>${escapeHtml(gameFeedbackTitle())}</strong>
       <span>${escapeHtml(currentGame.question.explanation)}</span>
       <button class="game-next" type="button" data-game-next>${escapeHtml(t("Следующий вопрос"))}</button>
     </div>
   `;
+}
+
+function gameFeedbackTitle() {
+  if (currentGame?.gaveUp) return t("Правильный ответ");
+  return currentGame.result === "correct" ? t("Верно") : t("Пока нет");
 }
 
 function setGameMode(modeId) {
@@ -1365,6 +1375,32 @@ function chooseTimelineAnswer(value) {
   render();
 }
 
+function giveUpGameQuestion() {
+  if (!currentGame?.question || currentGame.result) return;
+  currentGame.gaveUp = true;
+  currentGame.result = "wrong";
+
+  if (gameModeId === "timeline") {
+    currentGame.chosen = timelineCorrectValue();
+  } else {
+    currentGame.chosen = currentGame.correctValue;
+  }
+
+  if (gameModeId === "chain") {
+    chainSelection = [...currentGame.question.items];
+  } else if (gameModeId === "branches") {
+    branchSelection = {
+      left: [...currentGame.question.branches.left.items],
+      right: [...currentGame.question.branches.right.items],
+    };
+  }
+
+  rememberGameResult(currentGame);
+  gameScore.total += 1;
+  preferredGameFocus = "[data-game-next]";
+  render();
+}
+
 function chooseChainItem(value) {
   if (!currentGame || currentGame.result || chainSelection.includes(value)) return;
   chainSelection.push(value);
@@ -1496,10 +1532,12 @@ function setPresentationMode(nextValue, requestFullscreen = false) {
 }
 
 function gameQuestionFocusSelector() {
-  if (gameModeId === "chain") return ".chain-bank .chain-button, .chain-target .chain-placed, [data-game-next]";
-  if (gameModeId === "branches") return ".branch-bank .branch-button, .branch-zone .branch-button, [data-branch-check], [data-game-next]";
-  if (gameModeId === "timeline") return ".timeline-answer, [data-game-next]";
-  return ".game-answer, .creature-choice, [data-game-next]";
+  if (gameModeId === "chain") return ".chain-bank .chain-button, .chain-target .chain-placed, [data-game-next], [data-game-dont-know]";
+  if (gameModeId === "branches") {
+    return ".branch-bank .branch-button, .branch-zone .branch-button, [data-branch-check], [data-game-next], [data-game-dont-know]";
+  }
+  if (gameModeId === "timeline") return ".timeline-answer, [data-game-next], [data-game-dont-know]";
+  return ".game-answer, .creature-choice, [data-game-next], [data-game-dont-know]";
 }
 
 function updatePresentationState() {
@@ -2220,6 +2258,11 @@ slideNode.addEventListener("click", (event) => {
 
   if (event.target.closest("[data-branch-check]")) {
     checkBranchAnswer();
+    return;
+  }
+
+  if (event.target.closest("[data-game-dont-know]")) {
+    giveUpGameQuestion();
     return;
   }
 
