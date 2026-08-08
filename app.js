@@ -553,6 +553,7 @@ function renderGames() {
 function gameMarkup(mode) {
   if (gameModeId === "chain") return chainGameMarkup(mode);
   if (gameModeId === "branches") return branchesGameMarkup(mode);
+  if (gameModeId === "timeline") return timelineGameMarkup(mode);
   return choiceGameMarkup(mode);
 }
 
@@ -683,6 +684,72 @@ function chainBankItem(item) {
       ${escapeHtml(item)}
     </button>
   `;
+}
+
+function timelineGameMarkup(mode) {
+  const question = currentGame.question;
+  if (!question) return emptyGameMarkup();
+  const event = question.event;
+  const options = currentGame.answers;
+
+  return `
+    <section class="game-panel timeline-game-panel">
+      <div class="game-question">
+        <strong>${escapeHtml(question.prompt)}</strong>
+        <span>${escapeHtml(gameStatusText() || t("Выбери точку на шкале"))}</span>
+      </div>
+      <div class="timeline-challenge">
+        <figure class="timeline-event-card">
+          <img src="${escapeHtml(event.image)}" alt="${escapeHtml(event.title)}" loading="eager" decoding="async" />
+          <figcaption>
+            <strong>${escapeHtml(event.title)}</strong>
+            <span>${escapeHtml(event.novelty)}</span>
+          </figcaption>
+        </figure>
+        <div class="timeline-event-note">
+          <strong>${escapeHtml(t("Что дало"))}</strong>
+          <span>${escapeHtml(event.gave)}</span>
+        </div>
+      </div>
+      <div class="timeline-answer-axis" aria-label="${escapeHtml(t("Шкала времени"))}">
+        ${timelineAxisLabels()}
+        <div class="timeline-answer-track">
+          ${options.map((answer, answerIndex) => timelineAnswerButton(answer, answerIndex)).join("")}
+        </div>
+      </div>
+      ${gameFeedbackMarkup()}
+    </section>
+  `;
+}
+
+function timelineAnswerButton(answer, answerIndex) {
+  const isAnswered = Boolean(currentGame.result);
+  const isCorrect = currentGame.correctValue === answer.value;
+  const className = isAnswered ? (isCorrect ? "correct" : currentGame.chosen === answer.value ? "wrong" : "") : "";
+  return `
+    <button
+      class="timeline-answer ${className}"
+      type="button"
+      data-game-answer="${escapeHtml(answer.value)}"
+      data-focus-value="${escapeHtml(answer.value)}"
+      style="left: ${timelineGamePosition(answer.timeMa)}%; --lane: ${answerIndex % 3}"
+      ${isAnswered ? "disabled" : ""}
+    >
+      <span>${escapeHtml(answer.label)}</span>
+    </button>
+  `;
+}
+
+function timelineAxisLabels() {
+  return [
+    { label: t("4 млрд"), timeMa: 4000 },
+    { label: t("1 млрд"), timeMa: 1000 },
+    { label: t("100 млн"), timeMa: 100 },
+    { label: t("10 млн"), timeMa: 10 },
+    { label: t("сейчас"), timeMa: 0 },
+  ]
+    .map((item) => `<span class="timeline-axis-label" style="left: ${timelineGamePosition(item.timeMa)}%">${escapeHtml(item.label)}</span>`)
+    .join("");
 }
 
 function emptyGameMarkup() {
@@ -860,6 +927,7 @@ function generatedGameQuestions(modeId) {
   if (modeId === "ancestor") return generatedAncestorQuestions();
   if (modeId === "chain") return generatedChainQuestions();
   if (modeId === "branches") return generatedBranchQuestions();
+  if (modeId === "timeline") return generatedTimelineQuestions();
   return generatedCloserQuestions();
 }
 
@@ -885,6 +953,8 @@ function generatedCloserQuestions() {
         const aDepth = commonPrefix(a.path, targetPath).length;
         const bDepth = commonPrefix(b.path, targetPath).length;
         if (aDepth === bDepth) continue;
+        const depthDelta = Math.abs(aDepth - bDepth);
+        if (!closerDepthFitsLevel(depthDelta, level)) continue;
         const answer = aDepth > bDepth ? a : b;
         const other = answer === a ? b : a;
         const answerAncestor = lastCommonRank(answer.path, targetPath);
@@ -902,6 +972,12 @@ function generatedCloserQuestions() {
   }
 
   return questions;
+}
+
+function closerDepthFitsLevel(depthDelta, level) {
+  if (level === "hard") return depthDelta <= 2;
+  if (level === "medium") return depthDelta >= 3 && depthDelta <= 5;
+  return depthDelta >= 6;
 }
 
 function generatedAncestorQuestions() {
@@ -979,6 +1055,89 @@ function generatedBranchQuestions() {
     }
   }
   return questions;
+}
+
+function generatedTimelineQuestions() {
+  const events = games.timelineEvents || [];
+  return gameLevelIds().flatMap((level) =>
+    events.map((event) => ({
+      id: `timeline:${level}:${event.id}`,
+      level,
+      prompt: t("Когда появилось новшество?"),
+      event,
+      options: timelineOptionsForEvent(event, level),
+      answer: timelineAnswerValue(event, level),
+      explanation: `${event.title}: ${timelineEventDate(event)}. ${event.gave}`,
+    })),
+  );
+}
+
+function timelineOptionsForEvent(event, level) {
+  if (level === "easy") {
+    return (games.timelineEras || []).map((era) => ({
+      value: era.id,
+      label: era.label,
+      timeMa: era.timeMa,
+    }));
+  }
+
+  if (level === "medium") {
+    return timelineNearbyOptions(games.timelinePeriods || [], event.periodId, 4).map((period) => ({
+      value: period.id,
+      label: period.label,
+      timeMa: period.timeMa,
+    }));
+  }
+
+  return timelineNearbyOptions(games.timelineEvents || [], event.id, 4).map((item) => ({
+    value: item.id,
+    label: timelineTimeLabel(item.timeMa),
+    timeMa: item.timeMa,
+  }));
+}
+
+function timelineNearbyOptions(items, correctId, count) {
+  const correct = items.find((item) => item.id === correctId);
+  if (!correct) return items.slice(0, count);
+  const nearby = items
+    .filter((item) => item.id !== correctId)
+    .map((item) => ({ item, distance: timelineDistance(item.timeMa, correct.timeMa) }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, Math.max(0, count - 1))
+    .map(({ item }) => item);
+  return [correct, ...nearby].sort((a, b) => b.timeMa - a.timeMa);
+}
+
+function timelineAnswerValue(event, level) {
+  if (level === "easy") return event.eraId;
+  if (level === "medium") return event.periodId;
+  return event.id;
+}
+
+function timelineEventDate(event) {
+  const period = (games.timelinePeriods || []).find((item) => item.id === event.periodId)?.label;
+  return `${timelineTimeLabel(event.timeMa)}${period ? `, ${period}` : ""}`;
+}
+
+function timelineTimeLabel(timeMa) {
+  if (timeMa >= 1000) return `~${formatNumber(timeMa / 1000)} ${t("млрд лет назад")}`;
+  return `~${formatNumber(timeMa)} ${t("млн лет назад")}`;
+}
+
+function formatNumber(value) {
+  const rounded = value >= 10 ? Math.round(value) : Math.round(value * 10) / 10;
+  return String(rounded).replace(".", language === "ru" ? "," : ".");
+}
+
+function timelineDistance(firstMa, secondMa) {
+  return Math.abs(Math.log10(firstMa + 1) - Math.log10(secondMa + 1));
+}
+
+function timelineGamePosition(timeMa) {
+  const maxMa = 4000;
+  const clamped = Math.max(0, Math.min(maxMa, Number(timeMa) || 0));
+  const oldness = Math.log10(clamped + 1) / Math.log10(maxMa + 1);
+  return Math.round((100 - oldness * 100) * 10) / 10;
 }
 
 function withLeveledPath(card, level) {
@@ -1061,6 +1220,7 @@ function gameAnswers(modeId, question) {
   if (modeId === "ancestor") {
     return shuffle(question.options).map((option) => ({ value: option, label: option }));
   }
+  if (modeId === "timeline") return question.options;
   if (modeId === "chain" || modeId === "branches") return [];
   return shuffle(question.pair).map((id) => ({ value: id, label: games.cards[id].name }));
 }
@@ -1068,6 +1228,7 @@ function gameAnswers(modeId, question) {
 function gameCorrectValue(modeId, question) {
   if (modeId === "chain") return question.items.join("|");
   if (modeId === "branches") return "";
+  if (modeId === "timeline") return question.answer;
   return question.answer;
 }
 
@@ -1206,6 +1367,7 @@ function setPresentationMode(nextValue, requestFullscreen = false) {
 function gameQuestionFocusSelector() {
   if (gameModeId === "chain") return ".chain-bank .chain-button, .chain-target .chain-placed, [data-game-next]";
   if (gameModeId === "branches") return ".branch-bank .branch-button, .branch-zone .branch-button, [data-branch-check], [data-game-next]";
+  if (gameModeId === "timeline") return ".timeline-answer, [data-game-next]";
   return ".game-answer, .creature-choice, [data-game-next]";
 }
 
