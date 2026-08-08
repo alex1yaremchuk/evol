@@ -871,33 +871,33 @@ function gameCards() {
 
 function generatedCloserQuestions() {
   const targetId = games.target || "human";
-  const target = games.cards[targetId];
+  const target = { id: targetId, ...games.cards[targetId] };
   if (!target) return [];
   const cards = gameCards().filter((card) => card.id !== targetId);
   const questions = [];
 
-  for (let i = 0; i < cards.length; i += 1) {
-    for (let j = i + 1; j < cards.length; j += 1) {
-      const a = cards[i];
-      const b = cards[j];
-      const aDepth = commonPrefix(a.path, target.path).length;
-      const bDepth = commonPrefix(b.path, target.path).length;
-      // Equal depth means both branches split from the human line at the same fork.
-      // Example: lizards and crocodiles are both sauropsids relative to humans.
-      if (aDepth === bDepth) continue;
-      const answer = aDepth > bDepth ? a : b;
-      const other = answer === a ? b : a;
-      const answerAncestor = lastCommonRank(answer.path, target.path);
-      const otherAncestor = lastCommonRank(other.path, target.path);
-      const depthDelta = Math.abs(aDepth - bDepth);
-      questions.push({
-        id: `closer:${a.id}:${b.id}`,
-        level: closerQuestionLevel(depthDelta),
-        pair: [a.id, b.id],
-        answer: answer.id,
-        prompt: t("Кто ближе к человеку?"),
-        explanation: `${answer.name} ${t("ближе к человеку")}: ${t("общий предок")} - ${answerAncestor}. ${other.name}: ${t("более ранняя развилка")} - ${otherAncestor}.`,
-      });
+  for (const level of gameLevelIds()) {
+    const targetPath = pathForLevel(target, level);
+    for (let i = 0; i < cards.length; i += 1) {
+      for (let j = i + 1; j < cards.length; j += 1) {
+        const a = withLeveledPath(cards[i], level);
+        const b = withLeveledPath(cards[j], level);
+        const aDepth = commonPrefix(a.path, targetPath).length;
+        const bDepth = commonPrefix(b.path, targetPath).length;
+        if (aDepth === bDepth) continue;
+        const answer = aDepth > bDepth ? a : b;
+        const other = answer === a ? b : a;
+        const answerAncestor = lastCommonRank(answer.path, targetPath);
+        const otherAncestor = lastCommonRank(other.path, targetPath);
+        questions.push({
+          id: `closer:${level}:${a.id}:${b.id}`,
+          level,
+          pair: [a.id, b.id],
+          answer: answer.id,
+          prompt: t("Кто ближе к человеку?"),
+          explanation: `${answer.name} ${t("ближе к человеку")}: ${t("общий предок")} - ${answerAncestor}. ${other.name}: ${t("более ранняя развилка")} - ${otherAncestor}.`,
+        });
+      }
     }
   }
 
@@ -908,22 +908,23 @@ function generatedAncestorQuestions() {
   const cards = gameCards();
   const questions = [];
 
-  for (let i = 0; i < cards.length; i += 1) {
-    for (let j = i + 1; j < cards.length; j += 1) {
-      const a = cards[i];
-      const b = cards[j];
-      const answer = lastCommonRank(a.path, b.path);
-      if (!answer || answer === "жизнь" || answer === "life") continue;
-      const commonDepth = commonPrefix(a.path, b.path).length;
-      questions.push({
-        id: `ancestor:${a.id}:${b.id}`,
-        level: ancestorQuestionLevel(commonDepth),
-        pair: [a.id, b.id],
-        prompt: t("Где последний общий предок?"),
-        options: ancestorOptions(answer, a.path, b.path),
-        answer,
-        explanation: `${a.name} ${t("и")} ${b.name}: ${t("последний общий предок")} - ${answer}.`,
-      });
+  for (const level of gameLevelIds()) {
+    for (let i = 0; i < cards.length; i += 1) {
+      for (let j = i + 1; j < cards.length; j += 1) {
+        const a = withLeveledPath(cards[i], level);
+        const b = withLeveledPath(cards[j], level);
+        const answer = lastCommonRank(a.path, b.path);
+        if (!answer || answer === "жизнь" || answer === "life") continue;
+        questions.push({
+          id: `ancestor:${level}:${a.id}:${b.id}`,
+          level,
+          pair: [a.id, b.id],
+          prompt: t("Где последний общий предок?"),
+          options: ancestorOptions(answer, a.path, b.path),
+          answer,
+          explanation: `${a.name} ${t("и")} ${b.name}: ${t("последний общий предок")} - ${answer}.`,
+        });
+      }
     }
   }
 
@@ -931,78 +932,85 @@ function generatedAncestorQuestions() {
 }
 
 function generatedChainQuestions() {
-  return gameCards()
-    .filter((card) => card.id !== "bacteria")
-    .map((card) => {
-      const items = chainItemsForCard(card);
-      return {
-        id: `chain:${card.id}:${items.length}`,
-        level: card.level || "easy",
-        prompt: `${t("Собери путь")}: ${card.name}`,
-        items,
-        explanation: `${t("Правильный путь")}: ${items.join(" → ")}.`,
-      };
-    })
+  return gameLevelIds()
+    .flatMap((level) =>
+      gameCards()
+        .filter((card) => card.id !== "bacteria")
+        .map((card) => {
+          const items = pathForLevel(card, level);
+          return {
+            id: `chain:${level}:${card.id}:${items.length}`,
+            level,
+            prompt: `${t("Собери путь")}: ${card.name}`,
+            items,
+            explanation: `${t("Правильный путь")}: ${items.join(" → ")}.`,
+          };
+        }),
+    )
     .filter((question) => question.items.length >= 3);
 }
 
 function generatedBranchQuestions() {
   const cards = gameCards();
   const questions = [];
-  for (let i = 0; i < cards.length; i += 1) {
-    for (let j = i + 1; j < cards.length; j += 1) {
-      const a = cards[i];
-      const b = cards[j];
-      const prefix = commonPrefix(a.path, b.path);
-      if (prefix.length < 3) continue;
-      const leftItems = branchItemsAfterPrefix(a.path, prefix.length);
-      const rightItems = branchItemsAfterPrefix(b.path, prefix.length);
-      if (leftItems.length < 2 || rightItems.length < 2 || leftItems[0] === rightItems[0]) continue;
-      const ancestor = prefix[prefix.length - 1];
-      questions.push({
-        id: `branches:${a.id}:${b.id}`,
-        level: hardestLevel(a.level, b.level),
-        prompt: `${t("Собери две ветки")}: ${ancestor}`,
-        branches: {
-          left: { label: `${a.name}: ${leftItems[0]}`, items: leftItems },
-          right: { label: `${b.name}: ${rightItems[0]}`, items: rightItems },
-        },
-        items: shuffle([...leftItems, ...rightItems]),
-        explanation: `${t("Общий предок")} - ${ancestor}. ${a.name}: ${leftItems.join(" → ")}. ${b.name}: ${rightItems.join(" → ")}.`,
-      });
+  for (const level of gameLevelIds()) {
+    for (let i = 0; i < cards.length; i += 1) {
+      for (let j = i + 1; j < cards.length; j += 1) {
+        const a = withLeveledPath(cards[i], level);
+        const b = withLeveledPath(cards[j], level);
+        const prefix = commonPrefix(a.path, b.path);
+        if (prefix.length < 3) continue;
+        const leftItems = a.path.slice(prefix.length);
+        const rightItems = b.path.slice(prefix.length);
+        if (leftItems.length < 2 || rightItems.length < 2 || leftItems[0] === rightItems[0]) continue;
+        const ancestor = prefix[prefix.length - 1];
+        questions.push({
+          id: `branches:${level}:${a.id}:${b.id}`,
+          level,
+          prompt: `${t("Собери две ветки")}: ${ancestor}`,
+          branches: {
+            left: { label: `${a.name}: ${leftItems[0]}`, items: leftItems },
+            right: { label: `${b.name}: ${rightItems[0]}`, items: rightItems },
+          },
+          items: shuffle([...leftItems, ...rightItems]),
+          explanation: `${t("Общий предок")} - ${ancestor}. ${a.name}: ${leftItems.join(" → ")}. ${b.name}: ${rightItems.join(" → ")}.`,
+        });
+      }
     }
   }
   return questions;
 }
 
-function branchItemsAfterPrefix(path, prefixLength) {
-  return reducePath(path.slice(prefixLength), selectedChainLevel() === "hard" ? 7 : 5);
+function withLeveledPath(card, level) {
+  return { ...card, path: pathForLevel(card, level) };
 }
 
-function chainItemsForCard(card) {
-  const level = selectedChainLevel();
-  const limit = games.levels.find((item) => item.id === level)?.maxRankCount || 8;
-  const source = level === "easy" && card.keyRanks ? card.keyRanks : card.path;
-  return reducePath(source, limit);
+function pathForLevel(card, level) {
+  const path = card.path || [];
+  if (!path.length) return [];
+  const terminal = path[path.length - 1];
+  return uniquePath(path.filter((node, index) => index === 0 || node === terminal || nodeAllowedAtLevel(node, level)));
 }
 
-function selectedChainLevel() {
-  const order = ["easy", "medium", "hard"];
-  return order.filter((level) => selectedGameLevels.has(level)).pop() || "easy";
+function uniquePath(path) {
+  return path.filter((node, index) => path.indexOf(node) === index);
 }
 
-function reducePath(path, limit) {
-  const unique = [...new Set(path)];
-  if (unique.length <= limit) return unique;
-  const result = [unique[0]];
-  const middleSlots = Math.max(0, limit - 2);
-  for (let i = 1; i <= middleSlots; i += 1) {
-    const index = Math.round((i * (unique.length - 1)) / (middleSlots + 1));
-    if (!result.includes(unique[index])) result.push(unique[index]);
-  }
-  const last = unique[unique.length - 1];
-  if (!result.includes(last)) result.push(last);
-  return result;
+function nodeAllowedAtLevel(node, level) {
+  return levelRank(nodeLevel(node)) <= levelRank(level);
+}
+
+function nodeLevel(node) {
+  const entry = games.nodeLevels?.find((item) => item.node === node);
+  return entry?.level || "hard";
+}
+
+function levelRank(level) {
+  return gameLevelIds().indexOf(level);
+}
+
+function gameLevelIds() {
+  return games.levels.map((level) => level.id);
 }
 
 function ancestorOptions(answer, firstPath, secondPath) {
@@ -1029,23 +1037,6 @@ function commonPrefix(first, second) {
 function lastCommonRank(first, second) {
   const prefix = commonPrefix(first, second);
   return prefix[prefix.length - 1] || "";
-}
-
-function hardestLevel(...levels) {
-  const order = ["easy", "medium", "hard"];
-  return levels.reduce((hardest, level) => (order.indexOf(level) > order.indexOf(hardest) ? level : hardest), "easy");
-}
-
-function closerQuestionLevel(depthDelta) {
-  if (depthDelta >= 4) return "easy";
-  if (depthDelta >= 2) return "medium";
-  return "hard";
-}
-
-function ancestorQuestionLevel(commonDepth) {
-  if (commonDepth >= 10) return "easy";
-  if (commonDepth >= 5) return "medium";
-  return "hard";
 }
 
 function progressState() {
