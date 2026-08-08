@@ -23,6 +23,7 @@ let currentGame = null;
 let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
 let branchSelection = { left: [], right: [] };
+let activeBranchSide = "left";
 let selectedGameLevels = new Set(["easy", "medium", "hard"]);
 let gameProgress = {};
 let chainPointerDrag = null;
@@ -86,6 +87,7 @@ function setLanguage(nextLanguage, updateUrl = true) {
   currentGame = null;
   chainSelection = [];
   branchSelection = { left: [], right: [] };
+  activeBranchSide = "left";
   gameProgress = {};
   index = Math.max(0, Math.min(decks[deckIndex].slides.length - 1, index));
 
@@ -606,7 +608,7 @@ function branchesGameMarkup(mode) {
 
 function branchZone(side, label, items) {
   return `
-    <div class="chain-zone branch-zone" data-branch-drop="${side}">
+    <div class="chain-zone branch-zone ${activeBranchSide === side ? "active-branch" : ""}" data-branch-drop="${side}" data-branch-zone="${side}">
       <strong>${escapeHtml(label)}</strong>
       <div class="chain-options">
         ${items.length ? items.map((item, index) => branchItem(item, side, index)).join("") : `<span class="chain-empty">${escapeHtml(t("Перетащи сюда узлы ветки"))}</span>`}
@@ -763,6 +765,7 @@ function setGameMode(modeId) {
   currentGame = null;
   chainSelection = [];
   branchSelection = { left: [], right: [] };
+  activeBranchSide = "left";
   preferredGameFocus = presentationMode ? gameQuestionFocusSelector() : "[data-game-mode].active";
   render();
 }
@@ -771,6 +774,7 @@ function nextGameQuestion() {
   const question = nextQuestionForCurrentSettings();
   chainSelection = [];
   branchSelection = { left: [], right: [] };
+  activeBranchSide = "left";
   currentGame = {
     modeId: gameModeId,
     question,
@@ -885,9 +889,10 @@ function generatedCloserQuestions() {
       const other = answer === a ? b : a;
       const answerAncestor = lastCommonRank(answer.path, target.path);
       const otherAncestor = lastCommonRank(other.path, target.path);
+      const depthDelta = Math.abs(aDepth - bDepth);
       questions.push({
         id: `closer:${a.id}:${b.id}`,
-        level: hardestLevel(a.level, b.level),
+        level: closerQuestionLevel(depthDelta),
         pair: [a.id, b.id],
         answer: answer.id,
         prompt: t("Кто ближе к человеку?"),
@@ -909,9 +914,10 @@ function generatedAncestorQuestions() {
       const b = cards[j];
       const answer = lastCommonRank(a.path, b.path);
       if (!answer || answer === "жизнь" || answer === "life") continue;
+      const commonDepth = commonPrefix(a.path, b.path).length;
       questions.push({
         id: `ancestor:${a.id}:${b.id}`,
-        level: hardestLevel(a.level, b.level),
+        level: ancestorQuestionLevel(commonDepth),
         pair: [a.id, b.id],
         prompt: t("Где последний общий предок?"),
         options: ancestorOptions(answer, a.path, b.path),
@@ -1030,6 +1036,18 @@ function hardestLevel(...levels) {
   return levels.reduce((hardest, level) => (order.indexOf(level) > order.indexOf(hardest) ? level : hardest), "easy");
 }
 
+function closerQuestionLevel(depthDelta) {
+  if (depthDelta >= 4) return "easy";
+  if (depthDelta >= 2) return "medium";
+  return "hard";
+}
+
+function ancestorQuestionLevel(commonDepth) {
+  if (commonDepth >= 10) return "easy";
+  if (commonDepth >= 5) return "medium";
+  return "hard";
+}
+
 function progressState() {
   const key = `${gameModeId}:${[...selectedGameLevels].sort().join(",")}`;
   if (!gameProgress[key]) {
@@ -1117,6 +1135,7 @@ function moveBranchItem(value, nextSide, nextIndex = null) {
   if (nextSide === "left" || nextSide === "right") {
     const index = nextIndex === null ? branchSelection[nextSide].length : Math.max(0, Math.min(branchSelection[nextSide].length, nextIndex));
     branchSelection[nextSide].splice(index, 0, value);
+    activeBranchSide = nextSide;
   }
   preferredGameFocus = `[data-branch-value="${cssEscape(value)}"]`;
   render();
@@ -1124,11 +1143,13 @@ function moveBranchItem(value, nextSide, nextIndex = null) {
 
 function cycleBranchItem(value) {
   if (branchSelection.left.includes(value)) {
+    activeBranchSide = "left";
     moveBranchItem(value, "right");
   } else if (branchSelection.right.includes(value)) {
+    activeBranchSide = "right";
     moveBranchItem(value, "bank");
   } else {
-    moveBranchItem(value, "left");
+    moveBranchItem(value, activeBranchSide);
   }
 }
 
@@ -1172,6 +1193,7 @@ function toggleGameLevel(levelId) {
   currentGame = null;
   chainSelection = [];
   branchSelection = { left: [], right: [] };
+  activeBranchSide = "left";
   preferredGameFocus = `[data-game-level="${cssEscape(levelId)}"]`;
   render();
 }
@@ -1903,6 +1925,14 @@ slideNode.addEventListener("click", (event) => {
   const branchButton = event.target.closest("[data-branch-item]");
   if (branchButton) {
     cycleBranchItem(branchButton.dataset.branchItem);
+    return;
+  }
+
+  const branchZoneButton = event.target.closest("[data-branch-zone]");
+  if (branchZoneButton) {
+    activeBranchSide = branchZoneButton.dataset.branchZone;
+    preferredGameFocus = `.branch-zone[data-branch-zone="${cssEscape(activeBranchSide)}"] .branch-button, .branch-bank .branch-button`;
+    render();
     return;
   }
 
