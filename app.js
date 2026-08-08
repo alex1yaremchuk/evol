@@ -1134,10 +1134,8 @@ function moveBranchItem(value, nextSide, nextIndex = null) {
 
 function cycleBranchItem(value) {
   if (branchSelection.left.includes(value)) {
-    activeBranchSide = "left";
-    moveBranchItem(value, "right");
+    moveBranchItem(value, "bank");
   } else if (branchSelection.right.includes(value)) {
-    activeBranchSide = "right";
     moveBranchItem(value, "bank");
   } else {
     moveBranchItem(value, activeBranchSide);
@@ -2024,6 +2022,8 @@ slideNode.addEventListener("pointerdown", (event) => {
   if (branchItem && !currentGame?.result && event.button === 0) {
     branchPointerDrag = {
       value: branchItem.dataset.branchValue,
+      sourceSide: branchItem.dataset.branchSide || "bank",
+      sourceIndex: branchItem.dataset.branchIndex === undefined ? null : Number(branchItem.dataset.branchIndex),
       startX: event.clientX,
       startY: event.clientY,
       pointerId: event.pointerId,
@@ -2227,7 +2227,12 @@ function finishBranchPointerDrag(event) {
   window.setTimeout(() => {
     suppressChainClick = false;
   }, 0);
-  if (!target) return;
+  if (!target) {
+    if (drag.sourceSide === "left" || drag.sourceSide === "right") {
+      moveBranchItem(drag.value, "bank");
+    }
+    return;
+  }
   moveBranchItem(drag.value, target.side, target.index ?? null);
 }
 
