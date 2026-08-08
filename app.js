@@ -24,7 +24,7 @@ let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
 let branchSelection = { left: [], right: [] };
 let activeBranchSide = "left";
-let selectedGameLevels = new Set(["easy", "medium", "hard"]);
+let selectedGameLevels = initialGameLevels();
 let gameProgress = {};
 let chainPointerDrag = null;
 let branchPointerDrag = null;
@@ -53,6 +53,17 @@ function initialSection() {
 function initialPresentationMode() {
   const params = new URLSearchParams(window.location.search);
   return params.get("play") === "full";
+}
+
+function initialGameLevels() {
+  const fallback = ["easy", "medium", "hard"];
+  try {
+    const saved = JSON.parse(window.localStorage.getItem("evol-game-levels") || "[]");
+    const levels = Array.isArray(saved) ? saved.filter((level) => fallback.includes(level)) : [];
+    return new Set(levels.length ? levels : fallback);
+  } catch {
+    return new Set(fallback);
+  }
 }
 
 function normalizeLanguage(value) {
@@ -690,13 +701,14 @@ function timelineGameMarkup(mode) {
   const question = currentGame.question;
   if (!question) return emptyGameMarkup();
   const event = question.event;
-  const options = currentGame.answers;
+  const options = timelineCurrentOptions();
+  const step = timelineCurrentStep();
 
   return `
     <section class="game-panel timeline-game-panel">
       <div class="game-question">
         <strong>${escapeHtml(question.prompt)}</strong>
-        <span>${escapeHtml(gameStatusText() || t("Выбери точку на шкале"))}</span>
+        <span>${escapeHtml(timelineGameStatusText())}</span>
       </div>
       <div class="timeline-challenge">
         <figure class="timeline-event-card">
@@ -711,7 +723,8 @@ function timelineGameMarkup(mode) {
           <span>${escapeHtml(event.gave)}</span>
         </div>
       </div>
-      <div class="timeline-answer-axis" aria-label="${escapeHtml(t("Шкала времени"))}">
+      ${timelineTrailMarkup()}
+      <div class="timeline-answer-axis timeline-step-${escapeHtml(step)}" aria-label="${escapeHtml(t("Шкала времени"))}">
         ${timelineAxisLabels()}
         <div class="timeline-answer-track">
           ${options.map((answer, answerIndex) => timelineAnswerButton(answer, answerIndex)).join("")}
@@ -724,19 +737,34 @@ function timelineGameMarkup(mode) {
 
 function timelineAnswerButton(answer, answerIndex) {
   const isAnswered = Boolean(currentGame.result);
-  const isCorrect = currentGame.correctValue === answer.value;
+  const isCorrect = timelineCorrectValue() === answer.value;
   const className = isAnswered ? (isCorrect ? "correct" : currentGame.chosen === answer.value ? "wrong" : "") : "";
+  const range = answer.type === "range";
+  const lane = range ? answerIndex % 4 : answerIndex % 3;
+  const left = range ? timelineGamePosition(answer.startMa) : timelineGamePosition(answer.timeMa);
+  const right = range ? timelineGamePosition(answer.endMa) : left;
+  const width = range ? Math.max(4, right - left) : 0;
   return `
     <button
-      class="timeline-answer ${className}"
+      class="timeline-answer ${range ? "range-answer" : "point-answer"} ${className}"
       type="button"
       data-game-answer="${escapeHtml(answer.value)}"
       data-focus-value="${escapeHtml(answer.value)}"
-      style="left: ${timelineGamePosition(answer.timeMa)}%; --lane: ${answerIndex % 3}"
+      style="${range ? `left: ${left}%; width: ${width}%` : `left: ${left}%`}; --lane: ${lane}"
       ${isAnswered ? "disabled" : ""}
     >
       <span>${escapeHtml(answer.label)}</span>
     </button>
+  `;
+}
+
+function timelineTrailMarkup() {
+  const selections = currentGame.timelineSelections || [];
+  if (!selections.length) return "";
+  return `
+    <div class="timeline-trail" aria-label="${escapeHtml(t("Выбранные шаги"))}">
+      ${selections.map((item) => `<span>${escapeHtml(timelineStepTitle(item.step))}: <strong>${escapeHtml(item.label)}</strong></span>`).join("")}
+    </div>
   `;
 }
 
@@ -851,6 +879,8 @@ function nextGameQuestion() {
     chosen: null,
     shuffled: question?.items ? shuffle(question.items) : [],
     phase: question?.phase,
+    timelineStep: gameModeId === "timeline" ? "era" : null,
+    timelineSelections: [],
   };
 }
 
@@ -1065,57 +1095,99 @@ function generatedTimelineQuestions() {
       level,
       prompt: t("Когда появилось новшество?"),
       event,
-      options: timelineOptionsForEvent(event, level),
-      answer: timelineAnswerValue(event, level),
       explanation: `${event.title}: ${timelineEventDate(event)}. ${event.gave}`,
     })),
   );
 }
 
-function timelineOptionsForEvent(event, level) {
-  if (level === "easy") {
-    return (games.timelineEras || []).map((era) => ({
-      value: era.id,
-      label: era.label,
-      timeMa: era.timeMa,
-    }));
-  }
-
-  if (level === "medium") {
-    return timelineNearbyOptions(games.timelinePeriods || [], event.periodId, 4).map((period) => ({
-      value: period.id,
-      label: period.label,
-      timeMa: period.timeMa,
-    }));
-  }
-
-  return timelineNearbyOptions(games.timelineEvents || [], event.id, 4).map((item) => ({
-    value: item.id,
-    label: timelineTimeLabel(item.timeMa),
-    timeMa: item.timeMa,
-  }));
+function timelineCurrentStep() {
+  return currentGame?.timelineStep || "era";
 }
 
-function timelineNearbyOptions(items, correctId, count) {
-  const correct = items.find((item) => item.id === correctId);
-  if (!correct) return items.slice(0, count);
-  const nearby = items
-    .filter((item) => item.id !== correctId)
-    .map((item) => ({ item, distance: timelineDistance(item.timeMa, correct.timeMa) }))
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, Math.max(0, count - 1))
-    .map(({ item }) => item);
-  return [correct, ...nearby].sort((a, b) => b.timeMa - a.timeMa);
+function timelineCurrentOptions() {
+  const question = currentGame?.question;
+  if (!question?.event) return [];
+  const step = timelineCurrentStep();
+  if (step === "period") return timelinePeriodOptions(question.event);
+  if (step === "date") return timelineDateOptions(question.event);
+  return timelineEraOptions();
 }
 
-function timelineAnswerValue(event, level) {
-  if (level === "easy") return event.eraId;
-  if (level === "medium") return event.periodId;
-  return event.id;
+function timelineEraOptions() {
+  return (games.timelineEras || []).map((era) => timelineRangeOption(era));
+}
+
+function timelinePeriodOptions(event) {
+  return timelinePeriodsForEvent(event).map((period) => timelineRangeOption(period));
+}
+
+function timelinePeriodsForEvent(event) {
+  return (games.timelinePeriods || []).filter((period) => period.parentId === event.eraId);
+}
+
+function timelineRangeOption(range) {
+  return {
+    type: "range",
+    value: range.id,
+    label: range.label,
+    startMa: range.startMa,
+    endMa: range.endMa,
+  };
+}
+
+function timelineDateOptions(event) {
+  const period = timelinePeriodById(event.periodId);
+  const startMa = period?.startMa ?? event.timeMa + 10;
+  const endMa = period?.endMa ?? Math.max(0, event.timeMa - 10);
+  const span = Math.max(1, startMa - endMa);
+  const candidates = [event.timeMa, event.timeMa + span * 0.22, event.timeMa - span * 0.22, startMa - span * 0.08, endMa + span * 0.12]
+    .map((timeMa) => Math.max(endMa, Math.min(startMa, timeMa)))
+    .map((timeMa) => Math.round(timeMa * 10) / 10);
+  const unique = [...new Set(candidates)].slice(0, 4);
+  while (unique.length < 4) {
+    const fallback = Math.round((startMa - (span * unique.length) / 4) * 10) / 10;
+    if (!unique.includes(fallback)) unique.push(fallback);
+    else break;
+  }
+  return unique
+    .sort((a, b) => b - a)
+    .map((timeMa) => ({
+      type: "point",
+      value: timelineDateValue(timeMa),
+      label: timelineTimeLabel(timeMa),
+      timeMa,
+    }));
+}
+
+function timelinePeriodById(periodId) {
+  return (games.timelinePeriods || []).find((period) => period.id === periodId);
+}
+
+function timelineCorrectValue() {
+  const event = currentGame?.question?.event;
+  if (!event) return "";
+  const step = timelineCurrentStep();
+  if (step === "period") return event.periodId;
+  if (step === "date") return timelineDateValue(event.timeMa);
+  return event.eraId;
+}
+
+function timelineDateValue(timeMa) {
+  return `date:${Math.round(timeMa * 10) / 10}`;
+}
+
+function timelineNextStep() {
+  const event = currentGame?.question?.event;
+  if (!event) return null;
+  const level = currentGame.question.level || "easy";
+  const step = timelineCurrentStep();
+  if (step === "era" && levelRank(level) >= levelRank("medium") && timelinePeriodsForEvent(event).length > 1) return "period";
+  if (step === "period" && levelRank(level) >= levelRank("hard")) return "date";
+  return null;
 }
 
 function timelineEventDate(event) {
-  const period = (games.timelinePeriods || []).find((item) => item.id === event.periodId)?.label;
+  const period = timelinePeriodById(event.periodId)?.label;
   return `${timelineTimeLabel(event.timeMa)}${period ? `, ${period}` : ""}`;
 }
 
@@ -1129,14 +1201,10 @@ function formatNumber(value) {
   return String(rounded).replace(".", language === "ru" ? "," : ".");
 }
 
-function timelineDistance(firstMa, secondMa) {
-  return Math.abs(Math.log10(firstMa + 1) - Math.log10(secondMa + 1));
-}
-
 function timelineGamePosition(timeMa) {
   const maxMa = 4000;
   const clamped = Math.max(0, Math.min(maxMa, Number(timeMa) || 0));
-  const oldness = Math.log10(clamped + 1) / Math.log10(maxMa + 1);
+  const oldness = Math.pow(clamped / maxMa, 0.35);
   return Math.round((100 - oldness * 100) * 10) / 10;
 }
 
@@ -1216,11 +1284,24 @@ function gameStatusText() {
   return `${t("Новые вопросы")}: ${done}/${total}`;
 }
 
+function timelineGameStatusText() {
+  const progress = gameStatusText();
+  const step = timelineStepTitle(timelineCurrentStep());
+  if (currentGame?.result) return progress;
+  return progress ? `${step} · ${progress}` : step;
+}
+
+function timelineStepTitle(step) {
+  if (step === "period") return t("Шаг 2: выбери период");
+  if (step === "date") return t("Шаг 3: выбери точнее внутри периода");
+  return t("Шаг 1: выбери большой отрезок");
+}
+
 function gameAnswers(modeId, question) {
   if (modeId === "ancestor") {
     return shuffle(question.options).map((option) => ({ value: option, label: option }));
   }
-  if (modeId === "timeline") return question.options;
+  if (modeId === "timeline") return [];
   if (modeId === "chain" || modeId === "branches") return [];
   return shuffle(question.pair).map((id) => ({ value: id, label: games.cards[id].name }));
 }
@@ -1228,17 +1309,58 @@ function gameAnswers(modeId, question) {
 function gameCorrectValue(modeId, question) {
   if (modeId === "chain") return question.items.join("|");
   if (modeId === "branches") return "";
-  if (modeId === "timeline") return question.answer;
+  if (modeId === "timeline") return "";
   return question.answer;
 }
 
 function chooseGameAnswer(value) {
   if (!currentGame || currentGame.result) return;
+  if (gameModeId === "timeline") {
+    chooseTimelineAnswer(value);
+    return;
+  }
   currentGame.chosen = value;
   currentGame.result = value === currentGame.correctValue ? "correct" : "wrong";
   rememberGameResult(currentGame);
   gameScore.total += 1;
   if (currentGame.result === "correct") gameScore.correct += 1;
+  preferredGameFocus = "[data-game-next]";
+  render();
+}
+
+function chooseTimelineAnswer(value) {
+  if (!currentGame?.question || currentGame.result) return;
+  const option = timelineCurrentOptions().find((item) => item.value === value);
+  const expected = timelineCorrectValue();
+  const step = timelineCurrentStep();
+  currentGame.chosen = value;
+  currentGame.timelineSelections = [
+    ...(currentGame.timelineSelections || []),
+    { step, value, label: option?.label || value, correct: value === expected },
+  ];
+
+  if (value !== expected) {
+    currentGame.result = "wrong";
+    rememberGameResult(currentGame);
+    gameScore.total += 1;
+    preferredGameFocus = "[data-game-next]";
+    render();
+    return;
+  }
+
+  const nextStep = timelineNextStep();
+  if (nextStep) {
+    currentGame.timelineStep = nextStep;
+    currentGame.chosen = null;
+    preferredGameFocus = ".timeline-answer";
+    render();
+    return;
+  }
+
+  currentGame.result = "correct";
+  rememberGameResult(currentGame);
+  gameScore.total += 1;
+  gameScore.correct += 1;
   preferredGameFocus = "[data-game-next]";
   render();
 }
@@ -1340,12 +1462,21 @@ function toggleGameLevel(levelId) {
   } else {
     selectedGameLevels.add(levelId);
   }
+  saveGameLevels();
   currentGame = null;
   chainSelection = [];
   branchSelection = { left: [], right: [] };
   activeBranchSide = "left";
   preferredGameFocus = `[data-game-level="${cssEscape(levelId)}"]`;
   render();
+}
+
+function saveGameLevels() {
+  try {
+    window.localStorage.setItem("evol-game-levels", JSON.stringify([...selectedGameLevels]));
+  } catch {
+    // The game still works if storage is unavailable.
+  }
 }
 
 function setPresentationMode(nextValue, requestFullscreen = false) {

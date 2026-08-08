@@ -38,6 +38,25 @@ function timePointSlide(point) {
 
 const slides = [
   {
+    kicker: "Живое / неживое",
+    title: "Мир первых клеток",
+    subtitle: "На ранней Земле появляются первые клетки. Они еще простые, без ядра: бактерии и археи начинают живую историю.",
+    improvement: "клетка и обмен веществ",
+    novelty: "живая клетка: оболочка, обмен веществ, копирование себя",
+    sideBranch: "неживая Земля: камни, вода, минералы, газы",
+    mainBranch: "первые клетки: бактерии и археи",
+    effect: "жизнь стала отдельной системой: она берет энергию, строит себя и оставляет потомков",
+    side: "Камни и минералы не размножаются и не строят себя заново; они остаются неживой средой для жизни.",
+    caption: "Главный герой: первые клетки",
+    scene: "cell",
+    marker: "microbe",
+    mainPhoto: { src: "assets/photos/bacteria.jpg", label: "наш путь начинается среди первых клеток" },
+    sidePhoto: { src: "assets/photos/log-stromatolites.jpg", label: "следы древней бактериальной жизни" },
+    timeMa: 3800,
+    timeLabel: "~3,8 млрд лет назад",
+    colors: ["#d8ead6", "#eadcc4"],
+  },
+  {
     kicker: "Старт большой линии",
     title: "Клетка с ядром",
     subtitle: "Среди бактерий и архей появляется эукариотическая клетка: внутри есть ядро и маленькие энергетические станции.",
@@ -489,7 +508,7 @@ const synapsidSlides = [
     side: "Шимпанзе и гориллы не предки людей, а близкие современные родственники.",
     caption: "Наш путь: люди",
     scene: "human",
-    mainPhoto: { src: "assets/photos/human.jpg", label: "наш путь: люди" },
+    mainPhoto: { src: "assets/photos/australopithecus.jpg", label: "наш путь: австралопитеки и ранние люди" },
     sidePhoto: { src: "assets/photos/chimpanzee.jpg", label: "боковая ветка: другие человекообразные" },
     timeMa: 7,
     timeLabel: "~7 млн лет назад",
@@ -698,7 +717,38 @@ const diapsidSlides = [
   },
 ];
 
+const synapsidMarkers = [
+  "split",
+  "jaw",
+  "mammal",
+  "mammal",
+  "egg",
+  "mammal",
+  "monkey",
+  "monkey",
+  "ape",
+  "footprint",
+];
+
+const diapsidMarkers = [
+  "skull",
+  "split",
+  "limb",
+  "split",
+  "dino",
+  "dino",
+  "fork",
+  "dino",
+  "bird",
+  "bird",
+  "bird",
+];
+
 const mainSuccess = [
+  {
+    main: "Живые клетки оказались новой силой: они размножаются, меняются и постепенно создают всю биосферу.",
+    side: "Неживая Земля важна как сцена и сырье: вода, камни и минералы дают среду, но сами не эволюционируют как жизнь.",
+  },
   {
     main: "Эукариоты сильны сложностью: крупные клетки дали водоросли, грибы, растения и животных.",
     side: "Прокариоты сильны числом, биомассой и химическим разнообразием; они живут почти везде.",
@@ -1171,7 +1221,7 @@ const powerTwoPoints = [
     mainBranch: "линия человека: австралопитеки и близкие формы",
     sideBranch: "мир вокруг: африканские мозаичные ландшафты, хищники, саванны и леса",
     effect: "руки чаще свободны для переноски, пищи и простых предметов",
-    photo: "assets/photos/human.jpg",
+    photo: "assets/photos/australopithecus.jpg",
     label: "прямохождение в человеческой линии",
     marker: "footprint",
     symbolLabel: "двуногое тело",
@@ -1199,7 +1249,7 @@ const powerTwoPoints = [
     mainBranch: "линия человека: Homo erectus и близкие формы",
     sideBranch: "мир вокруг: ледниковые циклы, крупная фауна, новые ландшафты",
     effect: "знания о пище, огне, местах и камне передаются между поколениями",
-    photo: "assets/photos/human.jpg",
+    photo: "assets/photos/homo-erectus.jpg",
     label: "ранние люди расселяются",
     marker: "migration",
     symbolLabel: "расселение Homo erectus",
@@ -1227,7 +1277,7 @@ const powerTwoPoints = [
     mainBranch: "линия человека: архаичные Homo и предки Homo sapiens",
     sideBranch: "мир вокруг: будущие неандертальцы и денисовцы расходятся рядом",
     effect: "человеческая история становится сетью родственных линий, а не одной простой лестницей",
-    photo: "assets/photos/primate.jpg",
+    photo: "assets/photos/neanderthal.jpg",
     label: "несколько родственных человеческих линий",
     marker: "family",
     symbolLabel: "разные человеческие линии",
@@ -1929,7 +1979,7 @@ const arthropodSlides = [
     marker: "metamorphosis",
     symbolLabel: "личинка → взрослый",
     mainPhoto: { src: "assets/photos/local-butterfly.jpg", label: "полное превращение: бабочка" },
-    sidePhoto: { src: "assets/photos/arthropod-ladybird.jpg", label: "личинка жука: другая форма тела" },
+    sidePhoto: { src: "assets/photos/arthropod-ladybird-larva.jpg", label: "личинка жука: другая форма тела" },
     timeMa: 350,
     timeLabel: "~350 млн лет назад",
     colors: ["#ead8c1", "#d9e7d5"],
@@ -2032,7 +2082,7 @@ const decks = [
       { ma: 541, label: "541 млн" },
       { ma: 320, label: "320 млн" },
     ],
-    slides: slides.slice(0, 13).map((slide, i) => ({ ...slide, success: mainSuccess[i] })),
+    slides: slides.slice(0, 14).map((slide, i) => ({ ...slide, success: mainSuccess[i] })),
     showTimelineMarkers: true,
   },
   {
@@ -2169,7 +2219,12 @@ const decks = [
       { ma: 66, label: "66" },
       { ma: 7, label: "7 млн" },
     ],
-    slides: synapsidSlides.map((slide, i) => ({ ...slide, success: synapsidSuccess[i] })),
+    slides: synapsidSlides.map((slide, i) => ({
+      ...slide,
+      marker: slide.marker || synapsidMarkers[i] || "fork",
+      success: synapsidSuccess[i],
+    })),
+    showTimelineMarkers: true,
   },
   {
     id: "diapsids",
@@ -2197,7 +2252,12 @@ const decks = [
       { ma: 150, label: "150" },
       { ma: 66, label: "66 млн" },
     ],
-    slides: diapsidSlides.map((slide, i) => ({ ...slide, success: diapsidSuccess[i] })),
+    slides: diapsidSlides.map((slide, i) => ({
+      ...slide,
+      marker: slide.marker || diapsidMarkers[i] || "fork",
+      success: diapsidSuccess[i],
+    })),
+    showTimelineMarkers: true,
   },
   {
     id: "log10",

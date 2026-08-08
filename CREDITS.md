@@ -46,6 +46,9 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `chimpanzee.jpg` | [Chimpanzee-Head.jpg](https://commons.wikimedia.org/wiki/File:Chimpanzee-Head.jpg) | see file page | see file page |
 | `primate.jpg` | [Lemuroidea.jpg](https://commons.wikimedia.org/wiki/File:Lemuroidea.jpg) | Composite image, derivative work by Maky | CC BY-SA 3.0 |
 | `human.jpg` | [Akha cropped hires.JPG](https://commons.wikimedia.org/wiki/File:Akha_cropped_hires.JPG) | Weltenbummler84 | CC BY-SA 2.0 de |
+| `australopithecus.jpg` | [Australopithecus afarensis.png](https://commons.wikimedia.org/wiki/File:Australopithecus_afarensis.png) | see file page | see file page |
+| `homo-erectus.jpg` | [Homo erectus reconstruction, Natural History Museum, London.jpg](https://commons.wikimedia.org/wiki/File:Homo_erectus_reconstruction,_Natural_History_Museum,_London.jpg) | see file page | see file page |
+| `neanderthal.jpg` | [Neanderthal man reconstruction, Natural History Museum, London.jpg](https://commons.wikimedia.org/wiki/File:Neanderthal_man_reconstruction,_Natural_History_Museum,_London.jpg) | see file page | see file page |
 | `log-milky-way.jpg` | [Center of the Milky Way Galaxy IV - Composite.jpg](https://commons.wikimedia.org/wiki/File:Center_of_the_Milky_Way_Galaxy_IV_%E2%80%93_Composite.jpg) | see file page | see file page |
 | `log-stromatolites.jpg` | [Shark Bay stromatolites.jpg](https://commons.wikimedia.org/wiki/File:Shark_Bay_stromatolites.jpg) | see file page | see file page |
 | `log-stone-tool.jpg` | [Oldowan Core or Chopper - Early Stone Tool Technology.jpg](https://commons.wikimedia.org/wiki/File:Oldowan_Core_or_Chopper_%E2%80%94_Early_Stone_Tool_Technology.jpg) | see file page | see file page |
@@ -85,13 +88,14 @@ All photos are stored locally in `assets/photos`. Sources are Wikimedia Commons 
 | `arthropod-springtail.jpg` | [Plump Springtail](https://commons.wikimedia.org/wiki/File:Plump_Springtail_(Poduromorpha)_-_H%C3%A5,_Norway_2021-08-08.jpg) | see file page | see file page |
 | `arthropod-dragonfly.jpg` | [Hairy dragonfly male close up](https://commons.wikimedia.org/wiki/File:Hairy_dragonfly_(Brachytron_pratense)_male_close_up.jpg) | see file page | see file page |
 | `arthropod-grasshopper.jpg` | [Red-legged grasshopper](https://commons.wikimedia.org/wiki/File:Red-legged_grasshopper_(72625).jpg) | see file page | see file page |
-| `arthropod-ladybird.jpg` | [Ladybird beetle larva](https://commons.wikimedia.org/wiki/File:Ladybird_beetle_larva_on_a_leaf,_by_baby-bear.org.jpg) | see file page | see file page |
+| `arthropod-ladybird.jpg` | [Seven-spot ladybird 1.jpg](https://commons.wikimedia.org/wiki/File:Seven-spot_ladybird_1.jpg) | see file page | see file page |
+| `arthropod-ladybird-larva.jpg` | [Coccinella septempunctata (larva).jpg](https://commons.wikimedia.org/wiki/File:Coccinella_septempunctata_(larva).jpg) | see file page | see file page |
 | `arthropod-fly.jpg` | [Sarcophagid fly portrait](https://commons.wikimedia.org/wiki/File:Sarcophagid_fly_Portrait.jpg) | see file page | see file page |
 | `arthropod-silverfish.jpg` | [Long-tailed silverfish](https://commons.wikimedia.org/wiki/File:Long-tailed_Silverfish_(Ctenolepisma_longicaudata)_-_Oslo,_Norway_2020-11-27.jpg) | see file page | see file page |
 | `arthropod-peacock-butterfly.jpg` | [Peacock butterfly](https://commons.wikimedia.org/wiki/File:Peacock_butterfly_(Aglais_io)_2.jpg) | see file page | see file page |
 | `arthropod-wasp.jpg` | [Wasp colony](https://commons.wikimedia.org/wiki/File:Wasp_colony.jpg) | see file page | see file page |
 | `squirrel.jpg` | [Squirrel posing.jpg](https://commons.wikimedia.org/wiki/File:Squirrel_posing.jpg) | see file page | see file page |
-| `rabbit.jpg` | [Rabbit - Hong Kong](https://commons.wikimedia.org/wiki/File:Rabbit_-_Hong_Kong_-_20091004_6729.jpg) | see file page | see file page |
+| `rabbit.jpg` | [Oryctolagus cuniculus Rcdo.jpg](https://commons.wikimedia.org/wiki/File:Oryctolagus_cuniculus_Rcdo.jpg) | see file page | see file page |
 | `baboon.jpg` | [Olive baboon with juvenile](https://commons.wikimedia.org/wiki/File:Olive_baboon_(Papio_anubis)_with_juvenile.jpg) | see file page | see file page |
 | `orangutan.jpg` | [Orangutan Kalimantan.jpg](https://commons.wikimedia.org/wiki/File:Orangutan_Kalimantan.jpg) | see file page | see file page |
 | `alligator.jpg` | [Albino Alligator 2008.jpg](https://commons.wikimedia.org/wiki/File:Albino_Alligator_2008.jpg) | see file page | see file page |
