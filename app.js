@@ -436,7 +436,7 @@ function photoCard(photo, className) {
   if (!photo) return "";
   return `
     <figure class="photo-card ${className} ${photo.silhouette ? "silhouette-photo" : ""}">
-      <img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.label)}" loading="eager" />
+      <img src="${escapeHtml(photo.src)}" alt="${escapeHtml(photo.label)}" loading="eager" decoding="async" />
       <figcaption>${escapeHtml(photo.label)}</figcaption>
     </figure>
   `;
@@ -702,7 +702,7 @@ function creatureChoiceCard(card, question = null) {
   if (answerable && value) {
     return `
       <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}">
-        <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" />
+        <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
         <span>
           <strong>${escapeHtml(card.name)}</strong>
           <em>${escapeHtml(card.note)}</em>
@@ -712,7 +712,7 @@ function creatureChoiceCard(card, question = null) {
   }
   return `
     <figure class="game-creature-card">
-      <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" />
+      <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
       <figcaption>
         <strong>${escapeHtml(card.name)}</strong>
         <span>${escapeHtml(card.note)}</span>
