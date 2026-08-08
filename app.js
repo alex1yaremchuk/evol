@@ -16,9 +16,9 @@ let language = initialLanguage();
 let decks = localizeDecks(sourceDecks);
 let games = localizeGames(sourceGames);
 let section = initialSection();
-let deckIndex = 0;
-let index = 0;
-let gameModeId = "closer";
+let deckIndex = initialDeckIndex();
+let index = initialSlideIndex(deckIndex);
+let gameModeId = initialGameMode();
 let currentGame = null;
 let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
@@ -47,7 +47,14 @@ function initialLanguage() {
 
 function initialSection() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("section") === "games" ? "games" : "slides";
+  if (params.get("section") === "games") return "games";
+  if (params.has("deck") || params.has("slide")) return "slides";
+
+  try {
+    return window.localStorage.getItem("evol-section") === "games" ? "games" : "slides";
+  } catch {
+    return "slides";
+  }
 }
 
 function initialPresentationMode() {
@@ -64,6 +71,61 @@ function initialGameLevels() {
   } catch {
     return new Set(fallback);
   }
+}
+
+function initialDeckIndex() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = Number(params.get("deck"));
+  if (Number.isInteger(fromUrl)) return clampIndex(fromUrl, sourceDecks.length);
+
+  const saved = savedUiState();
+  const fromSavedId = sourceDecks.findIndex((deck) => deck.id === saved.deckId);
+  if (fromSavedId !== -1) return fromSavedId;
+  return clampIndex(Number(saved.deckIndex), sourceDecks.length);
+}
+
+function initialSlideIndex(nextDeckIndex) {
+  const deck = sourceDecks[nextDeckIndex] || sourceDecks[0];
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = Number(params.get("slide"));
+  if (Number.isInteger(fromUrl)) return clampIndex(fromUrl, deck.slides.length);
+
+  const saved = savedUiState();
+  const savedSlides = saved.slideByDeck || {};
+  return clampIndex(Number(savedSlides[deck.id] ?? saved.slideIndex), deck.slides.length);
+}
+
+function initialGameMode() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("game");
+  if (isGameModeId(fromUrl)) return fromUrl;
+
+  const saved = savedUiState();
+  return isGameModeId(saved.gameModeId) ? saved.gameModeId : "closer";
+}
+
+function savedUiState() {
+  try {
+    return JSON.parse(window.localStorage.getItem("evol-ui-state") || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function clampIndex(value, length) {
+  if (!Number.isFinite(value) || length <= 0) return 0;
+  return Math.max(0, Math.min(length - 1, Math.trunc(value)));
+}
+
+function isGameModeId(value) {
+  return Boolean(value && sourceGames.modes.some((mode) => mode.id === value));
+}
+
+function savedSlideIndexForDeck(nextDeckIndex) {
+  const deck = sourceDecks[nextDeckIndex] || sourceDecks[0];
+  const saved = savedUiState();
+  const savedSlides = saved.slideByDeck || {};
+  return clampIndex(Number(savedSlides[deck.id] ?? 0), deck.slides.length);
 }
 
 function normalizeLanguage(value) {
@@ -871,6 +933,7 @@ function setGameMode(modeId) {
   chainSelection = [];
   branchSelection = { left: [], right: [] };
   activeBranchSide = "left";
+  updateSectionUrl();
   preferredGameFocus = presentationMode ? gameQuestionFocusSelector() : "[data-game-mode].active";
   render();
 }
@@ -1503,6 +1566,7 @@ function toggleGameLevel(levelId) {
   chainSelection = [];
   branchSelection = { left: [], right: [] };
   activeBranchSide = "left";
+  updateSectionUrl();
   preferredGameFocus = `[data-game-level="${cssEscape(levelId)}"]`;
   render();
 }
@@ -2146,15 +2210,46 @@ function updateSectionUrl() {
   url.searchParams.set("lang", language);
   if (section === "games") {
     url.searchParams.set("section", "games");
+    url.searchParams.set("game", gameModeId);
+    url.searchParams.delete("deck");
+    url.searchParams.delete("slide");
   } else {
     url.searchParams.delete("section");
+    url.searchParams.delete("game");
+    url.searchParams.set("deck", String(deckIndex));
+    url.searchParams.set("slide", String(index));
   }
   if (section === "games" && presentationMode) {
     url.searchParams.set("play", "full");
   } else {
     url.searchParams.delete("play");
   }
+  saveUiState();
   window.history.replaceState({}, "", url);
+}
+
+function saveUiState() {
+  try {
+    const previous = savedUiState();
+    const slideByDeck = { ...(previous.slideByDeck || {}) };
+    const activeDeck = decks[deckIndex];
+    if (activeDeck) slideByDeck[activeDeck.id] = index;
+    window.localStorage.setItem("evol-section", section);
+    window.localStorage.setItem(
+      "evol-ui-state",
+      JSON.stringify({
+        section,
+        deckIndex,
+        deckId: activeDeck?.id || "",
+        slideIndex: index,
+        slideByDeck,
+        gameModeId,
+        presentationMode,
+      }),
+    );
+  } catch {
+    // Navigation still works if storage is unavailable.
+  }
 }
 
 function go(delta) {
@@ -2170,6 +2265,7 @@ function go(delta) {
     return;
   }
   index = Math.max(0, Math.min(deck.slides.length - 1, next));
+  updateSectionUrl();
   render();
 }
 
@@ -2192,7 +2288,8 @@ schemeNavNode.addEventListener("click", (event) => {
 
   const button = event.target.closest("[data-deck]");
   if (!button) return;
-  setDeck(Number(button.dataset.deck), 0);
+  const nextDeckIndex = Number(button.dataset.deck);
+  setDeck(nextDeckIndex, savedSlideIndexForDeck(nextDeckIndex));
 });
 
 languageButtons.forEach((button) => {
