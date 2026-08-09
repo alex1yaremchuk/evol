@@ -1255,6 +1255,65 @@ window.EVOL_GAMES = {
     },
   },
 
+  filters: {
+    lineOptions: [
+      {
+        id: "all",
+        title: "вся жизнь",
+        description: "без ограничения по веткам",
+      },
+      {
+        id: "human",
+        title: "линия к человеку",
+        description: "позвоночные, синапсиды, млекопитающие и приматы",
+        nodes: ["хордовые", "черепные", "челюстноротые", "костные позвоночные", "лопастеперые", "четвероногие", "амниоты", "синапсиды", "млекопитающие", "звери", "плацентарные", "приматы", "обезьяны", "человекообразные"],
+        eventIds: ["chordates", "vertebrate-skull", "jaws", "bony-vertebrates", "lobe-fins", "tetrapod-limbs", "amniotic-egg", "synapsid-skull", "mammals", "placentals", "primates", "apes", "hominins", "stone-tools", "controlled-fire", "homo-sapiens", "symbolic-art", "agriculture"],
+      },
+      {
+        id: "synapsids",
+        title: "синапсиды",
+        description: "ветка к млекопитающим",
+        nodes: ["синапсиды", "терапсиды", "цинодонты", "млекопитающие формы", "млекопитающие", "звери", "плацентарные", "сумчатые", "однопроходные"],
+        eventIds: ["synapsid-skull", "mammals", "placentals", "bat-flight", "whales", "primates", "apes", "hominins"],
+      },
+      {
+        id: "diapsids",
+        title: "диапсиды и птицы",
+        description: "завропсиды, архозавры, динозавры, птицы",
+        nodes: ["завропсиды", "лепидозавры", "архозавры", "псевдозухии", "авеметатарзалии", "птерозавры", "динозавры", "тероподы", "птицы"],
+        eventIds: ["diapsid-skull", "archosaurs", "dinosaurs", "pterosaur-flight", "theropod-feathers", "birds", "modern-birds"],
+      },
+      {
+        id: "plants",
+        title: "растения",
+        description: "водоросли, наземные растения, семена и цветы",
+        nodes: ["архепластиды", "зеленые растения", "стрептофиты", "наземные растения", "сосудистые растения", "семенные растения", "цветковые"],
+        eventIds: ["chloroplasts", "multicellular-algae", "land-plants", "vascular-plants", "seeds", "flowers", "grasses"],
+      },
+      {
+        id: "arthropods",
+        title: "членистоногие",
+        description: "насекомые, пауки, раки и близкие ветки",
+        nodes: ["линяющие", "панартроподы", "членистоногие", "шестиногие", "насекомые", "хелицеровые", "ракообразные"],
+        eventIds: ["arthropods", "terrestrial-arthropods", "insects", "insect-wings", "complete-metamorphosis", "social-insects"],
+      },
+      {
+        id: "vertebrates",
+        title: "позвоночные",
+        description: "рыбы, амфибии, рептилии, птицы и млекопитающие",
+        nodes: ["хордовые", "черепные", "челюстноротые", "костные позвоночные", "лучеперые", "лопастеперые", "четвероногие", "амниоты"],
+        eventIds: ["chordates", "vertebrate-skull", "jaws", "bony-vertebrates", "lobe-fins", "tetrapod-limbs", "amniotic-egg"],
+      },
+      {
+        id: "local",
+        title: "живое рядом",
+        description: "то, что легче встретить рядом с домом",
+        cardIds: ["bacteria", "amoeba", "mushroom", "oak", "moss", "pine", "fern", "horsetail", "grass", "earthworm", "slug", "bee", "ant", "butterfly", "mosquito", "dragonfly", "grasshopper", "ladybird", "wasp", "fly", "springtail", "silverfish", "spider", "crayfish", "lamprey", "perch", "frog", "lizard", "snake", "sparrow", "raven", "mouse", "rabbit", "squirrel", "bat", "human"],
+        eventIds: ["prokaryotic-cells", "eukaryotic-cell", "chloroplasts", "multicellular-animals", "bilateria", "land-plants", "terrestrial-arthropods", "insects", "tetrapod-limbs", "flowers", "social-insects", "grasses", "bat-flight", "homo-sapiens", "agriculture"],
+      },
+    ],
+  },
+
   modes: [
     {
       id: "closer",

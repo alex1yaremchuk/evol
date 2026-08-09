@@ -723,7 +723,7 @@ button {
 .game-title {
   margin: 0.12rem 0 0;
   color: #0f1d2b;
-  font-size: clamp(1.9rem, 4.1vw, 3.55rem);
+  font-size: clamp(1.8rem, 3.4vw, 3rem);
   line-height: 0.98;
   letter-spacing: 0;
 }
@@ -759,8 +759,9 @@ button {
 
 .game-modes {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.45rem;
-  overflow-x: auto;
+  overflow-x: visible;
   padding-bottom: 0.15rem;
   scrollbar-width: none;
 }
@@ -772,6 +773,7 @@ button {
 .game-mode-button,
 .game-level-button,
 .game-fullscreen-button,
+.game-settings-button,
 .game-answer,
 .chain-button,
 .game-next {
@@ -783,15 +785,17 @@ button {
   font-weight: 840;
 }
 
-.game-fullscreen-button {
+.game-fullscreen-button,
+.game-settings-button {
   min-height: 2.35rem;
   padding: 0.42rem 0.7rem;
 }
 
 .game-mode-button {
   flex: 0 0 auto;
-  min-height: 2.35rem;
-  padding: 0.42rem 0.7rem;
+  min-height: 2.2rem;
+  padding: 0.36rem 0.62rem;
+  font-size: 0.92rem;
 }
 
 .game-mode-button.active {
@@ -824,6 +828,20 @@ button {
 .game-level-button.active {
   background: rgba(229, 111, 93, 0.92);
   color: #fff;
+}
+
+.game-filter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 760;
+}
+
+.game-filter-summary strong {
+  color: #26323c;
+  font-weight: 900;
 }
 
 .game-panel {
@@ -1315,6 +1333,139 @@ button {
   line-height: 1.25;
 }
 
+.game-settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.8rem, 3vw, 2rem);
+  background: rgba(15, 29, 43, 0.34);
+  backdrop-filter: blur(3px);
+}
+
+.game-settings-dialog {
+  display: grid;
+  gap: 0.85rem;
+  width: min(100%, 46rem);
+  max-height: min(88svh, 48rem);
+  overflow: auto;
+  padding: 0.95rem;
+  border: 1px solid rgba(24, 33, 43, 0.18);
+  border-radius: 0.75rem;
+  background: rgba(250, 249, 239, 0.98);
+  box-shadow: 0 1.4rem 4rem rgba(15, 29, 43, 0.28);
+}
+
+.game-settings-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.game-settings-header div,
+.game-settings-section {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.game-settings-header strong {
+  color: #0f1d2b;
+  font-size: 1.18rem;
+  font-weight: 930;
+}
+
+.game-settings-header span,
+.game-settings-section p,
+.game-settings-section > span,
+.game-settings-section label {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 760;
+  line-height: 1.25;
+}
+
+.game-settings-close {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.7);
+  color: #26323c;
+  cursor: pointer;
+  font-size: 1.45rem;
+  font-weight: 820;
+}
+
+.game-period-select {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.42rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: #26323c;
+  font: inherit;
+  font-weight: 820;
+}
+
+.game-line-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+.game-line-filter {
+  display: grid;
+  gap: 0.18rem;
+  min-height: 4.1rem;
+  padding: 0.55rem 0.62rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.58);
+  color: #26323c;
+  cursor: pointer;
+  text-align: left;
+}
+
+.game-line-filter.active {
+  border-color: rgba(36, 125, 116, 0.48);
+  background: rgba(213, 234, 211, 0.86);
+}
+
+.game-line-filter strong {
+  font-size: 0.92rem;
+  font-weight: 920;
+}
+
+.game-line-filter span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 710;
+  line-height: 1.18;
+}
+
+.game-settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.game-settings-total {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 760;
+}
+
 body.game-presentation {
   overflow: hidden;
 }
@@ -1347,6 +1498,11 @@ body.game-presentation .game-score,
 body.game-presentation .game-fullscreen-button {
   min-height: 2.8rem;
   font-size: 1rem;
+}
+
+body.game-presentation .game-settings-button,
+body.game-presentation .game-filter-summary {
+  display: none;
 }
 
 body.game-presentation .game-panel {
@@ -1626,7 +1782,9 @@ svg .bone {
   }
 
   .game-modes {
+    flex-wrap: nowrap;
     gap: 0.32rem;
+    overflow-x: auto;
   }
 
   .game-mode-button {
@@ -2117,6 +2275,12 @@ svg .bone {
     justify-content: space-between;
   }
 
+  .game-settings-button {
+    min-height: 2rem;
+    padding: 0.3rem 0.48rem;
+    font-size: 0.74rem;
+  }
+
   .game-title {
     font-size: 2.05rem;
     line-height: 1.02;
@@ -2129,7 +2293,9 @@ svg .bone {
   }
 
   .game-modes {
+    flex-wrap: nowrap;
     gap: 0.34rem;
+    overflow-x: auto;
     margin-inline: -0.82rem;
     padding: 0 0.82rem 0.12rem;
   }
@@ -2149,6 +2315,25 @@ svg .bone {
     min-height: 1.7rem;
     padding: 0.2rem 0.44rem;
     font-size: 0.72rem;
+  }
+
+  .game-filter-summary {
+    gap: 0.28rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .game-settings-dialog {
+    max-height: 92svh;
+    padding: 0.72rem;
+  }
+
+  .game-line-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .game-line-filter {
+    min-height: 3.2rem;
+    padding: 0.48rem 0.55rem;
   }
 
   .game-panel {

@@ -25,6 +25,8 @@ let chainSelection = [];
 let branchSelection = { left: [], right: [] };
 let activeBranchSide = "left";
 let selectedGameLevels = initialGameLevels();
+let gameFilters = initialGameFilters();
+let gameSettingsOpen = false;
 let gameProgress = {};
 let chainPointerDrag = null;
 let branchPointerDrag = null;
@@ -70,6 +72,21 @@ function initialGameLevels() {
     return new Set(levels.length ? levels : fallback);
   } catch {
     return new Set(fallback);
+  }
+}
+
+function initialGameFilters() {
+  const fallback = { periodId: "all", lineIds: ["all"] };
+  try {
+    const saved = JSON.parse(window.localStorage.getItem("evol-game-filters") || "{}") || {};
+    const periodId = isPeriodFilterId(saved.periodId) ? saved.periodId : fallback.periodId;
+    const lineIds = Array.isArray(saved.lineIds) ? saved.lineIds.filter(isLineFilterId) : [];
+    return {
+      periodId,
+      lineIds: lineIds.length ? normalizeLineFilterIds(lineIds) : fallback.lineIds,
+    };
+  } catch {
+    return fallback;
   }
 }
 
@@ -119,6 +136,25 @@ function clampIndex(value, length) {
 
 function isGameModeId(value) {
   return Boolean(value && sourceGames.modes.some((mode) => mode.id === value));
+}
+
+function isPeriodFilterId(value) {
+  if (value === "all") return true;
+  if (typeof value !== "string") return false;
+  const [kind, id] = value.split(":");
+  if (kind === "era") return sourceGames.timelineEras.some((item) => item.id === id);
+  if (kind === "period") return sourceGames.timelinePeriods.some((item) => item.id === id);
+  return false;
+}
+
+function isLineFilterId(value) {
+  return Boolean(value && sourceGames.filters?.lineOptions?.some((item) => item.id === value));
+}
+
+function normalizeLineFilterIds(lineIds) {
+  const unique = [...new Set(lineIds.filter(isLineFilterId))];
+  if (!unique.length || unique.includes("all")) return ["all"];
+  return unique;
 }
 
 function savedSlideIndexForDeck(nextDeckIndex) {
@@ -605,6 +641,9 @@ function renderGames() {
           <button class="game-fullscreen-button" type="button" data-game-fullscreen>
             ${escapeHtml(presentationMode ? t("Обычный режим") : t("Во весь экран"))}
           </button>
+          <button class="game-settings-button" type="button" data-game-settings-open aria-expanded="${gameSettingsOpen}">
+            ${escapeHtml(t("Настройки"))}
+          </button>
           <div class="game-score" aria-label="${escapeHtml(t("Счет"))}">
             <strong>${gameScore.correct}</strong><span>/</span><strong>${gameScore.total}</strong>
           </div>
@@ -617,10 +656,84 @@ function renderGames() {
         <span>${escapeHtml(t("Уровень"))}</span>
         ${levelButtons}
       </div>
+      <div class="game-filter-summary">${gameFilterSummaryMarkup()}</div>
       ${gameMarkup(mode)}
+      ${gameSettingsOpen ? gameSettingsMarkup() : ""}
     </article>
   `;
   updateGameFocus();
+}
+
+function gameFilterSummaryMarkup() {
+  const period = periodFilterLabel(gameFilters.periodId);
+  const lines = selectedLineFilters().map((item) => item.title).join(", ");
+  const count = eligibleQuestions().length;
+  return `
+    <span>${escapeHtml(t("Фокус"))}: <strong>${escapeHtml(period)}</strong> · <strong>${escapeHtml(lines)}</strong></span>
+    <span>${escapeHtml(t("вопросов"))}: <strong>${count}</strong></span>
+  `;
+}
+
+function gameSettingsMarkup() {
+  const periodOptions = gamePeriodOptions();
+  const lineOptions = games.filters?.lineOptions || [];
+  return `
+    <div class="game-settings-overlay" data-game-settings-backdrop>
+      <section class="game-settings-dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(t("Настройки игр"))}">
+        <header class="game-settings-header">
+          <div>
+            <strong>${escapeHtml(t("Настройки игр"))}</strong>
+            <span>${escapeHtml(t("Выбери время и ветки для тренировки"))}</span>
+          </div>
+          <button class="game-settings-close" type="button" data-game-settings-close aria-label="${escapeHtml(t("Закрыть"))}">×</button>
+        </header>
+        <div class="game-settings-section">
+          <label for="game-period-filter">${escapeHtml(t("Период"))}</label>
+          <select id="game-period-filter" class="game-period-select" data-game-period-filter>
+            ${periodOptions.map((option) => `<option value="${escapeHtml(option.id)}" ${option.id === gameFilters.periodId ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+          </select>
+          <p>${escapeHtml(t("Период точнее всего работает в играх про время; в карточных играх он оставляет линии, чьи признаки появились в это окно."))}</p>
+        </div>
+        <div class="game-settings-section">
+          <span>${escapeHtml(t("Линии"))}</span>
+          <div class="game-line-filters">
+            ${lineOptions.map((line) => gameLineFilterButton(line)).join("")}
+          </div>
+        </div>
+        <footer class="game-settings-footer">
+          <div class="game-settings-total">${gameFilterSummaryMarkup()}</div>
+          <button class="game-next" type="button" data-game-settings-reset>${escapeHtml(t("Сбросить"))}</button>
+          <button class="game-next chain-check" type="button" data-game-settings-close>${escapeHtml(t("Готово"))}</button>
+        </footer>
+      </section>
+    </div>
+  `;
+}
+
+function gameLineFilterButton(line) {
+  const active = gameFilters.lineIds.includes(line.id);
+  return `
+    <button class="game-line-filter ${active ? "active" : ""}" type="button" data-game-line-filter="${escapeHtml(line.id)}" aria-pressed="${active}">
+      <strong>${escapeHtml(line.title)}</strong>
+      <span>${escapeHtml(line.description || "")}</span>
+    </button>
+  `;
+}
+
+function gamePeriodOptions() {
+  return [
+    { id: "all", label: t("все время") },
+    ...(games.timelineEras || []).map((era) => ({ id: `era:${era.id}`, label: `${t("эра")}: ${era.label}` })),
+    ...(games.timelinePeriods || []).map((period) => ({ id: `period:${period.id}`, label: `${t("период")}: ${period.label}` })),
+  ];
+}
+
+function periodFilterLabel(periodId) {
+  if (periodId === "all") return t("все время");
+  const [kind, id] = String(periodId).split(":");
+  if (kind === "era") return (games.timelineEras || []).find((item) => item.id === id)?.label || t("все время");
+  if (kind === "period") return (games.timelinePeriods || []).find((item) => item.id === id)?.label || t("все время");
+  return t("все время");
 }
 
 function gameMarkup(mode) {
@@ -867,7 +980,7 @@ function emptyGameMarkup() {
     <section class="game-panel">
       <div class="game-question">
         <strong>${escapeHtml(t("Нет вопросов для выбранных уровней"))}</strong>
-        <span>${escapeHtml(t("Выбери другой уровень"))}</span>
+        <span>${escapeHtml(t("Выбери другой уровень или расширь фильтры"))}</span>
       </div>
     </section>
   `;
@@ -880,13 +993,14 @@ function creatureChoiceCard(card, question = null) {
   const isCorrect = isAnswered && value && currentGame.correctValue === value;
   const isWrongChoice = isAnswered && value && currentGame.chosen === value && currentGame.result === "wrong";
   const resultClass = isCorrect ? "correct" : isWrongChoice ? "wrong" : "";
+  const showNote = gameModeId !== "odd" || isAnswered;
   if (answerable && value) {
     return `
       <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}">
         <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
         <span>
           <strong>${escapeHtml(card.name)}</strong>
-          <em>${escapeHtml(card.note)}</em>
+          ${showNote ? `<em>${escapeHtml(card.note)}</em>` : ""}
         </span>
       </button>
     `;
@@ -896,7 +1010,7 @@ function creatureChoiceCard(card, question = null) {
       <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
       <figcaption>
         <strong>${escapeHtml(card.name)}</strong>
-        <span>${escapeHtml(card.note)}</span>
+        ${showNote ? `<span>${escapeHtml(card.note)}</span>` : ""}
       </figcaption>
     </figure>
   `;
@@ -907,6 +1021,7 @@ function timelineEventChoiceCard(event) {
   const isCorrect = isAnswered && currentGame.correctValue === event.id;
   const isWrongChoice = isAnswered && currentGame.chosen === event.id && currentGame.result === "wrong";
   const resultClass = isCorrect ? "correct" : isWrongChoice ? "wrong" : "";
+  const detail = isAnswered ? timelineEventDate(event) : event.novelty;
   return `
     <button
       class="timeline-event-card timeline-event-choice ${resultClass}"
@@ -918,7 +1033,7 @@ function timelineEventChoiceCard(event) {
       <img src="${escapeHtml(event.image)}" alt="${escapeHtml(event.title)}" loading="eager" decoding="async" />
       <span>
         <strong>${escapeHtml(event.title)}</strong>
-        <em>${escapeHtml(timelineEventDate(event))}</em>
+        <em>${escapeHtml(detail)}</em>
       </span>
     </button>
   `;
@@ -1080,10 +1195,129 @@ function generatedGameQuestions(modeId) {
   return generatedCloserQuestions();
 }
 
-function gameCards() {
+function gameCards(applyFilters = true) {
   return Object.entries(games.cards)
     .map(([id, card]) => ({ id, ...card }))
-    .filter((card) => Array.isArray(card.path) && card.path.length);
+    .filter((card) => Array.isArray(card.path) && card.path.length)
+    .filter((card) => !applyFilters || cardMatchesGameFilters(card));
+}
+
+function filteredTimelineEvents() {
+  return (games.timelineEvents || []).filter((event) => eventMatchesGameFilters(event));
+}
+
+function selectedLineFilters() {
+  const options = games.filters?.lineOptions || [];
+  const normalized = normalizeLineFilterIds(gameFilters.lineIds);
+  if (normalized.includes("all")) {
+    return options.filter((item) => item.id === "all");
+  }
+  return options.filter((item) => normalized.includes(item.id));
+}
+
+function lineFiltersAreAll() {
+  return normalizeLineFilterIds(gameFilters.lineIds).includes("all");
+}
+
+function cardMatchesGameFilters(card) {
+  return cardMatchesLineFilters(card) && cardMatchesPeriodFilter(card);
+}
+
+function eventMatchesGameFilters(event) {
+  return eventMatchesLineFilters(event) && eventMatchesPeriodFilter(event);
+}
+
+function cardMatchesLineFilters(card) {
+  if (lineFiltersAreAll()) return true;
+  return selectedLineFilters().some((line) => {
+    if (line.cardIds?.includes(card.id)) return true;
+    return (line.nodes || []).some((node) => card.path.includes(node));
+  });
+}
+
+function eventMatchesLineFilters(event) {
+  if (lineFiltersAreAll()) return true;
+  return selectedLineFilters().some((line) => (line.eventIds || []).includes(event.id));
+}
+
+function eventMatchesPeriodFilter(event) {
+  if (gameFilters.periodId === "all") return true;
+  const [kind, id] = String(gameFilters.periodId).split(":");
+  if (kind === "era") return event.eraId === id;
+  if (kind === "period") return event.periodId === id;
+  return true;
+}
+
+function cardMatchesPeriodFilter(card) {
+  if (gameFilters.periodId === "all") return true;
+  const nodes = periodFilterNodes();
+  if (!nodes.size) return true;
+  return card.path.some((node) => nodes.has(node));
+}
+
+function periodFilterNodes() {
+  const nodes = new Set();
+  (games.timelineEvents || [])
+    .filter(eventMatchesPeriodFilter)
+    .flatMap((event) => timelineEventNodes(event.id))
+    .forEach((node) => nodes.add(node));
+  return nodes;
+}
+
+function timelineEventNodes(eventId) {
+  const map = {
+    "prokaryotic-cells": ["прокариоты"],
+    photosynthesis: ["прокариоты"],
+    "oxygen-revolution": ["прокариоты"],
+    "eukaryotic-cell": ["эукариоты"],
+    mitochondria: ["эукариоты"],
+    chloroplasts: ["архепластиды", "зеленые растения"],
+    "sexual-reproduction": ["эукариоты"],
+    "multicellular-algae": ["зеленые растения", "зеленые водоросли"],
+    "multicellular-animals": ["животные"],
+    "nervous-system": ["животные", "кишечнополостные"],
+    bilateria: ["билатерии"],
+    "hard-skeletons": ["моллюски", "членистоногие", "хордовые"],
+    chordates: ["хордовые"],
+    arthropods: ["членистоногие"],
+    "vertebrate-skull": ["черепные"],
+    "land-plants": ["наземные растения"],
+    "terrestrial-arthropods": ["членистоногие"],
+    jaws: ["челюстноротые"],
+    "bony-vertebrates": ["костные позвоночные"],
+    "vascular-plants": ["сосудистые растения"],
+    insects: ["насекомые"],
+    "lobe-fins": ["лопастеперые"],
+    "insect-wings": ["крылатые насекомые", "насекомые"],
+    "tetrapod-limbs": ["четвероногие"],
+    seeds: ["семенные растения"],
+    "complete-metamorphosis": ["насекомые"],
+    "amniotic-egg": ["амниоты"],
+    "synapsid-skull": ["синапсиды"],
+    "diapsid-skull": ["завропсиды"],
+    archosaurs: ["архозавры"],
+    dinosaurs: ["динозавры"],
+    "pterosaur-flight": ["птерозавры"],
+    mammals: ["млекопитающие"],
+    "theropod-feathers": ["тероподы"],
+    placentals: ["плацентарные"],
+    birds: ["птицы"],
+    flowers: ["цветковые"],
+    "modern-birds": ["птицы"],
+    "social-insects": ["насекомые", "перепончатокрылые"],
+    grasses: ["однодольные", "цветковые"],
+    "bat-flight": ["рукокрылые"],
+    primates: ["приматы"],
+    whales: ["китообразные"],
+    apes: ["человекообразные"],
+    hominins: ["люди", "человекообразные"],
+    "stone-tools": ["люди"],
+    "controlled-fire": ["люди"],
+    "homo-sapiens": ["люди"],
+    "symbolic-art": ["люди"],
+    agriculture: ["люди"],
+  };
+  return (map[eventId] || []).map((node) => t(node));
 }
 
 function generatedCloserQuestions() {
@@ -1207,7 +1441,7 @@ function generatedBranchQuestions() {
 }
 
 function generatedEarlierQuestions() {
-  const events = games.timelineEvents || [];
+  const events = filteredTimelineEvents();
   const questions = [];
   for (const level of gameLevelIds()) {
     for (let i = 0; i < events.length; i += 1) {
@@ -1328,7 +1562,7 @@ function oddCardForGroup(node, groupCards, cards, level) {
 }
 
 function generatedTimelineQuestions() {
-  const events = games.timelineEvents || [];
+  const events = filteredTimelineEvents();
   return gameLevelIds().flatMap((level) =>
     events.map((event) => ({
       id: `timeline:${level}:${event.id}`,
@@ -1511,11 +1745,15 @@ function lastCommonRank(first, second) {
 }
 
 function progressState() {
-  const key = `${gameModeId}:${[...selectedGameLevels].sort().join(",")}`;
+  const key = `${gameModeId}:${[...selectedGameLevels].sort().join(",")}:${gameFilterKey()}`;
   if (!gameProgress[key]) {
     gameProgress[key] = { freshQueue: [], retryQueue: [], rounds: 0, completedOnce: false, lastCards: [] };
   }
   return gameProgress[key];
+}
+
+function gameFilterKey() {
+  return `${gameFilters.periodId}:${normalizeLineFilterIds(gameFilters.lineIds).sort().join(",")}`;
 }
 
 function gameStatusText() {
@@ -1745,6 +1983,56 @@ function toggleGameLevel(levelId) {
 function saveGameLevels() {
   try {
     window.localStorage.setItem("evol-game-levels", JSON.stringify([...selectedGameLevels]));
+  } catch {
+    // The game still works if storage is unavailable.
+  }
+}
+
+function setGameSettingsOpen(nextValue) {
+  gameSettingsOpen = Boolean(nextValue);
+  preferredGameFocus = gameSettingsOpen ? ".game-period-select, .game-line-filter.active, .game-settings-close" : "[data-game-settings-open]";
+  render();
+}
+
+function setGamePeriodFilter(periodId) {
+  if (!isPeriodFilterId(periodId)) return;
+  gameFilters = { ...gameFilters, periodId };
+  commitGameFilterChange();
+}
+
+function toggleGameLineFilter(lineId) {
+  if (!isLineFilterId(lineId)) return;
+  if (lineId === "all") {
+    gameFilters = { ...gameFilters, lineIds: ["all"] };
+    commitGameFilterChange();
+    return;
+  }
+
+  const current = normalizeLineFilterIds(gameFilters.lineIds).filter((id) => id !== "all");
+  const next = current.includes(lineId) ? current.filter((id) => id !== lineId) : [...current, lineId];
+  gameFilters = { ...gameFilters, lineIds: next.length ? normalizeLineFilterIds(next) : ["all"] };
+  commitGameFilterChange();
+}
+
+function resetGameFilters() {
+  gameFilters = { periodId: "all", lineIds: ["all"] };
+  commitGameFilterChange();
+}
+
+function commitGameFilterChange() {
+  saveGameFilters();
+  currentGame = null;
+  chainSelection = [];
+  branchSelection = { left: [], right: [] };
+  activeBranchSide = "left";
+  gameProgress = {};
+  preferredGameFocus = ".game-line-filter.active, [data-game-settings-close]";
+  render();
+}
+
+function saveGameFilters() {
+  try {
+    window.localStorage.setItem("evol-game-filters", JSON.stringify(gameFilters));
   } catch {
     // The game still works if storage is unavailable.
   }
@@ -2488,6 +2776,32 @@ slideNode.addEventListener("click", (event) => {
     return;
   }
 
+  if (event.target.closest("[data-game-settings-open]")) {
+    setGameSettingsOpen(true);
+    return;
+  }
+
+  if (event.target.closest("[data-game-settings-close]")) {
+    setGameSettingsOpen(false);
+    return;
+  }
+
+  if (event.target.matches("[data-game-settings-backdrop]")) {
+    setGameSettingsOpen(false);
+    return;
+  }
+
+  const lineFilterButton = event.target.closest("[data-game-line-filter]");
+  if (lineFilterButton) {
+    toggleGameLineFilter(lineFilterButton.dataset.gameLineFilter);
+    return;
+  }
+
+  if (event.target.closest("[data-game-settings-reset]")) {
+    resetGameFilters();
+    return;
+  }
+
   const answerButton = event.target.closest("[data-game-answer]");
   if (answerButton) {
     chooseGameAnswer(answerButton.dataset.gameAnswer);
@@ -2552,8 +2866,21 @@ slideNode.addEventListener("click", (event) => {
   setDeck(deckIndex, Number(button.dataset.slide));
 });
 
+slideNode.addEventListener("change", (event) => {
+  const periodSelect = event.target.closest("[data-game-period-filter]");
+  if (!periodSelect) return;
+  setGamePeriodFilter(periodSelect.value);
+});
+
 document.addEventListener("keydown", (event) => {
   if (section === "games") {
+    if (gameSettingsOpen) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setGameSettingsOpen(false);
+      }
+      return;
+    }
     if (event.key === "Escape") {
       event.preventDefault();
       setPresentationMode(false);
