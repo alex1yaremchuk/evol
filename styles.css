@@ -1039,6 +1039,50 @@ button {
   background: rgba(255, 255, 255, 0.5);
 }
 
+.timeline-event-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.68rem;
+}
+
+.timeline-event-choice {
+  display: grid;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.timeline-event-choice.correct {
+  border-color: rgba(36, 125, 116, 0.5);
+  background: rgba(213, 234, 211, 0.86);
+  box-shadow: 0 0.8rem 1.7rem rgba(36, 125, 116, 0.18);
+}
+
+.timeline-event-choice.wrong {
+  border-color: rgba(209, 79, 63, 0.38);
+  background: rgba(240, 214, 203, 0.78);
+}
+
+.timeline-event-choice:hover,
+.timeline-event-choice:focus-visible {
+  border-color: rgba(36, 125, 116, 0.5);
+  box-shadow: 0 0 0 3px rgba(36, 125, 116, 0.16);
+}
+
+.timeline-event-choice span {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.48rem 0.62rem;
+}
+
+.timeline-event-choice em {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 720;
+}
+
 .timeline-trail {
   display: flex;
   flex-wrap: wrap;
@@ -1654,6 +1698,10 @@ svg .bone {
 
   .timeline-event-card img {
     height: clamp(6.7rem, 20vh, 9.4rem);
+  }
+
+  .timeline-event-choices {
+    gap: 0.48rem;
   }
 
   .timeline-answer-axis {

@@ -2060,5 +2060,15 @@ Object.assign(window.EVOL_I18N.en, {
   "жизнь на ветках стала удобнее: хвататься, видеть расстояние и учиться движениям": "life in branches became easier: grasping, judging distance, and learning movements",
   "прямохождение": "upright walking",
   "ходьба на двух ногах": "walking on two legs",
-  "руки освободились, а обзор над травой стал лучше": "hands were freed and the view over grass improved"
+  "руки освободились, а обзор над травой стал лучше": "hands were freed and the view over grass improved",
+  "Что было раньше?": "What came earlier?",
+  "Выбери более древнее новшество на шкале времени.": "Choose the older innovation on the timeline.",
+  "Выбери более древнее новшество": "Choose the older innovation",
+  "появилось раньше": "appeared earlier",
+  "появилось позже": "appeared later",
+  "Кто лишний?": "Odd one out",
+  "Найди карточку, которая не входит в общую ветку остальных.": "Find the card that does not belong to the shared branch of the others.",
+  "одна общая ветка": "one shared branch",
+  "лишняя карточка": "the odd card",
+  "общая ветка с ними": "its shared branch with them"
 });
