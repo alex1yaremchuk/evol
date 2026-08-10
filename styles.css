@@ -298,7 +298,7 @@ button {
 }
 
 .timeline.with-markers .timeline-track {
-  height: 6rem;
+  height: 9rem;
 }
 
 .time-tick,
@@ -340,7 +340,7 @@ button {
 
 .timeline-marker {
   position: absolute;
-  top: calc(0.55rem + var(--lane) * 1.42rem);
+  top: calc(0.55rem + var(--lane) * 1.36rem);
   z-index: 2;
   display: grid;
   place-items: center;
@@ -842,6 +842,99 @@ button {
 .game-filter-summary strong {
   color: #26323c;
   font-weight: 900;
+}
+
+.generated-slide {
+  grid-template-rows: auto auto 1fr;
+}
+
+.generated-toolbar,
+.generated-empty {
+  width: min(100%, 1420px);
+  margin: 0 auto;
+}
+
+.generated-toolbar {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.72rem 0.82rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0.8rem 1.7rem rgba(24, 33, 43, 0.08);
+  backdrop-filter: blur(9px);
+}
+
+.generated-toolbar-head,
+.generated-levels,
+.generated-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.generated-toolbar-head {
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.generated-toolbar-head strong {
+  color: #0f1d2b;
+  font-size: 1rem;
+  font-weight: 920;
+}
+
+.generated-levels {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.generated-filter {
+  display: grid;
+  gap: 0.1rem;
+  min-height: 2.8rem;
+  padding: 0.42rem 0.56rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.62);
+  color: #26323c;
+  cursor: pointer;
+  text-align: left;
+}
+
+.generated-filter.active {
+  border-color: rgba(36, 125, 116, 0.45);
+  background: rgba(36, 125, 116, 0.94);
+  color: #fff;
+}
+
+.generated-filter strong {
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.generated-filter span {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 720;
+  line-height: 1.12;
+}
+
+.generated-filter.active span {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.generated-empty {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-height: 100vh;
+  padding: clamp(4.8rem, 6.4vw, 5.8rem) clamp(1.5rem, 4vw, 4.5rem);
 }
 
 .game-panel {
@@ -1640,11 +1733,11 @@ svg .bone {
   }
 
   .timeline.with-markers .timeline-track {
-    height: 3.75rem;
+    height: 5.65rem;
   }
 
   .timeline-marker {
-    top: calc(0.38rem + var(--lane) * 0.82rem);
+    top: calc(0.38rem + var(--lane) * 0.84rem);
     width: 1.02rem;
     height: 1.02rem;
   }
@@ -2141,11 +2234,11 @@ svg .bone {
   }
 
   .timeline.with-markers .timeline-track {
-    height: 5.2rem;
+    height: 6.75rem;
   }
 
   .timeline-marker {
-    top: calc(0.42rem + var(--lane) * 1.08rem);
+    top: calc(0.42rem + var(--lane) * 0.98rem);
     width: 1.32rem;
     height: 1.32rem;
   }
@@ -2317,6 +2410,44 @@ svg .bone {
     font-size: 0.72rem;
   }
 
+  .generated-toolbar {
+    gap: 0.46rem;
+    padding: 0.58rem;
+  }
+
+  .generated-toolbar-head {
+    align-items: start;
+    flex-direction: column;
+    gap: 0.18rem;
+    font-size: 0.72rem;
+  }
+
+  .generated-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -0.58rem;
+    padding-inline: 0.58rem;
+    scrollbar-width: none;
+  }
+
+  .generated-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .generated-filter {
+    flex: 0 0 9rem;
+    min-height: 2.55rem;
+    padding: 0.34rem 0.48rem;
+  }
+
+  .generated-filter strong {
+    font-size: 0.76rem;
+  }
+
+  .generated-filter span {
+    font-size: 0.64rem;
+  }
+
   .game-filter-summary {
     gap: 0.28rem 0.55rem;
     font-size: 0.72rem;
@@ -2475,6 +2606,12 @@ svg .bone {
   }
 
   .timeline.with-markers .timeline-track {
-    height: 4.8rem;
+    height: 5.85rem;
+  }
+
+  .timeline-marker {
+    top: calc(0.34rem + var(--lane) * 0.78rem);
+    width: 1rem;
+    height: 1rem;
   }
 }

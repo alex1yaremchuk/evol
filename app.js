@@ -1,5 +1,6 @@
 const sourceDecks = window.EVOL_DATA.decks;
 const sourceGames = window.EVOL_GAMES;
+const sourceModel = window.EVOL_MODEL || { nodeDetails: [], cardFlags: {} };
 
 const slideNode = document.getElementById("slide");
 const schemeNavNode = document.getElementById("scheme-nav");
@@ -15,10 +16,14 @@ const topToolsNode = document.querySelector(".top-tools");
 let language = initialLanguage();
 let decks = localizeDecks(sourceDecks);
 let games = localizeGames(sourceGames);
+let model = localizeModel(sourceModel);
 let section = initialSection();
 let deckIndex = initialDeckIndex();
 let index = initialSlideIndex(deckIndex);
 let gameModeId = initialGameMode();
+let generatedIndex = initialGeneratedIndex();
+let generatedFocusId = initialGeneratedFocus();
+let generatedLevelId = initialGeneratedLevel();
 let currentGame = null;
 let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
@@ -50,10 +55,12 @@ function initialLanguage() {
 function initialSection() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("section") === "games") return "games";
+  if (params.get("section") === "new-timelines") return "new-timelines";
   if (params.has("deck") || params.has("slide")) return "slides";
 
   try {
-    return window.localStorage.getItem("evol-section") === "games" ? "games" : "slides";
+    const saved = window.localStorage.getItem("evol-section");
+    return saved === "games" || saved === "new-timelines" ? saved : "slides";
   } catch {
     return "slides";
   }
@@ -121,6 +128,29 @@ function initialGameMode() {
   return isGameModeId(saved.gameModeId) ? saved.gameModeId : "closer";
 }
 
+function initialGeneratedIndex() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = Number(params.get("point"));
+  if (Number.isInteger(fromUrl)) return Math.max(0, Math.trunc(fromUrl));
+  return Math.max(0, Math.trunc(Number(savedUiState().generatedIndex) || 0));
+}
+
+function initialGeneratedFocus() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("focus");
+  if (isGeneratedFocusId(fromUrl)) return fromUrl;
+  const saved = savedUiState();
+  return isGeneratedFocusId(saved.generatedFocusId) ? saved.generatedFocusId : "life";
+}
+
+function initialGeneratedLevel() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("level");
+  if (isGeneratedLevelId(fromUrl)) return fromUrl;
+  const saved = savedUiState();
+  return isGeneratedLevelId(saved.generatedLevelId) ? saved.generatedLevelId : "easy";
+}
+
 function savedUiState() {
   try {
     return JSON.parse(window.localStorage.getItem("evol-ui-state") || "{}") || {};
@@ -136,6 +166,15 @@ function clampIndex(value, length) {
 
 function isGameModeId(value) {
   return Boolean(value && sourceGames.modes.some((mode) => mode.id === value));
+}
+
+function isGeneratedFocusId(value) {
+  if (!value) return false;
+  return sourceModel.nodeDetails.some((node) => node.id === value && node.flags?.filter) || sourceModel.localFocus?.id === value;
+}
+
+function isGeneratedLevelId(value) {
+  return Boolean(value && sourceGames.levels.some((level) => level.id === value));
 }
 
 function isPeriodFilterId(value) {
@@ -181,6 +220,10 @@ function localizeGames(rawGames) {
   return localizeValue(rawGames);
 }
 
+function localizeModel(rawModel) {
+  return localizeValue(rawModel);
+}
+
 function localizeValue(value) {
   if (typeof value === "string") return t(value);
   if (Array.isArray(value)) return value.map(localizeValue);
@@ -193,6 +236,7 @@ function setLanguage(nextLanguage, updateUrl = true) {
   language = normalized;
   decks = localizeDecks(sourceDecks);
   games = localizeGames(sourceGames);
+  model = localizeModel(sourceModel);
   currentGame = null;
   chainSelection = [];
   branchSelection = { left: [], right: [] };
@@ -455,6 +499,10 @@ function render() {
     renderGames();
     return;
   }
+  if (section === "new-timelines") {
+    renderGeneratedTimelines();
+    return;
+  }
 
   const deck = decks[deckIndex];
   const slide = deck.slides[index];
@@ -489,6 +537,282 @@ function render() {
   nextButton.disabled = deckIndex === decks.length - 1 && index === deck.slides.length - 1;
   document.querySelector(".controls")?.classList.remove("hidden");
   renderSchemeNav();
+}
+
+function renderGeneratedTimelines() {
+  const slides = generatedTimelineSlides();
+  generatedIndex = clampIndex(generatedIndex, slides.length || 1);
+  const slide = slides[generatedIndex];
+  const deck = generatedTimelineDeck(slides);
+  const colors = slide?.colors || ["#d9e8d2", "#eadcc4"];
+  slideNode.style.setProperty("--bg-a", colors[0]);
+  slideNode.style.setProperty("--bg-b", colors[1]);
+  document.querySelector(".controls")?.classList.toggle("hidden", !slides.length);
+
+  if (!slides.length) {
+    slideNode.innerHTML = `
+      <article class="generated-empty">
+        ${generatedToolbar(0)}
+        <div class="game-panel">
+          <div class="game-question">
+            <strong>${escapeHtml(t("Нет точек для выбранного фокуса"))}</strong>
+            <span>${escapeHtml(t("Выбери другой уровень или фокус"))}</span>
+          </div>
+        </div>
+      </article>
+    `;
+    currentNode.textContent = "0";
+    totalNode.textContent = "0";
+    renderSchemeNav();
+    return;
+  }
+
+  slideNode.innerHTML = `
+    <article class="slide generated-slide">
+      ${generatedToolbar(slides.length)}
+      ${timeline(deck, slide)}
+      <div class="copy">
+        <div class="kicker">${escapeHtml(slide.kicker)}</div>
+        <h1 class="title">${escapeHtml(slide.title)}</h1>
+        <p class="subtitle">${escapeHtml(slide.subtitle)}</p>
+        ${infoGrid(slide, deck)}
+      </div>
+      <div class="stage ${slide.mainPhoto ? "has-main-photo" : ""}">
+        ${memorySymbol(slide, deck)}
+        <div class="stage-photos">
+          ${photoCard(slide.mainPhoto, "main-photo")}
+          ${photoCard(slide.sidePhoto, "side-photo")}
+        </div>
+        ${iconSvg(slide.scene, slide.caption)}
+        <div class="caption">${escapeHtml(slide.caption)}</div>
+      </div>
+    </article>
+  `;
+
+  currentNode.textContent = String(generatedIndex + 1);
+  totalNode.textContent = String(slides.length);
+  prevButton.disabled = generatedIndex === 0;
+  nextButton.disabled = generatedIndex >= slides.length - 1;
+  renderSchemeNav();
+}
+
+function generatedToolbar(slideCount) {
+  const focusButtons = generatedFocusOptions()
+    .map(
+      (focus) => `
+        <button class="generated-filter ${focus.id === generatedFocusId ? "active" : ""}" type="button" data-generated-focus="${escapeHtml(focus.id)}" aria-pressed="${focus.id === generatedFocusId}">
+          <strong>${escapeHtml(focus.title)}</strong>
+          <span>${escapeHtml(focus.description || "")}</span>
+        </button>
+      `,
+    )
+    .join("");
+  const levelButtons = games.levels
+    .map(
+      (level) => `
+        <button class="game-level-button ${level.id === generatedLevelId ? "active" : ""}" type="button" data-generated-level="${escapeHtml(level.id)}" aria-pressed="${level.id === generatedLevelId}">
+          ${escapeHtml(level.title)}
+        </button>
+      `,
+    )
+    .join("");
+
+  return `
+    <section class="generated-toolbar">
+      <div class="generated-toolbar-head">
+        <strong>${escapeHtml(t("Новые таймлайны"))}</strong>
+        <span>${escapeHtml(t("Собрано из узлов дерева и карточек"))}: ${slideCount}</span>
+      </div>
+      <div class="generated-levels">
+        <span>${escapeHtml(t("Уровень"))}</span>
+        ${levelButtons}
+      </div>
+      <div class="generated-filters" aria-label="${escapeHtml(t("Фокус"))}">
+        ${focusButtons}
+      </div>
+    </section>
+  `;
+}
+
+function generatedFocusOptions() {
+  const nodeFocuses = (model.nodeDetails || [])
+    .filter((item) => item.flags?.filter)
+    .map((item) => ({
+      id: item.id,
+      title: item.filterTitle || item.node,
+      description: item.title,
+      kind: "node",
+      node: item.node,
+      order: item.filterOrder || 50,
+    }));
+  return [...nodeFocuses, model.localFocus].filter(Boolean).sort((a, b) => (a.order || a.filterOrder || 50) - (b.order || b.filterOrder || 50));
+}
+
+function generatedTimelineSlides() {
+  const focus = generatedFocusOptions().find((item) => item.id === generatedFocusId) || generatedFocusOptions()[0];
+  const relevantNodes = generatedRelevantNodes(focus);
+  const localNodeIds = focus?.kind === "local" && Array.isArray(focus.nodeIds) ? new Set(focus.nodeIds) : null;
+  return (model.nodeDetails || [])
+    .filter((item) => item.appearedMa && levelRank(item.level || "hard") <= levelRank(generatedLevelId))
+    .filter((item) => !localNodeIds || localNodeIds.has(item.id))
+    .filter((item) => isGeneratedEventVisibleForFocus(item, focus))
+    .filter((item) => relevantNodes.has(item.node))
+    .sort((a, b) => b.appearedMa - a.appearedMa)
+    .map((item) => generatedSlideFromNode(item, focus, relevantNodes));
+}
+
+function isGeneratedEventVisibleForFocus(item, focus) {
+  const focusOnly = item.flags?.focusOnly;
+  if (!Array.isArray(focusOnly) || !focusOnly.length) return true;
+  return focusOnly.includes(focus?.id);
+}
+
+function generatedRelevantNodes(focus) {
+  const nodes = new Set();
+  const cards = generatedCardsForFocus(focus);
+  for (const card of cards) {
+    for (const node of card.path || []) nodes.add(node);
+  }
+  if (focus?.node) nodes.add(focus.node);
+  return nodes;
+}
+
+function generatedCardsForFocus(focus) {
+  const cards = gameCards(false);
+  if (focus?.kind === "local") {
+    const legacyLocalIds = new Set(model.localCardIds || []);
+    return cards.filter((card) => model.cardFlags?.[card.id]?.local || legacyLocalIds.has(card.id));
+  }
+  if (!focus?.node || focus.node === t("жизнь")) return cards;
+  return cards.filter((card) => card.path.includes(focus.node));
+}
+
+function generatedSlideFromNode(item, focus, relevantNodes) {
+  const examples = generatedExampleCards(item);
+  const sideNode = generatedSideNode(item.node, relevantNodes);
+  const sideExamples = sideNode ? generatedCardsForNode(sideNode).slice(0, 3) : [];
+  const sideDetail = generatedNodeDetail(sideNode);
+  const sideTitle = sideDetail?.title || sideNode;
+  const mainNames = examples.map((card) => card.name).join(", ") || item.node;
+  const sideNames = sideExamples.map((card) => card.name).join(", ");
+  return {
+    kicker: focus?.title || t("Новые таймлайны"),
+    title: item.title || item.node,
+    subtitle: `${item.node}: ${item.novelty}`,
+    novelty: item.novelty,
+    mainBranch: `${item.node}: ${mainNames}`,
+    sideBranch: item.sideLabel || (sideNode ? `${sideTitle}${sideNames ? `: ${sideNames}` : ""}` : t("соседняя ветка не показана")),
+    effect: item.effect,
+    side: item.sideLabel,
+    caption: `${t("Узел дерева")}: ${item.node}`,
+    scene: generatedSceneForNode(item),
+    marker: item.marker || "fork",
+    symbolLabel: item.novelty,
+    mainPhoto: item.image
+      ? { src: item.image, label: item.imageLabel || `${t("представитель")}: ${item.title || item.node}` }
+      : examples[0]
+        ? { src: examples[0].image, label: `${t("представитель")}: ${examples[0].name}` }
+        : null,
+    sidePhoto: sideExamples[0] ? { src: sideExamples[0].image, label: `${t("соседняя ветка")}: ${sideExamples[0].name}` } : null,
+    timeMa: item.appearedMa,
+    timeLabel: formatMa(item.appearedMa),
+    colors: generatedColorsForNode(item),
+  };
+}
+
+function generatedExampleCards(item) {
+  const explicitIds = item.mainExamples || [];
+  const explicit = explicitIds.map((id) => games.cards[id] && { id, ...games.cards[id] }).filter(Boolean);
+  if (explicit.length) return explicit;
+  return generatedCardsForNode(item.node).slice(0, 3);
+}
+
+function generatedCardsForNode(node) {
+  return gameCards(false).filter((card) => card.path.includes(node));
+}
+
+function generatedSideNode(node, relevantNodes) {
+  const parent = generatedNodeParent(node);
+  if (!parent) return "";
+  const siblings = generatedNodeChildren(parent).filter((child) => child !== node && generatedCardsForNode(child).length);
+  return siblings.find((child) => !relevantNodes.has(child)) || siblings[0] || "";
+}
+
+function generatedNodeParent(node) {
+  for (const card of gameCards(false)) {
+    const index = card.path.indexOf(node);
+    if (index > 0) return card.path[index - 1];
+  }
+  return "";
+}
+
+function generatedNodeChildren(parent) {
+  const children = new Set();
+  for (const card of gameCards(false)) {
+    const index = card.path.indexOf(parent);
+    if (index !== -1 && card.path[index + 1]) children.add(card.path[index + 1]);
+  }
+  return [...children];
+}
+
+function generatedNodeDetail(node) {
+  return (model.nodeDetails || []).find((item) => item.node === node);
+}
+
+function generatedSceneForNode(item) {
+  const node = item.node;
+  if ([t("прокариоты"), t("эукариоты")].includes(node)) return "cell";
+  if ([t("архепластиды"), t("зеленые растения"), t("наземные растения"), t("сосудистые растения"), t("семенные растения"), t("цветковые"), t("злаки")].includes(node)) return "tree";
+  if ([t("членистоногие"), t("насекомые")].includes(node)) return "tree";
+  if ([t("динозавры"), t("архозавры"), t("тероподы"), t("птицы")].includes(node)) return "theropod";
+  if ([t("млекопитающие"), t("синапсиды"), t("приматы"), t("люди")].includes(node)) return "smallMammal";
+  if ([t("хордовые"), t("черепные"), t("челюстноротые"), t("костные позвоночные"), t("лопастеперые")].includes(node)) return "bonyfish";
+  return item.id === "life" || item.id === "eukaryotes" ? "cell" : "tree";
+}
+
+function generatedColorsForNode(item) {
+  const node = item.node;
+  if ([t("архепластиды"), t("зеленые растения"), t("наземные растения"), t("сосудистые растения"), t("семенные растения"), t("цветковые"), t("злаки")].includes(node)) return ["#d7ead5", "#f0dfc2"];
+  if ([t("членистоногие"), t("насекомые")].includes(node)) return ["#efe0b8", "#d4e7ec"];
+  if ([t("динозавры"), t("архозавры"), t("тероподы"), t("птицы"), t("завропсиды")].includes(node)) return ["#e8d7bd", "#c9e6e0"];
+  if ([t("синапсиды"), t("млекопитающие"), t("приматы"), t("люди")].includes(node)) return ["#ecdcc5", "#d8e5d3"];
+  return ["#d9e8d2", "#eadcc4"];
+}
+
+function generatedTimelineDeck(slides) {
+  return {
+    id: "new-timelines",
+    label: t("Новые таймлайны"),
+    range: { start: 4000, end: 0.01 },
+    scale: "log",
+    timelineKicker: t("примерная дата появления узла"),
+    eras: [
+      { start: 4000, end: 2500, label: t("Архей"), short: t("архей"), full: t("Архейский эон") },
+      { start: 2500, end: 541, label: t("Протерозой"), short: t("протерозой"), full: t("Протерозойский эон") },
+      { start: 541, end: 252, label: t("Палеозой"), short: t("палеозой"), full: t("Палеозойская эра") },
+      { start: 252, end: 66, label: t("Мезозой"), short: t("мезозой"), full: t("Мезозойская эра") },
+      { start: 66, end: 0.01, label: t("Кайнозой"), short: t("кайнозой"), full: t("Кайнозойская эра") },
+    ],
+    periods: [
+      { start: 4000, end: 2500, label: t("архей"), full: t("Архейский эон") },
+      { start: 2500, end: 541, label: t("протерозой"), full: t("Протерозойский эон") },
+      { start: 541, end: 252, label: t("палеозой"), full: t("Палеозойская эра") },
+      { start: 252, end: 66, label: t("мезозой"), full: t("Мезозойская эра") },
+      { start: 66, end: 2.6, label: t("кайнозой"), full: t("Кайнозойская эра до четвертичного периода") },
+      { start: 2.6, end: 0.01, label: t("четвертичный"), short: t("четв."), full: t("Четвертичный период") },
+    ],
+    ticks: [
+      { ma: 4000, label: t("4 млрд") },
+      { ma: 1000, label: t("1 млрд") },
+      { ma: 100, label: t("100 млн") },
+      { ma: 10, label: t("10 млн") },
+      { ma: 1, label: t("1 млн") },
+      { ma: 0.1, label: t("100 тыс.") },
+    ],
+    slides,
+    showTimelineMarkers: true,
+    showSlideSymbol: true,
+  };
 }
 
 function infoGrid(slide, deck) {
@@ -2150,12 +2474,14 @@ function shuffle(items) {
 
 function timelineMarkers(deck, activeSlide) {
   if (!deck.showTimelineMarkers) return "";
+  const placed = [];
   return deck.slides
     .map((slide, slideIndex) => ({ slide, slideIndex }))
     .filter(({ slide }) => slide.marker && slide.timeMa)
     .map(({ slide, slideIndex }, markerIndex) => {
       const left = timelinePosition(deck, slide.timeMa);
-      const lane = markerLane(left, markerIndex);
+      const lane = markerLane(left, placed);
+      placed.push({ left, lane });
       const isActive = slide === activeSlide;
       return `
         <button
@@ -2173,10 +2499,14 @@ function timelineMarkers(deck, activeSlide) {
     .join("");
 }
 
-function markerLane(left, markerIndex) {
-  if (left > 83) return markerIndex % 4;
-  if (left > 60) return markerIndex % 3;
-  return 1;
+function markerLane(left, placed) {
+  const lanes = 6;
+  const minGap = 3.4;
+  for (let lane = 0; lane < lanes; lane += 1) {
+    const collision = placed.some((item) => item.lane === lane && Math.abs(item.left - left) < minGap);
+    if (!collision) return lane;
+  }
+  return placed.length % lanes;
 }
 
 function markerSvg(kind) {
@@ -2643,6 +2973,9 @@ function renderSchemeNav() {
 
   schemeNavNode.innerHTML = `
     ${deckButtons}
+    <button class="scheme-button ${section === "new-timelines" ? "active" : ""}" type="button" data-section="new-timelines" aria-pressed="${section === "new-timelines"}">
+      <span>${escapeHtml(t("Новые таймлайны"))}</span>
+    </button>
     <button class="scheme-button ${section === "games" ? "active" : ""}" type="button" data-section="games" aria-pressed="${section === "games"}">
       <span>${escapeHtml(t("Игры"))}</span>
     </button>
@@ -2665,6 +2998,29 @@ function setGamesSection() {
   render();
 }
 
+function setGeneratedTimelinesSection() {
+  section = "new-timelines";
+  updateSectionUrl();
+  updatePresentationState();
+  render();
+}
+
+function setGeneratedFocus(focusId) {
+  if (!isGeneratedFocusId(focusId)) return;
+  generatedFocusId = focusId;
+  generatedIndex = 0;
+  updateSectionUrl();
+  render();
+}
+
+function setGeneratedLevel(levelId) {
+  if (!isGeneratedLevelId(levelId)) return;
+  generatedLevelId = levelId;
+  generatedIndex = 0;
+  updateSectionUrl();
+  render();
+}
+
 function updateSectionUrl() {
   const url = new URL(window.location.href);
   url.searchParams.set("lang", language);
@@ -2673,9 +3029,23 @@ function updateSectionUrl() {
     url.searchParams.set("game", gameModeId);
     url.searchParams.delete("deck");
     url.searchParams.delete("slide");
+    url.searchParams.delete("focus");
+    url.searchParams.delete("level");
+    url.searchParams.delete("point");
+  } else if (section === "new-timelines") {
+    url.searchParams.set("section", "new-timelines");
+    url.searchParams.set("focus", generatedFocusId);
+    url.searchParams.set("level", generatedLevelId);
+    url.searchParams.set("point", String(generatedIndex));
+    url.searchParams.delete("game");
+    url.searchParams.delete("deck");
+    url.searchParams.delete("slide");
   } else {
     url.searchParams.delete("section");
     url.searchParams.delete("game");
+    url.searchParams.delete("focus");
+    url.searchParams.delete("level");
+    url.searchParams.delete("point");
     url.searchParams.set("deck", String(deckIndex));
     url.searchParams.set("slide", String(index));
   }
@@ -2704,6 +3074,9 @@ function saveUiState() {
         slideIndex: index,
         slideByDeck,
         gameModeId,
+        generatedIndex,
+        generatedFocusId,
+        generatedLevelId,
         presentationMode,
       }),
     );
@@ -2714,6 +3087,13 @@ function saveUiState() {
 
 function go(delta) {
   if (section === "games") return;
+  if (section === "new-timelines") {
+    const slides = generatedTimelineSlides();
+    generatedIndex = clampIndex(generatedIndex + delta, slides.length);
+    updateSectionUrl();
+    render();
+    return;
+  }
   const deck = decks[deckIndex];
   const next = index + delta;
   if (next < 0 && deckIndex > 0) {
@@ -2746,6 +3126,12 @@ schemeNavNode.addEventListener("click", (event) => {
     return;
   }
 
+  const generatedSectionButton = event.target.closest("[data-section='new-timelines']");
+  if (generatedSectionButton) {
+    setGeneratedTimelinesSection();
+    return;
+  }
+
   const button = event.target.closest("[data-deck]");
   if (!button) return;
   const nextDeckIndex = Number(button.dataset.deck);
@@ -2773,6 +3159,18 @@ slideNode.addEventListener("click", (event) => {
   const levelButton = event.target.closest("[data-game-level]");
   if (levelButton) {
     toggleGameLevel(levelButton.dataset.gameLevel);
+    return;
+  }
+
+  const generatedFocusButton = event.target.closest("[data-generated-focus]");
+  if (generatedFocusButton) {
+    setGeneratedFocus(generatedFocusButton.dataset.generatedFocus);
+    return;
+  }
+
+  const generatedLevelButton = event.target.closest("[data-generated-level]");
+  if (generatedLevelButton) {
+    setGeneratedLevel(generatedLevelButton.dataset.generatedLevel);
     return;
   }
 
@@ -2863,6 +3261,12 @@ slideNode.addEventListener("click", (event) => {
 
   const button = event.target.closest("[data-slide]");
   if (!button) return;
+  if (section === "new-timelines") {
+    generatedIndex = Number(button.dataset.slide);
+    updateSectionUrl();
+    render();
+    return;
+  }
   setDeck(deckIndex, Number(button.dataset.slide));
 });
 
@@ -2935,10 +3339,22 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "Home") {
     event.preventDefault();
+    if (section === "new-timelines") {
+      generatedIndex = 0;
+      updateSectionUrl();
+      render();
+      return;
+    }
     setDeck(deckIndex, 0);
   }
   if (event.key === "End") {
     event.preventDefault();
+    if (section === "new-timelines") {
+      generatedIndex = Math.max(0, generatedTimelineSlides().length - 1);
+      updateSectionUrl();
+      render();
+      return;
+    }
     setDeck(deckIndex, decks[deckIndex].slides.length - 1);
   }
 });
