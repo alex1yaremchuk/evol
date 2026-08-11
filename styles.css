@@ -24,7 +24,8 @@ body {
 }
 
 body {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--paper);
   color: var(--ink);
 }
@@ -37,7 +38,7 @@ button {
   position: relative;
   z-index: 0;
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .scheme-nav {
@@ -49,7 +50,7 @@ button {
   gap: 0.45rem;
   width: calc(100% - 16rem);
   justify-content: center;
-  overflow-x: auto;
+  overflow: visible;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -71,6 +72,71 @@ button {
   font-size: clamp(0.78rem, 1.35vw, 0.94rem);
   font-weight: 820;
   backdrop-filter: blur(12px);
+}
+
+.scheme-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.scheme-menu > summary {
+  display: inline-flex;
+  align-items: center;
+  list-style: none;
+}
+
+.scheme-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.scheme-menu > summary::after {
+  content: "";
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-left: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-0.12rem) rotate(45deg);
+}
+
+.scheme-menu[open] > summary::after {
+  transform: translateY(0.12rem) rotate(225deg);
+}
+
+.scheme-submenu {
+  position: absolute;
+  top: calc(100% + 0.38rem);
+  left: 0;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(8.2rem, 1fr));
+  gap: 0.35rem;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0.48rem;
+  border: 1px solid rgba(24, 33, 43, 0.14);
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1rem 2.4rem rgba(24, 33, 43, 0.16);
+  backdrop-filter: blur(14px);
+}
+
+.scheme-submenu-button {
+  min-height: 2.25rem;
+  padding: 0.38rem 0.58rem;
+  border: 1px solid rgba(24, 33, 43, 0.12);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: #26323c;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 820;
+  text-align: left;
+}
+
+.scheme-submenu-button.active {
+  border-color: rgba(36, 125, 116, 0.42);
+  background: rgba(36, 125, 116, 0.94);
+  color: #fff;
 }
 
 .scheme-button.active {
@@ -443,12 +509,24 @@ button {
   font-weight: 880;
 }
 
-.info-card span {
+.info-card span,
+.info-card .info-value {
   display: block;
   color: #38444e;
   font-size: clamp(0.68rem, 0.92vw, 0.74rem);
   font-weight: 660;
   line-height: 1.14;
+}
+
+.info-list {
+  display: grid;
+  gap: 0.12rem;
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.info-list li {
+  padding-left: 0.05rem;
 }
 
 .success-grid {
@@ -846,6 +924,8 @@ button {
 
 .generated-slide {
   grid-template-rows: auto auto 1fr;
+  min-height: 100vh;
+  height: auto;
 }
 
 .generated-toolbar,
@@ -895,10 +975,10 @@ button {
 }
 
 .generated-filter {
-  display: grid;
-  gap: 0.1rem;
-  min-height: 2.8rem;
-  padding: 0.42rem 0.56rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.1rem;
+  padding: 0.34rem 0.58rem;
   border: 1px solid var(--line);
   border-radius: 0.55rem;
   background: rgba(255, 255, 255, 0.62);
@@ -916,17 +996,6 @@ button {
 .generated-filter strong {
   font-size: 0.84rem;
   font-weight: 900;
-}
-
-.generated-filter span {
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 720;
-  line-height: 1.12;
-}
-
-.generated-filter.active span {
-  color: rgba(255, 255, 255, 0.82);
 }
 
 .generated-empty {
@@ -1682,6 +1751,11 @@ svg .bone {
     font-size: 0.78rem;
   }
 
+  .scheme-submenu-button {
+    min-height: 2rem;
+    font-size: 0.76rem;
+  }
+
   .language-switch {
     min-height: 2.15rem;
     padding: 0.16rem;
@@ -1792,6 +1866,7 @@ svg .bone {
   }
 
   .info-card span,
+  .info-card .info-value,
   .success-card span {
     font-size: 0.64rem;
     line-height: 1.1;
@@ -1996,6 +2071,17 @@ svg .bone {
     font-size: clamp(0.66rem, 2.8vw, 0.82rem);
   }
 
+  .scheme-submenu {
+    grid-template-columns: repeat(2, minmax(7.1rem, 1fr));
+    width: min(20rem, calc(100vw - 1.1rem));
+  }
+
+  .scheme-submenu-button {
+    min-height: 2.08rem;
+    padding: 0.32rem 0.48rem;
+    font-size: 0.74rem;
+  }
+
   .top-tools {
     top: 3.35rem;
     right: 0.55rem;
@@ -2173,6 +2259,11 @@ svg .bone {
     box-shadow: 0 0.42rem 1rem rgba(24, 33, 43, 0.08);
   }
 
+  .scheme-submenu {
+    left: 0.55rem;
+    width: min(20rem, calc(100vw - 1.1rem));
+  }
+
   .top-tools {
     top: 2.95rem;
     left: 0.55rem;
@@ -2285,6 +2376,7 @@ svg .bone {
   }
 
   .info-card span,
+  .info-card .info-value,
   .success-card span {
     font-size: 0.7rem;
     line-height: 1.16;
@@ -2435,17 +2527,13 @@ svg .bone {
   }
 
   .generated-filter {
-    flex: 0 0 9rem;
-    min-height: 2.55rem;
+    flex: 0 0 auto;
+    min-height: 2.1rem;
     padding: 0.34rem 0.48rem;
   }
 
   .generated-filter strong {
     font-size: 0.76rem;
-  }
-
-  .generated-filter span {
-    font-size: 0.64rem;
   }
 
   .game-filter-summary {

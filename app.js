@@ -24,6 +24,8 @@ let gameModeId = initialGameMode();
 let generatedIndex = initialGeneratedIndex();
 let generatedFocusId = initialGeneratedFocus();
 let generatedLevelId = initialGeneratedLevel();
+let generatedScopeId = initialGeneratedScope();
+let generatedEraIds = initialGeneratedEras();
 let currentGame = null;
 let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
@@ -151,6 +153,23 @@ function initialGeneratedLevel() {
   return isGeneratedLevelId(saved.generatedLevelId) ? saved.generatedLevelId : "easy";
 }
 
+function initialGeneratedScope() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("scope");
+  if (isGeneratedScopeId(fromUrl)) return fromUrl;
+  const saved = savedUiState();
+  if (isGeneratedScopeId(saved.generatedScopeId)) return saved.generatedScopeId;
+  return generatedDefaultScope(generatedFocusId);
+}
+
+function initialGeneratedEras() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("eras");
+  if (fromUrl) return normalizeGeneratedEraIds(fromUrl.split(","));
+  const saved = savedUiState();
+  return normalizeGeneratedEraIds(Array.isArray(saved.generatedEraIds) ? saved.generatedEraIds : []);
+}
+
 function savedUiState() {
   try {
     return JSON.parse(window.localStorage.getItem("evol-ui-state") || "{}") || {};
@@ -170,11 +189,24 @@ function isGameModeId(value) {
 
 function isGeneratedFocusId(value) {
   if (!value) return false;
-  return sourceModel.nodeDetails.some((node) => node.id === value && node.flags?.filter) || sourceModel.localFocus?.id === value;
+  return sourceModel.nodeDetails.some((node) => node.id === value && node.flags?.filter) || sourceModel.localFocus?.id === value || value === "deck-log10" || value === "deck-pow2";
 }
 
 function isGeneratedLevelId(value) {
   return Boolean(value && sourceGames.levels.some((level) => level.id === value));
+}
+
+function isGeneratedScopeId(value) {
+  return Boolean(value && generatedScopeOptions(sourceModel).some((scope) => scope.id === value));
+}
+
+function isGeneratedEraId(value) {
+  return Boolean(value && generatedEraOptions(sourceGames).some((era) => era.id === value));
+}
+
+function normalizeGeneratedEraIds(eraIds) {
+  const ids = [...new Set((Array.isArray(eraIds) ? eraIds : []).filter(isGeneratedEraId))];
+  return ids.length ? ids : generatedEraOptions(sourceGames).map((era) => era.id);
 }
 
 function isPeriodFilterId(value) {
@@ -600,9 +632,17 @@ function generatedToolbar(slideCount) {
   const focusButtons = generatedFocusOptions()
     .map(
       (focus) => `
-        <button class="generated-filter ${focus.id === generatedFocusId ? "active" : ""}" type="button" data-generated-focus="${escapeHtml(focus.id)}" aria-pressed="${focus.id === generatedFocusId}">
+        <button class="generated-filter ${focus.id === generatedFocusId ? "active" : ""}" type="button" data-generated-focus="${escapeHtml(focus.id)}" aria-pressed="${focus.id === generatedFocusId}" title="${escapeHtml(focus.description || focus.title)}">
           <strong>${escapeHtml(focus.title)}</strong>
-          <span>${escapeHtml(focus.description || "")}</span>
+        </button>
+      `,
+    )
+    .join("");
+  const scopeButtons = generatedScopeOptions()
+    .map(
+      (scope) => `
+        <button class="game-level-button ${scope.id === generatedScopeId ? "active" : ""}" type="button" data-generated-scope="${escapeHtml(scope.id)}" aria-pressed="${scope.id === generatedScopeId}" title="${escapeHtml(scope.description || "")}">
+          ${escapeHtml(scope.title)}
         </button>
       `,
     )
@@ -612,6 +652,15 @@ function generatedToolbar(slideCount) {
       (level) => `
         <button class="game-level-button ${level.id === generatedLevelId ? "active" : ""}" type="button" data-generated-level="${escapeHtml(level.id)}" aria-pressed="${level.id === generatedLevelId}">
           ${escapeHtml(level.title)}
+        </button>
+      `,
+    )
+    .join("");
+  const eraButtons = generatedEraOptions()
+    .map(
+      (era) => `
+        <button class="game-level-button ${generatedEraIds.includes(era.id) ? "active" : ""}" type="button" data-generated-era="${escapeHtml(era.id)}" aria-pressed="${generatedEraIds.includes(era.id)}" title="${escapeHtml(era.full || era.label)}">
+          ${escapeHtml(era.label)}
         </button>
       `,
     )
@@ -626,6 +675,14 @@ function generatedToolbar(slideCount) {
       <div class="generated-levels">
         <span>${escapeHtml(t("Уровень"))}</span>
         ${levelButtons}
+      </div>
+      <div class="generated-levels">
+        <span>${escapeHtml(t("Масштаб"))}</span>
+        ${scopeButtons}
+      </div>
+      <div class="generated-levels generated-era-row">
+        <span>${escapeHtml(t("Эры"))}</span>
+        ${eraButtons}
       </div>
       <div class="generated-filters" aria-label="${escapeHtml(t("Фокус"))}">
         ${focusButtons}
@@ -643,22 +700,185 @@ function generatedFocusOptions() {
       description: item.title,
       kind: "node",
       node: item.node,
+      defaultScope: item.defaultScope,
       order: item.filterOrder || 50,
     }));
-  return [...nodeFocuses, model.localFocus].filter(Boolean).sort((a, b) => (a.order || a.filterOrder || 50) - (b.order || b.filterOrder || 50));
+  const fixedTimelineFocuses = decks
+    .map((deck, deckIndex) => ({ deck, deckIndex }))
+    .filter(({ deck }) => deck.id === "log10" || deck.id === "pow2")
+    .map(({ deck, deckIndex }, offset) => ({
+      id: `deck-${deck.id}`,
+      title: deck.label,
+      description: deck.id === "log10" ? t("новшества между степенями десяти") : t("новшества между степенями двойки"),
+      kind: "scaleIntervals",
+      defaultScope: "all",
+      scaleId: deck.id,
+      deckIndex,
+      order: 100 + offset,
+    }));
+  return [...nodeFocuses, model.localFocus, ...fixedTimelineFocuses].filter(Boolean).sort((a, b) => (a.order || a.filterOrder || 50) - (b.order || b.filterOrder || 50));
+}
+
+function generatedScopeOptions(rawModel = model) {
+  return rawModel.scopeOptions || [
+    { id: "main", title: t("Главное"), description: t("только самые крупные вехи") },
+    { id: "detail", title: t("Подробнее"), description: t("крупные и важные ветвевые события") },
+    { id: "all", title: t("Все"), description: t("все события выбранной ветки") },
+  ];
+}
+
+function generatedEraOptions(rawGames = games) {
+  return [
+    { id: "cosmic", label: t("до Земли"), full: t("Космическая предыстория Земли"), startMa: 14000, endMa: 4540 },
+    { id: "early-earth", label: t("ранняя Земля"), full: t("Формирование молодой Земли"), startMa: 4540, endMa: 4000 },
+    ...(rawGames.timelineEras || []).map((era) => ({
+      id: era.id,
+      label: t(era.label),
+      full: t(era.label),
+      startMa: era.startMa,
+      endMa: era.endMa || 0.000001,
+    })),
+  ];
+}
+
+function generatedDefaultScope(focusId) {
+  const focus = generatedFocusOptions().find((item) => item.id === focusId);
+  return isGeneratedScopeId(focus?.defaultScope) ? focus.defaultScope : "detail";
 }
 
 function generatedTimelineSlides() {
   const focus = generatedFocusOptions().find((item) => item.id === generatedFocusId) || generatedFocusOptions()[0];
+  if (focus?.kind === "scaleIntervals") return generatedScaleSlides(focus);
   const relevantNodes = generatedRelevantNodes(focus);
   const localNodeIds = focus?.kind === "local" && Array.isArray(focus.nodeIds) ? new Set(focus.nodeIds) : null;
   return (model.nodeDetails || [])
     .filter((item) => item.appearedMa && levelRank(item.level || "hard") <= levelRank(generatedLevelId))
+    .filter((item) => generatedImportanceRank(generatedEventImportance(item)) <= generatedScopeRank(generatedScopeId))
+    .filter(isGeneratedEventInSelectedEra)
     .filter((item) => !localNodeIds || localNodeIds.has(item.id))
     .filter((item) => isGeneratedEventVisibleForFocus(item, focus))
     .filter((item) => relevantNodes.has(item.node))
     .sort((a, b) => b.appearedMa - a.appearedMa)
     .map((item) => generatedSlideFromNode(item, focus, relevantNodes));
+}
+
+function generatedEventImportance(item) {
+  return model.importanceById?.[item.id] || item.importance || "branch";
+}
+
+function generatedImportanceRank(importance) {
+  const ranks = { global: 0, major: 1, branch: 2, fine: 3 };
+  return ranks[importance] ?? ranks.branch;
+}
+
+function generatedScopeRank(scopeId) {
+  const ranks = { main: 0, detail: 2, all: 3 };
+  return ranks[scopeId] ?? ranks.detail;
+}
+
+function generatedScaleSlides(focus) {
+  const scale = generatedScaleDefinition(focus);
+  return scale.points.map((point, pointIndex) => {
+    const olderMa = pointIndex === 0 ? scale.startMa : scale.points[pointIndex - 1].ma;
+    const newerMa = point.ma;
+    const events = generatedScaleEvents(olderMa, newerMa, pointIndex === 0);
+    const highlights = generatedScaleHighlights(events, 10);
+    const titleList = highlights.map((event) => generatedEventSummaryTitle(event));
+    const noveltyItems = titleList.length ? generatedLimitedList(titleList, 6, events.length - highlights.length) : [t("в модели нет новых событий")];
+    const eventItems = titleList.length ? generatedLimitedList(titleList, 10, events.length - highlights.length) : [t("нет событий")];
+    const effectItems = highlights.map((event) => event.effect).filter(Boolean).slice(0, 6);
+    const primary = highlights.find((event) => event.image) || highlights[0] || events.find((event) => event.image) || events[0];
+    return {
+      kicker: scale.title,
+      title: point.label,
+      subtitle: `${t("Что появилось за интервал")}: ${generatedIntervalLabel(olderMa, newerMa)}`,
+      novelty: noveltyItems,
+      mainBranch: eventItems,
+      sideBranch: generatedIntervalLabel(olderMa, newerMa),
+      effect: effectItems.length ? effectItems : [t("этот интервал пока оставлен пустым, потому что в модели нет подходящих узлов")],
+      caption: events.length ? `${events.length} ${t("событий")}` : t("пустой интервал"),
+      scene: primary ? generatedSceneForNode(primary) : "earth",
+      marker: primary?.marker || "fork",
+      symbolLabel: titleList[0] || t("нет событий"),
+      mainPhoto: primary?.image ? { src: primary.image, label: primary.imageLabel || primary.title || primary.node } : null,
+      timeMa: newerMa,
+      timeLabel: point.label,
+      colors: primary ? generatedColorsForNode(primary) : ["#d9e8d2", "#eadcc4"],
+      infoLabels: {
+        novelty: t("Новшества"),
+        main: t("События"),
+        side: t("Интервал"),
+        effect: t("Что это дало"),
+      },
+    };
+  });
+}
+
+function generatedScaleHighlights(events, limit) {
+  return [...events]
+    .sort((a, b) => generatedImportanceRank(generatedEventImportance(a)) - generatedImportanceRank(generatedEventImportance(b)) || b.appearedMa - a.appearedMa)
+    .slice(0, limit)
+    .sort((a, b) => b.appearedMa - a.appearedMa);
+}
+
+function generatedEventSummaryTitle(event) {
+  const title = event.title || event.node;
+  return `${title} (${formatMa(event.appearedMa)})`;
+}
+
+function generatedLimitedList(items, limit, hiddenCount = 0) {
+  const visible = items.slice(0, limit);
+  const rest = items.length - visible.length + hiddenCount;
+  return rest > 0 ? [...visible, `+${rest} ${t("еще")}`] : visible;
+}
+
+function generatedScaleEvents(olderMa, newerMa, includeOlderBoundary) {
+  return (model.nodeDetails || [])
+    .filter((item) => item.appearedMa && levelRank(item.level || "hard") <= levelRank(generatedLevelId))
+    .filter((item) => generatedImportanceRank(generatedEventImportance(item)) <= generatedScopeRank(generatedScopeId))
+    .filter(isGeneratedEventInSelectedEra)
+    .filter((item) => {
+      const time = item.appearedMa;
+      if (includeOlderBoundary && time === olderMa) return true;
+      return time < olderMa && time >= newerMa;
+    })
+    .sort((a, b) => b.appearedMa - a.appearedMa);
+}
+
+function generatedScaleDefinition(focus) {
+  if (focus?.scaleId === "pow2") {
+    const points = Array.from({ length: 31 }, (_, index) => 32 - index).map((power) => {
+      const ma = generatedYearsToMa(2 ** power);
+      return { ma, label: `2^${power} ${t("лет назад")} (${formatMa(ma)})` };
+    });
+    return {
+      id: "pow2",
+      title: "2^n",
+      startMa: 4600,
+      endMa: points.at(-1).ma,
+      points,
+    };
+  }
+  const exponents = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+  const points = exponents.map((exponent) => {
+    const ma = generatedYearsToMa(10 ** exponent);
+    return { ma, label: `10^${exponent} ${t("лет назад")} (${formatMa(ma)})` };
+  });
+  return {
+    id: "log10",
+    title: "10^n",
+    startMa: 14000,
+    endMa: points.at(-1).ma,
+    points,
+  };
+}
+
+function generatedYearsToMa(years) {
+  return years / 1000000;
+}
+
+function generatedIntervalLabel(olderMa, newerMa) {
+  return `${formatMa(olderMa)} - ${formatMa(newerMa)}`;
 }
 
 function isGeneratedEventVisibleForFocus(item, focus) {
@@ -761,58 +981,156 @@ function generatedNodeDetail(node) {
 
 function generatedSceneForNode(item) {
   const node = item.node;
+  if ([t("космос"), t("Земля")].includes(node)) return "earth";
   if ([t("прокариоты"), t("эукариоты")].includes(node)) return "cell";
-  if ([t("архепластиды"), t("зеленые растения"), t("наземные растения"), t("сосудистые растения"), t("семенные растения"), t("цветковые"), t("злаки")].includes(node)) return "tree";
+  if ([t("архепластиды"), t("зеленые растения"), t("наземные растения"), t("сосудистые растения"), t("семенные растения"), t("голосеменные"), t("цветковые"), t("злаки")].includes(node)) return "tree";
   if ([t("членистоногие"), t("насекомые")].includes(node)) return "tree";
   if ([t("динозавры"), t("архозавры"), t("тероподы"), t("птицы")].includes(node)) return "theropod";
   if ([t("млекопитающие"), t("синапсиды"), t("приматы"), t("люди")].includes(node)) return "smallMammal";
-  if ([t("хордовые"), t("черепные"), t("челюстноротые"), t("костные позвоночные"), t("лопастеперые")].includes(node)) return "bonyfish";
+  if ([t("хордовые"), t("черепные"), t("бесчелюстные"), t("челюстноротые"), t("хрящевые рыбы"), t("костные позвоночные"), t("лопастеперые")].includes(node)) return "bonyfish";
   return item.id === "life" || item.id === "eukaryotes" ? "cell" : "tree";
 }
 
 function generatedColorsForNode(item) {
   const node = item.node;
-  if ([t("архепластиды"), t("зеленые растения"), t("наземные растения"), t("сосудистые растения"), t("семенные растения"), t("цветковые"), t("злаки")].includes(node)) return ["#d7ead5", "#f0dfc2"];
+  if ([t("космос"), t("Земля")].includes(node)) return ["#dce3ef", "#ead8c5"];
+  if ([t("архепластиды"), t("зеленые растения"), t("наземные растения"), t("сосудистые растения"), t("семенные растения"), t("голосеменные"), t("цветковые"), t("злаки")].includes(node)) return ["#d7ead5", "#f0dfc2"];
   if ([t("членистоногие"), t("насекомые")].includes(node)) return ["#efe0b8", "#d4e7ec"];
   if ([t("динозавры"), t("архозавры"), t("тероподы"), t("птицы"), t("завропсиды")].includes(node)) return ["#e8d7bd", "#c9e6e0"];
   if ([t("синапсиды"), t("млекопитающие"), t("приматы"), t("люди")].includes(node)) return ["#ecdcc5", "#d8e5d3"];
   return ["#d9e8d2", "#eadcc4"];
 }
 
-function generatedTimelineDeck(slides) {
+function generatedScaleTimelineDeck(focus, slides) {
+  const scale = generatedScaleDefinition(focus);
+  const range = { start: scale.startMa, end: scale.endMa };
   return {
-    id: "new-timelines",
-    label: t("Новые таймлайны"),
-    range: { start: 4000, end: 0.01 },
+    id: `generated-${scale.id}`,
+    label: scale.title,
+    range,
     scale: "log",
-    timelineKicker: t("примерная дата появления узла"),
-    eras: [
-      { start: 4000, end: 2500, label: t("Архей"), short: t("архей"), full: t("Архейский эон") },
-      { start: 2500, end: 541, label: t("Протерозой"), short: t("протерозой"), full: t("Протерозойский эон") },
-      { start: 541, end: 252, label: t("Палеозой"), short: t("палеозой"), full: t("Палеозойская эра") },
-      { start: 252, end: 66, label: t("Мезозой"), short: t("мезозой"), full: t("Мезозойская эра") },
-      { start: 66, end: 0.01, label: t("Кайнозой"), short: t("кайнозой"), full: t("Кайнозойская эра") },
-    ],
-    periods: [
-      { start: 4000, end: 2500, label: t("архей"), full: t("Архейский эон") },
-      { start: 2500, end: 541, label: t("протерозой"), full: t("Протерозойский эон") },
-      { start: 541, end: 252, label: t("палеозой"), full: t("Палеозойская эра") },
-      { start: 252, end: 66, label: t("мезозой"), full: t("Мезозойская эра") },
-      { start: 66, end: 2.6, label: t("кайнозой"), full: t("Кайнозойская эра до четвертичного периода") },
-      { start: 2.6, end: 0.01, label: t("четвертичный"), short: t("четв."), full: t("Четвертичный период") },
-    ],
-    ticks: [
-      { ma: 4000, label: t("4 млрд") },
-      { ma: 1000, label: t("1 млрд") },
-      { ma: 100, label: t("100 млн") },
-      { ma: 10, label: t("10 млн") },
-      { ma: 1, label: t("1 млн") },
-      { ma: 0.1, label: t("100 тыс.") },
-    ],
+    timelineKicker: t("интервальная шкала новшеств"),
+    eras: generatedEraBands(range),
+    periods: generatedPeriodBands(range),
+    ticks: scale.points.map((point) => ({ ma: point.ma, label: generatedScaleTickLabel(point.label) })),
     slides,
     showTimelineMarkers: true,
     showSlideSymbol: true,
   };
+}
+
+function generatedTimelineDeck(slides) {
+  const focus = generatedFocusOptions().find((item) => item.id === generatedFocusId);
+  if (focus?.kind === "scaleIntervals") return generatedScaleTimelineDeck(focus, slides);
+  const range = generatedTimelineRange(slides);
+  return {
+    id: "new-timelines",
+    label: t("Новые таймлайны"),
+    range,
+    scale: "log",
+    timelineKicker: t("примерная дата появления узла"),
+    eras: generatedEraBands(range),
+    periods: generatedPeriodBands(range),
+    ticks: generatedTimelineTicks(range),
+    slides,
+    showTimelineMarkers: true,
+    showSlideSymbol: true,
+  };
+}
+
+function generatedTimelineRange(slides) {
+  const times = slides.map((slide) => slide.timeMa).filter((time) => Number.isFinite(time) && time > 0);
+  if (!times.length) return { start: 4000, end: 0.01 };
+  const oldest = Math.max(...times);
+  const youngest = Math.min(...times);
+  const start = generatedEraStartForTime(oldest);
+  const end = generatedEraEndForTime(youngest);
+  if (end > 0.01) return { start, end };
+  if (youngest < 0.01) return { start, end: Math.max(0.000001, youngest / 2) };
+  return { start, end: 0.01 };
+}
+
+function isGeneratedEventInSelectedEra(item) {
+  const time = item.appearedMa;
+  return generatedSelectedEraRanges().some((era) => time <= era.startMa && time >= era.endMa);
+}
+
+function generatedSelectedEraRanges() {
+  const selected = new Set(normalizeGeneratedEraIds(generatedEraIds));
+  return generatedEraOptions().filter((era) => selected.has(era.id));
+}
+
+function generatedEraForTime(time) {
+  return generatedEraOptions().find((era) => time <= era.startMa && time >= era.endMa);
+}
+
+function generatedEraStartForTime(time) {
+  return generatedEraForTime(time)?.startMa || Math.max(4000, time);
+}
+
+function generatedEraEndForTime(time) {
+  return generatedEraForTime(time)?.endMa || 0.01;
+}
+
+function generatedEraBands(range) {
+  return clipTimelineBands(
+    generatedEraOptions().map((era) => ({
+      start: era.startMa,
+      end: era.endMa,
+      label: era.label,
+      short: era.label,
+      full: era.full || era.label,
+    })),
+    range,
+  );
+}
+
+function generatedPeriodBands(range) {
+  return clipTimelineBands(
+    [
+      { start: 14000, end: 4540, label: t("до Земли"), full: t("Космическая предыстория Земли") },
+      { start: 4540, end: 4000, label: t("ранняя Земля"), full: t("Формирование молодой Земли") },
+      ...(games.timelinePeriods || []).map((period) => ({
+        start: period.startMa,
+        end: period.endMa || 0.000001,
+        label: t(period.label),
+        short: t(period.short || period.label),
+        full: t(period.label),
+      })),
+    ],
+    range,
+  );
+}
+
+function generatedScaleTickLabel(label) {
+  return String(label).replace(/ (лет назад|years ago).*/, "");
+}
+
+function generatedTimelineTicks(range) {
+  return [
+    { ma: 4000, label: t("4 млрд") },
+    { ma: 1000, label: t("1 млрд") },
+    { ma: 100, label: t("100 млн") },
+    { ma: 20, label: t("20 млн") },
+    { ma: 10, label: t("10 млн") },
+    { ma: 1, label: t("1 млн") },
+    { ma: 0.1, label: t("100 тыс.") },
+    { ma: 0.01, label: t("10 тыс.") },
+    { ma: 0.001, label: t("1 тыс.") },
+    { ma: 0.0001, label: t("100 лет") },
+    { ma: 0.00001, label: t("10 лет") },
+  ].filter((tick) => tick.ma <= range.start && tick.ma >= range.end);
+}
+
+function clipTimelineBands(bands, range) {
+  return bands
+    .filter((band) => band.start > range.end && band.end < range.start)
+    .map((band) => ({
+      ...band,
+      start: Math.min(band.start, range.start),
+      end: Math.max(band.end, range.end),
+    }))
+    .filter((band) => band.start > band.end);
 }
 
 function infoGrid(slide, deck) {
@@ -831,13 +1149,20 @@ function infoGrid(slide, deck) {
           ([label, value]) => `
             <div class="info-card">
               <strong>${escapeHtml(label)}</strong>
-              <span>${escapeHtml(value)}</span>
+              <div class="info-value">${infoValue(value)}</div>
             </div>
           `,
         )
         .join("")}
     </div>
   `;
+}
+
+function infoValue(value) {
+  if (Array.isArray(value)) {
+    return `<ul class="info-list">${value.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+  }
+  return escapeHtml(value);
 }
 
 function successGrid(slide) {
@@ -2478,6 +2803,7 @@ function timelineMarkers(deck, activeSlide) {
   return deck.slides
     .map((slide, slideIndex) => ({ slide, slideIndex }))
     .filter(({ slide }) => slide.marker && slide.timeMa)
+    .filter(({ slide }) => slide.timeMa <= deck.range.start && slide.timeMa >= deck.range.end)
     .map(({ slide, slideIndex }, markerIndex) => {
       const left = timelinePosition(deck, slide.timeMa);
       const lane = markerLane(left, placed);
@@ -2964,7 +3290,7 @@ function renderSchemeNav() {
   const deckButtons = decks
     .map(
       (deck, i) => `
-        <button class="scheme-button ${section === "slides" && i === deckIndex ? "active" : ""}" type="button" data-deck="${i}" aria-pressed="${section === "slides" && i === deckIndex}">
+        <button class="scheme-submenu-button ${section === "slides" && i === deckIndex ? "active" : ""}" type="button" data-deck="${i}" aria-pressed="${section === "slides" && i === deckIndex}">
           <span>${escapeHtml(deck.label)}</span>
         </button>
       `,
@@ -2972,7 +3298,14 @@ function renderSchemeNav() {
     .join("");
 
   schemeNavNode.innerHTML = `
-    ${deckButtons}
+    <details class="scheme-menu">
+      <summary class="scheme-button ${section === "slides" ? "active" : ""}" aria-current="${section === "slides" ? "page" : "false"}">
+        <span>${escapeHtml(t("Таймлайны"))}</span>
+      </summary>
+      <div class="scheme-submenu">
+        ${deckButtons}
+      </div>
+    </details>
     <button class="scheme-button ${section === "new-timelines" ? "active" : ""}" type="button" data-section="new-timelines" aria-pressed="${section === "new-timelines"}">
       <span>${escapeHtml(t("Новые таймлайны"))}</span>
     </button>
@@ -3008,6 +3341,7 @@ function setGeneratedTimelinesSection() {
 function setGeneratedFocus(focusId) {
   if (!isGeneratedFocusId(focusId)) return;
   generatedFocusId = focusId;
+  generatedScopeId = generatedDefaultScope(focusId);
   generatedIndex = 0;
   updateSectionUrl();
   render();
@@ -3016,6 +3350,29 @@ function setGeneratedFocus(focusId) {
 function setGeneratedLevel(levelId) {
   if (!isGeneratedLevelId(levelId)) return;
   generatedLevelId = levelId;
+  generatedIndex = 0;
+  updateSectionUrl();
+  render();
+}
+
+function setGeneratedScope(scopeId) {
+  if (!isGeneratedScopeId(scopeId)) return;
+  generatedScopeId = scopeId;
+  generatedIndex = 0;
+  updateSectionUrl();
+  render();
+}
+
+function toggleGeneratedEra(eraId) {
+  if (!isGeneratedEraId(eraId)) return;
+  const allIds = generatedEraOptions().map((era) => era.id);
+  const selected = new Set(normalizeGeneratedEraIds(generatedEraIds));
+  if (selected.has(eraId) && selected.size > 1) {
+    selected.delete(eraId);
+  } else {
+    selected.add(eraId);
+  }
+  generatedEraIds = allIds.filter((id) => selected.has(id));
   generatedIndex = 0;
   updateSectionUrl();
   render();
@@ -3031,11 +3388,15 @@ function updateSectionUrl() {
     url.searchParams.delete("slide");
     url.searchParams.delete("focus");
     url.searchParams.delete("level");
+    url.searchParams.delete("scope");
+    url.searchParams.delete("eras");
     url.searchParams.delete("point");
   } else if (section === "new-timelines") {
     url.searchParams.set("section", "new-timelines");
     url.searchParams.set("focus", generatedFocusId);
     url.searchParams.set("level", generatedLevelId);
+    url.searchParams.set("scope", generatedScopeId);
+    url.searchParams.set("eras", normalizeGeneratedEraIds(generatedEraIds).join(","));
     url.searchParams.set("point", String(generatedIndex));
     url.searchParams.delete("game");
     url.searchParams.delete("deck");
@@ -3045,6 +3406,8 @@ function updateSectionUrl() {
     url.searchParams.delete("game");
     url.searchParams.delete("focus");
     url.searchParams.delete("level");
+    url.searchParams.delete("scope");
+    url.searchParams.delete("eras");
     url.searchParams.delete("point");
     url.searchParams.set("deck", String(deckIndex));
     url.searchParams.set("slide", String(index));
@@ -3077,6 +3440,8 @@ function saveUiState() {
         generatedIndex,
         generatedFocusId,
         generatedLevelId,
+        generatedScopeId,
+        generatedEraIds: normalizeGeneratedEraIds(generatedEraIds),
         presentationMode,
       }),
     );
@@ -3171,6 +3536,17 @@ slideNode.addEventListener("click", (event) => {
   const generatedLevelButton = event.target.closest("[data-generated-level]");
   if (generatedLevelButton) {
     setGeneratedLevel(generatedLevelButton.dataset.generatedLevel);
+    return;
+  }
+
+  const generatedScopeButton = event.target.closest("[data-generated-scope]");
+  if (generatedScopeButton) {
+    setGeneratedScope(generatedScopeButton.dataset.generatedScope);
+    return;
+  }
+  const generatedEraButton = event.target.closest("[data-generated-era]");
+  if (generatedEraButton) {
+    toggleGeneratedEra(generatedEraButton.dataset.generatedEra);
     return;
   }
 

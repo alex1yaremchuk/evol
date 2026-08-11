@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" role="img" aria-label="костер в пещере">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="68%" r="48%">
+      <stop offset="0" stop-color="#ffd37a"/>
+      <stop offset="0.35" stop-color="#d86b36"/>
+      <stop offset="1" stop-color="#1f2226"/>
+    </radialGradient>
+    <linearGradient id="wall" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a3f37"/>
+      <stop offset="1" stop-color="#17191d"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="640" fill="#111418"/>
+  <path d="M0 640V180C110 70 238 34 380 54c95 14 137 60 222 58 92-2 147-62 231-39 60 17 100 70 127 143v424z" fill="url(#wall)"/>
+  <ellipse cx="492" cy="442" rx="405" ry="184" fill="url(#glow)" opacity=".82"/>
+  <path d="M67 640c50-90 98-142 155-157 85-22 155 44 242 41 122-5 182-110 307-79 70 18 118 75 159 195z" fill="#201b19" opacity=".72"/>
+  <path d="M361 510l246-74M593 510l-238-70" stroke="#4a2418" stroke-width="32" stroke-linecap="round"/>
+  <path d="M480 421c-68-41-57-104-14-163 17 54 71 74 71 132 0 42-22 67-57 84z" fill="#f5b044"/>
+  <path d="M504 477c-89-37-119-119-66-207 10 55 73 88 73 153 0 21-3 39-7 54z" fill="#e65f32"/>
+  <path d="M449 476c-39-32-48-81-17-128 15 34 51 53 51 89 0 21-13 34-34 39z" fill="#ffd36e"/>
+  <circle cx="278" cy="291" r="9" fill="#d88955" opacity=".65"/>
+  <circle cx="313" cy="260" r="5" fill="#e7a066" opacity=".55"/>
+  <circle cx="677" cy="256" r="7" fill="#d88955" opacity=".48"/>
+  <path d="M205 185c44-38 95-57 154-58M629 153c70-31 128-32 174-4" stroke="#8a7161" stroke-width="12" stroke-linecap="round" opacity=".28"/>
+</svg>

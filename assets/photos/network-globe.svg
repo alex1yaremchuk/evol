@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" role="img" aria-label="глобальная цифровая сеть">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0" stop-color="#e7f4f6"/>
+      <stop offset="1" stop-color="#b9cfdf"/>
+    </radialGradient>
+  </defs>
+  <rect width="960" height="640" fill="url(#bg)"/>
+  <circle cx="480" cy="320" r="206" fill="#f9fbff" opacity=".76" stroke="#5f8698" stroke-width="10"/>
+  <ellipse cx="480" cy="320" rx="206" ry="74" fill="none" stroke="#5f8698" stroke-width="7" opacity=".55"/>
+  <ellipse cx="480" cy="320" rx="82" ry="206" fill="none" stroke="#5f8698" stroke-width="7" opacity=".55"/>
+  <path d="M291 240c86 38 170 41 252 8 50-20 92-23 126-7M312 410c94-31 178-26 253 16 42 24 82 28 122 12" fill="none" stroke="#5f8698" stroke-width="7" opacity=".45"/>
+  <g fill="#247d74" stroke="#fff" stroke-width="8">
+    <circle cx="480" cy="320" r="22"/>
+    <circle cx="340" cy="246" r="18"/>
+    <circle cx="620" cy="232" r="18"/>
+    <circle cx="365" cy="433" r="18"/>
+    <circle cx="620" cy="427" r="18"/>
+    <circle cx="230" cy="330" r="18"/>
+    <circle cx="731" cy="324" r="18"/>
+  </g>
+  <g stroke="#247d74" stroke-width="8" stroke-linecap="round" opacity=".72">
+    <path d="M358 255l104 55M501 305l101-63M381 423l83-88M502 337l99 79M252 330h206M502 321h207"/>
+  </g>
+  <rect x="112" y="94" width="168" height="92" rx="16" fill="#fff" opacity=".82" stroke="#7897a8" stroke-width="5"/>
+  <path d="M142 134h106M142 158h76" stroke="#247d74" stroke-width="10" stroke-linecap="round"/>
+  <rect x="702" y="462" width="132" height="76" rx="16" fill="#fff" opacity=".82" stroke="#7897a8" stroke-width="5"/>
+  <path d="M732 500h72" stroke="#247d74" stroke-width="10" stroke-linecap="round"/>
+</svg>
