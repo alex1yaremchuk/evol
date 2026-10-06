@@ -24,7 +24,6 @@ let gameModeId = initialGameMode();
 let generatedIndex = initialGeneratedIndex();
 let generatedFocusId = initialGeneratedFocus();
 let generatedLevelId = initialGeneratedLevel();
-let generatedScopeId = initialGeneratedScope();
 let generatedEraIds = initialGeneratedEras();
 let currentGame = null;
 let gameScore = { correct: 0, total: 0 };
@@ -147,19 +146,14 @@ function initialGeneratedFocus() {
 
 function initialGeneratedLevel() {
   const params = new URLSearchParams(window.location.search);
-  const fromUrl = params.get("level");
+  const fromUrl = params.get("detail");
   if (isGeneratedLevelId(fromUrl)) return fromUrl;
+  const legacyLevel = params.get("level");
+  const legacyScope = params.get("scope");
+  if (isGeneratedLevelId(legacyLevel) || isGeneratedScopeId(legacyScope)) return mergedGeneratedDetail(legacyLevel, legacyScope);
   const saved = savedUiState();
+  if (isGeneratedLevelId(saved.generatedDetailId)) return saved.generatedDetailId;
   return isGeneratedLevelId(saved.generatedLevelId) ? saved.generatedLevelId : "easy";
-}
-
-function initialGeneratedScope() {
-  const params = new URLSearchParams(window.location.search);
-  const fromUrl = params.get("scope");
-  if (isGeneratedScopeId(fromUrl)) return fromUrl;
-  const saved = savedUiState();
-  if (isGeneratedScopeId(saved.generatedScopeId)) return saved.generatedScopeId;
-  return generatedDefaultScope(generatedFocusId);
 }
 
 function initialGeneratedEras() {
@@ -638,20 +632,11 @@ function generatedToolbar(slideCount) {
       `,
     )
     .join("");
-  const scopeButtons = generatedScopeOptions()
+  const levelButtons = generatedDetailOptions()
     .map(
-      (scope) => `
-        <button class="game-level-button ${scope.id === generatedScopeId ? "active" : ""}" type="button" data-generated-scope="${escapeHtml(scope.id)}" aria-pressed="${scope.id === generatedScopeId}" title="${escapeHtml(scope.description || "")}">
-          ${escapeHtml(scope.title)}
-        </button>
-      `,
-    )
-    .join("");
-  const levelButtons = games.levels
-    .map(
-      (level) => `
-        <button class="game-level-button ${level.id === generatedLevelId ? "active" : ""}" type="button" data-generated-level="${escapeHtml(level.id)}" aria-pressed="${level.id === generatedLevelId}">
-          ${escapeHtml(level.title)}
+      (detail) => `
+        <button class="game-level-button ${detail.id === generatedLevelId ? "active" : ""}" type="button" data-generated-level="${escapeHtml(detail.id)}" aria-pressed="${detail.id === generatedLevelId}" title="${escapeHtml(detail.description)}">
+          ${escapeHtml(detail.title)}
         </button>
       `,
     )
@@ -673,12 +658,8 @@ function generatedToolbar(slideCount) {
         <span>${escapeHtml(t("Собрано из узлов дерева и карточек"))}: ${slideCount}</span>
       </div>
       <div class="generated-levels">
-        <span>${escapeHtml(t("Уровень"))}</span>
+        <span>${escapeHtml(t("Детализация"))}</span>
         ${levelButtons}
-      </div>
-      <div class="generated-levels">
-        <span>${escapeHtml(t("Масштаб"))}</span>
-        ${scopeButtons}
       </div>
       <div class="generated-levels generated-era-row">
         <span>${escapeHtml(t("Эры"))}</span>
@@ -727,6 +708,14 @@ function generatedScopeOptions(rawModel = model) {
   ];
 }
 
+function generatedDetailOptions() {
+  return [
+    { id: "easy", title: t("Базово"), description: t("только самые крупные вехи") },
+    { id: "medium", title: t("Подробнее"), description: t("крупные и важные ветвевые события") },
+    { id: "hard", title: t("Все"), description: t("все события выбранной ветки") },
+  ];
+}
+
 function generatedEraOptions(rawGames = games) {
   return [
     { id: "cosmic", label: t("до Земли"), full: t("Космическая предыстория Земли"), startMa: 14000, endMa: 4540 },
@@ -741,11 +730,6 @@ function generatedEraOptions(rawGames = games) {
   ];
 }
 
-function generatedDefaultScope(focusId) {
-  const focus = generatedFocusOptions().find((item) => item.id === focusId);
-  return isGeneratedScopeId(focus?.defaultScope) ? focus.defaultScope : "detail";
-}
-
 function generatedTimelineSlides() {
   const focus = generatedFocusOptions().find((item) => item.id === generatedFocusId) || generatedFocusOptions()[0];
   if (focus?.kind === "scaleIntervals") return generatedScaleSlides(focus);
@@ -753,7 +737,7 @@ function generatedTimelineSlides() {
   const localNodeIds = focus?.kind === "local" && Array.isArray(focus.nodeIds) ? new Set(focus.nodeIds) : null;
   return (model.nodeDetails || [])
     .filter((item) => item.appearedMa && levelRank(item.level || "hard") <= levelRank(generatedLevelId))
-    .filter((item) => generatedImportanceRank(generatedEventImportance(item)) <= generatedScopeRank(generatedScopeId))
+    .filter((item) => generatedImportanceRank(generatedEventImportance(item)) <= generatedScopeRank(generatedScopeForDetail(generatedLevelId)))
     .filter(isGeneratedEventInSelectedEra)
     .filter((item) => !localNodeIds || localNodeIds.has(item.id))
     .filter((item) => isGeneratedEventVisibleForFocus(item, focus))
@@ -774,6 +758,24 @@ function generatedImportanceRank(importance) {
 function generatedScopeRank(scopeId) {
   const ranks = { main: 0, detail: 2, all: 3 };
   return ranks[scopeId] ?? ranks.detail;
+}
+
+function generatedScopeForDetail(levelId) {
+  if (levelId === "easy") return "main";
+  if (levelId === "medium") return "detail";
+  return "all";
+}
+
+function generatedDetailForScope(scopeId) {
+  if (scopeId === "main") return "easy";
+  if (scopeId === "all") return "hard";
+  return "medium";
+}
+
+function mergedGeneratedDetail(levelId, scopeId) {
+  const fromLevel = isGeneratedLevelId(levelId) ? levelId : "easy";
+  const fromScope = isGeneratedScopeId(scopeId) ? generatedDetailForScope(scopeId) : "easy";
+  return levelRank(fromLevel) >= levelRank(fromScope) ? fromLevel : fromScope;
 }
 
 function generatedScaleSlides(focus) {
@@ -835,7 +837,7 @@ function generatedLimitedList(items, limit, hiddenCount = 0) {
 function generatedScaleEvents(olderMa, newerMa, includeOlderBoundary) {
   return (model.nodeDetails || [])
     .filter((item) => item.appearedMa && levelRank(item.level || "hard") <= levelRank(generatedLevelId))
-    .filter((item) => generatedImportanceRank(generatedEventImportance(item)) <= generatedScopeRank(generatedScopeId))
+    .filter((item) => generatedImportanceRank(generatedEventImportance(item)) <= generatedScopeRank(generatedScopeForDetail(generatedLevelId)))
     .filter(isGeneratedEventInSelectedEra)
     .filter((item) => {
       const time = item.appearedMa;
@@ -3341,7 +3343,6 @@ function setGeneratedTimelinesSection() {
 function setGeneratedFocus(focusId) {
   if (!isGeneratedFocusId(focusId)) return;
   generatedFocusId = focusId;
-  generatedScopeId = generatedDefaultScope(focusId);
   generatedIndex = 0;
   updateSectionUrl();
   render();
@@ -3350,14 +3351,6 @@ function setGeneratedFocus(focusId) {
 function setGeneratedLevel(levelId) {
   if (!isGeneratedLevelId(levelId)) return;
   generatedLevelId = levelId;
-  generatedIndex = 0;
-  updateSectionUrl();
-  render();
-}
-
-function setGeneratedScope(scopeId) {
-  if (!isGeneratedScopeId(scopeId)) return;
-  generatedScopeId = scopeId;
   generatedIndex = 0;
   updateSectionUrl();
   render();
@@ -3389,13 +3382,15 @@ function updateSectionUrl() {
     url.searchParams.delete("focus");
     url.searchParams.delete("level");
     url.searchParams.delete("scope");
+    url.searchParams.delete("detail");
     url.searchParams.delete("eras");
     url.searchParams.delete("point");
   } else if (section === "new-timelines") {
     url.searchParams.set("section", "new-timelines");
     url.searchParams.set("focus", generatedFocusId);
-    url.searchParams.set("level", generatedLevelId);
-    url.searchParams.set("scope", generatedScopeId);
+    url.searchParams.set("detail", generatedLevelId);
+    url.searchParams.delete("level");
+    url.searchParams.delete("scope");
     url.searchParams.set("eras", normalizeGeneratedEraIds(generatedEraIds).join(","));
     url.searchParams.set("point", String(generatedIndex));
     url.searchParams.delete("game");
@@ -3407,6 +3402,7 @@ function updateSectionUrl() {
     url.searchParams.delete("focus");
     url.searchParams.delete("level");
     url.searchParams.delete("scope");
+    url.searchParams.delete("detail");
     url.searchParams.delete("eras");
     url.searchParams.delete("point");
     url.searchParams.set("deck", String(deckIndex));
@@ -3439,8 +3435,8 @@ function saveUiState() {
         gameModeId,
         generatedIndex,
         generatedFocusId,
+        generatedDetailId: generatedLevelId,
         generatedLevelId,
-        generatedScopeId,
         generatedEraIds: normalizeGeneratedEraIds(generatedEraIds),
         presentationMode,
       }),
@@ -3539,11 +3535,6 @@ slideNode.addEventListener("click", (event) => {
     return;
   }
 
-  const generatedScopeButton = event.target.closest("[data-generated-scope]");
-  if (generatedScopeButton) {
-    setGeneratedScope(generatedScopeButton.dataset.generatedScope);
-    return;
-  }
   const generatedEraButton = event.target.closest("[data-generated-era]");
   if (generatedEraButton) {
     toggleGeneratedEra(generatedEraButton.dataset.generatedEra);
