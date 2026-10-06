@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Evolution fork icon">
+  <defs>
+    <linearGradient id="bg" x1="96" y1="40" x2="416" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fffdf2"/>
+      <stop offset="0.54" stop-color="#e8efd9"/>
+      <stop offset="1" stop-color="#d8c9a4"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g stroke-linecap="round">
+    <line x1="256" y1="401" x2="256" y2="267" stroke="#42504a" stroke-width="34"/>
+    <line x1="256" y1="267" x2="132" y2="215" stroke="#247d74" stroke-width="34"/>
+    <line x1="256" y1="267" x2="364" y2="116" stroke="#247d74" stroke-width="34"/>
+    <line x1="256" y1="267" x2="421" y2="361" stroke="#247d74" stroke-width="34"/>
+  </g>
+
+  <circle cx="256" cy="267" r="40" fill="#d14f3f"/>
+  <circle cx="256" cy="267" r="24" fill="#fffdf2"/>
+  <circle cx="256" cy="267" r="12" fill="#d14f3f"/>
+
+  <circle cx="132" cy="215" r="42" fill="#f5c85b" stroke="#fffdf2" stroke-width="16"/>
+  <circle cx="364" cy="116" r="42" fill="#82c7a7" stroke="#fffdf2" stroke-width="16"/>
+  <circle cx="421" cy="361" r="42" fill="#5aa9c8" stroke="#fffdf2" stroke-width="16"/>
+  <circle cx="256" cy="401" r="34" fill="#18212b" stroke="#fffdf2" stroke-width="14"/>
+</svg>
