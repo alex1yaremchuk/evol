@@ -785,9 +785,10 @@ function generatedScaleSlides(focus) {
     const newerMa = point.ma;
     const events = generatedScaleEvents(olderMa, newerMa, pointIndex === 0);
     const highlights = generatedScaleHighlights(events, 10);
-    const titleList = highlights.map((event) => generatedEventSummaryTitle(event));
-    const noveltyItems = titleList.length ? generatedLimitedList(titleList, 6, events.length - highlights.length) : [t("в модели нет новых событий")];
-    const eventItems = titleList.length ? generatedLimitedList(titleList, 10, events.length - highlights.length) : [t("нет событий")];
+    const noveltyList = uniqueTextList(highlights.map((event) => event.novelty || event.title || event.node).filter(Boolean));
+    const eventList = highlights.map((event) => generatedEventSummaryTitle(event));
+    const noveltyItems = noveltyList.length ? generatedLimitedList(noveltyList, 6, Math.max(0, events.length - highlights.length)) : [t("в модели нет новых событий")];
+    const eventItems = eventList.length ? generatedLimitedList(eventList, 10, Math.max(0, events.length - highlights.length)) : [t("нет событий")];
     const effectItems = highlights.map((event) => event.effect).filter(Boolean).slice(0, 6);
     const primary = highlights.find((event) => event.image) || highlights[0] || events.find((event) => event.image) || events[0];
     return {
@@ -801,7 +802,7 @@ function generatedScaleSlides(focus) {
       caption: events.length ? `${events.length} ${t("событий")}` : t("пустой интервал"),
       scene: primary ? generatedSceneForNode(primary) : "earth",
       marker: primary?.marker || "fork",
-      symbolLabel: titleList[0] || t("нет событий"),
+      symbolLabel: eventList[0] || t("нет событий"),
       mainPhoto: primary?.image ? { src: primary.image, label: primary.imageLabel || primary.title || primary.node } : null,
       timeMa: newerMa,
       timeLabel: point.label,
@@ -821,6 +822,16 @@ function generatedScaleHighlights(events, limit) {
     .sort((a, b) => generatedImportanceRank(generatedEventImportance(a)) - generatedImportanceRank(generatedEventImportance(b)) || b.appearedMa - a.appearedMa)
     .slice(0, limit)
     .sort((a, b) => b.appearedMa - a.appearedMa);
+}
+
+function uniqueTextList(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = item.trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function generatedEventSummaryTitle(event) {
