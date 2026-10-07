@@ -1087,12 +1087,14 @@ button {
   white-space: nowrap;
 }
 
-.game-question-level.level-medium {
+.game-question-level.level-medium,
+.game-question-level.difficulty-medium {
   background: rgba(245, 200, 91, 0.2);
   color: #856018;
 }
 
-.game-question-level.level-hard {
+.game-question-level.level-hard,
+.game-question-level.difficulty-hard {
   background: rgba(209, 79, 63, 0.13);
   color: var(--accent);
 }

@@ -32,6 +32,7 @@ let chainSelection = [];
 let branchSelection = { left: [], right: [] };
 let activeBranchSide = "left";
 let selectedGameLevels = initialGameLevels();
+let selectedGameDifficulty = initialGameDifficulty();
 let gameFilters = initialGameFilters();
 let gameSettingsOpen = false;
 let gameProgress = {};
@@ -62,9 +63,9 @@ function initialSection() {
 
   try {
     const saved = window.localStorage.getItem("evol-section");
-    return saved === "games" || saved === "new-timelines" ? saved : "slides";
+    return saved === "games" ? "games" : "new-timelines";
   } catch {
-    return "slides";
+    return "new-timelines";
   }
 }
 
@@ -74,13 +75,22 @@ function initialPresentationMode() {
 }
 
 function initialGameLevels() {
-  const fallback = ["easy", "medium", "hard"];
+  const fallback = "easy";
   try {
     const saved = JSON.parse(window.localStorage.getItem("evol-game-levels") || "[]");
-    const levels = Array.isArray(saved) ? saved.filter((level) => fallback.includes(level)) : [];
-    return new Set(levels.length ? levels : fallback);
+    const savedLevel = Array.isArray(saved) ? saved.find(isGameLevelId) : saved;
+    return new Set([isGameLevelId(savedLevel) ? savedLevel : fallback]);
   } catch {
-    return new Set(fallback);
+    return new Set([fallback]);
+  }
+}
+
+function initialGameDifficulty() {
+  try {
+    const saved = window.localStorage.getItem("evol-game-difficulty");
+    return isGameDifficultyId(saved) ? saved : "medium";
+  } catch {
+    return "medium";
   }
 }
 
@@ -189,6 +199,14 @@ function isGeneratedFocusId(value) {
 
 function isGeneratedLevelId(value) {
   return Boolean(value && sourceGames.levels.some((level) => level.id === value));
+}
+
+function isGameLevelId(value) {
+  return Boolean(value && sourceGames.levels.some((level) => level.id === value));
+}
+
+function isGameDifficultyId(value) {
+  return Boolean(value && gameDifficultyOptions().some((difficulty) => difficulty.id === value));
 }
 
 function isGeneratedScopeId(value) {
@@ -1305,6 +1323,15 @@ function renderGames() {
       `,
     )
     .join("");
+  const difficultyButtons = gameDifficultyOptions()
+    .map(
+      (difficulty) => `
+        <button class="game-level-button ${selectedGameDifficulty === difficulty.id ? "active" : ""}" type="button" data-game-difficulty="${escapeHtml(difficulty.id)}" aria-pressed="${selectedGameDifficulty === difficulty.id}">
+          ${escapeHtml(difficulty.title)}
+        </button>
+      `,
+    )
+    .join("");
 
   slideNode.innerHTML = `
     <article class="game-screen">
@@ -1333,6 +1360,16 @@ function renderGames() {
         <span>${escapeHtml(t("Детализация"))}</span>
         ${levelButtons}
       </div>
+      ${
+        gameUsesDifficulty(gameModeId)
+          ? `
+            <div class="game-levels" aria-label="${escapeHtml(t("Сложность вопросов"))}">
+              <span>${escapeHtml(t("Сложность"))}</span>
+              ${difficultyButtons}
+            </div>
+          `
+          : ""
+      }
       <div class="game-filter-summary">${gameFilterSummaryMarkup()}</div>
       ${gameMarkup(mode)}
       ${gameSettingsOpen ? gameSettingsMarkup() : ""}
@@ -1349,6 +1386,18 @@ function gameFilterSummaryMarkup() {
     <span>${escapeHtml(t("Фокус"))}: <strong>${escapeHtml(period)}</strong> · <strong>${escapeHtml(lines)}</strong></span>
     <span>${escapeHtml(t("вопросов"))}: <strong>${count}</strong></span>
   `;
+}
+
+function gameDifficultyOptions() {
+  return [
+    { id: "easy", title: t("простая") },
+    { id: "medium", title: t("обычная") },
+    { id: "hard", title: t("сложная") },
+  ];
+}
+
+function gameUsesDifficulty(modeId) {
+  return modeId === "closer" || modeId === "earlier" || modeId === "timeline";
 }
 
 function gameSettingsMarkup() {
@@ -1570,6 +1619,11 @@ function gameQuestionHeaderMarkup(question, statusText) {
 }
 
 function gameQuestionLevelBadge(question) {
+  const difficultyId = question.difficulty;
+  if (difficultyId && gameUsesDifficulty(gameModeId)) {
+    const difficulty = gameDifficultyOptions().find((item) => item.id === difficultyId);
+    return `<small class="game-question-level difficulty-${escapeHtml(difficultyId)}">${escapeHtml(difficulty?.title || difficultyId)}</small>`;
+  }
   const levelId = question.level || "easy";
   const level = games.levels.find((item) => item.id === levelId);
   const title = level?.title || levelId;
@@ -1857,6 +1911,7 @@ function questionRepeatScore(question, recentCards) {
 function questionCardIds(question) {
   if (Array.isArray(question?.choices)) return question.choices;
   if (Array.isArray(question?.eventPair)) return question.eventPair.map((id) => `event:${id}`);
+  if (question?.event?.id) return [`event:${question.event.id}`];
   return Array.isArray(question?.pair) ? question.pair : [];
 }
 
@@ -1867,7 +1922,9 @@ function rememberShownQuestion(state, question) {
 
 function eligibleQuestions() {
   const levels = selectedGameLevels.size ? selectedGameLevels : new Set(games.levels.map((level) => level.id));
-  return generatedGameQuestions(gameModeId).filter((question) => levels.has(question.level || "easy"));
+  return generatedGameQuestions(gameModeId)
+    .filter((question) => levels.has(question.level || "easy"))
+    .filter((question) => !gameUsesDifficulty(gameModeId) || (question.difficulty || "medium") === selectedGameDifficulty);
 }
 
 function generatedGameQuestions(modeId) {
@@ -1888,7 +1945,40 @@ function gameCards(applyFilters = true) {
 }
 
 function filteredTimelineEvents() {
-  return (games.timelineEvents || []).filter((event) => eventMatchesGameFilters(event));
+  return gameTimelineEvents().filter((event) => eventMatchesGameFilters(event));
+}
+
+function gameTimelineEvents() {
+  const explicitEvents = games.timelineEvents || [];
+  const explicitIds = new Set(explicitEvents.map((event) => event.id));
+  const modelEvents = (model.nodeDetails || [])
+    .filter((event) => event.id && !explicitIds.has(event.id) && event.appearedMa && event.novelty)
+    .map(modelNodeTimelineEvent)
+    .filter(Boolean);
+  return [...explicitEvents, ...modelEvents];
+}
+
+function modelNodeTimelineEvent(node) {
+  const timeMa = node.appearedMa;
+  const era = timelineRangeForTime(games.timelineEras || [], timeMa);
+  const period = timelineRangeForTime(games.timelinePeriods || [], timeMa);
+  if (!era || !period) return null;
+  return {
+    id: `model:${node.id}`,
+    title: node.title || node.node,
+    image: node.image || "assets/photos/early-earth.svg",
+    timeMa,
+    eraId: era.id,
+    periodId: period.id,
+    novelty: node.novelty,
+    gave: node.effect || node.novelty,
+    level: node.level || "hard",
+    nodes: [node.node].filter(Boolean),
+  };
+}
+
+function timelineRangeForTime(ranges, timeMa) {
+  return ranges.find((range) => timeMa <= range.startMa && timeMa >= range.endMa);
 }
 
 function selectedLineFilters() {
@@ -1922,7 +2012,10 @@ function cardMatchesLineFilters(card) {
 
 function eventMatchesLineFilters(event) {
   if (lineFiltersAreAll()) return true;
-  return selectedLineFilters().some((line) => (line.eventIds || []).includes(event.id));
+  return selectedLineFilters().some((line) => {
+    if ((line.eventIds || []).includes(event.id)) return true;
+    return (line.nodes || []).some((node) => (event.nodes || []).includes(node));
+  });
 }
 
 function eventMatchesPeriodFilter(event) {
@@ -1942,7 +2035,7 @@ function cardMatchesPeriodFilter(card) {
 
 function periodFilterNodes() {
   const nodes = new Set();
-  (games.timelineEvents || [])
+  gameTimelineEvents()
     .filter(eventMatchesPeriodFilter)
     .flatMap((event) => timelineEventNodes(event.id))
     .forEach((node) => nodes.add(node));
@@ -1950,6 +2043,8 @@ function periodFilterNodes() {
 }
 
 function timelineEventNodes(eventId) {
+  const event = gameTimelineEvents().find((item) => item.id === eventId);
+  if (event?.nodes?.length) return event.nodes;
   const map = {
     "prokaryotic-cells": ["прокариоты"],
     photosynthesis: ["прокариоты"],
@@ -2022,7 +2117,7 @@ function generatedCloserQuestions() {
         const bDepth = commonPrefix(b.path, targetPath).length;
         if (aDepth === bDepth) continue;
         const depthDelta = Math.abs(aDepth - bDepth);
-        if (!closerDepthFitsLevel(depthDelta, level)) continue;
+        const difficulty = closerDepthDifficulty(depthDelta);
         const answer = aDepth > bDepth ? a : b;
         const other = answer === a ? b : a;
         const answerAncestor = lastCommonRank(answer.path, targetPath);
@@ -2030,6 +2125,7 @@ function generatedCloserQuestions() {
         questions.push({
           id: `closer:${level}:${a.id}:${b.id}`,
           level,
+          difficulty,
           pair: [a.id, b.id],
           answer: answer.id,
           prompt: t("Кто ближе к человеку?"),
@@ -2042,10 +2138,10 @@ function generatedCloserQuestions() {
   return questions;
 }
 
-function closerDepthFitsLevel(depthDelta, level) {
-  if (level === "hard") return depthDelta <= 2;
-  if (level === "medium") return depthDelta >= 3 && depthDelta <= 5;
-  return depthDelta >= 6;
+function closerDepthDifficulty(depthDelta) {
+  if (depthDelta <= 2) return "hard";
+  if (depthDelta <= 5) return "medium";
+  return "easy";
 }
 
 function generatedAncestorQuestions() {
@@ -2126,21 +2222,22 @@ function generatedBranchQuestions() {
 }
 
 function generatedEarlierQuestions() {
-  const events = filteredTimelineEvents();
   const questions = [];
   for (const level of gameLevelIds()) {
+    const events = filteredTimelineEvents().filter((event) => levelRank(event.level || "easy") <= levelRank(level));
     for (let i = 0; i < events.length; i += 1) {
       for (let j = i + 1; j < events.length; j += 1) {
         const a = events[i];
         const b = events[j];
         if (a.timeMa === b.timeMa) continue;
         const distance = timelineLogDistance(a.timeMa, b.timeMa);
-        if (!timelineDistanceFitsLevel(distance, level)) continue;
+        const difficulty = timelineDistanceDifficulty(distance);
         const answer = a.timeMa > b.timeMa ? a : b;
         const other = answer === a ? b : a;
         questions.push({
           id: `earlier:${level}:${a.id}:${b.id}`,
           level,
+          difficulty,
           eventPair: shuffle([a.id, b.id]),
           answer: answer.id,
           prompt: t("Что было раньше?"),
@@ -2184,10 +2281,10 @@ function timelineLogDistance(firstMa, secondMa) {
   return Math.abs(Math.log10(safeFirst) - Math.log10(safeSecond));
 }
 
-function timelineDistanceFitsLevel(distance, level) {
-  if (level === "hard") return distance > 0 && distance < 0.32;
-  if (level === "medium") return distance >= 0.32 && distance < 0.9;
-  return distance >= 0.9;
+function timelineDistanceDifficulty(distance) {
+  if (distance < 0.32) return "hard";
+  if (distance < 0.9) return "medium";
+  return "easy";
 }
 
 function oddQuestionBuckets(cards, level) {
@@ -2247,15 +2344,19 @@ function oddCardForGroup(node, groupCards, cards, level) {
 }
 
 function generatedTimelineQuestions() {
-  const events = filteredTimelineEvents();
   return gameLevelIds().flatMap((level) =>
-    events.map((event) => ({
-      id: `timeline:${level}:${event.id}`,
-      level,
-      prompt: t("Когда появилось новшество?"),
-      event,
-      explanation: `${event.title}: ${timelineEventDate(event)}. ${event.gave}`,
-    })),
+    filteredTimelineEvents()
+      .filter((event) => levelRank(event.level || "easy") <= levelRank(level))
+      .flatMap((event) =>
+      gameDifficultyOptions().map((difficulty) => ({
+        id: `timeline:${level}:${difficulty.id}:${event.id}`,
+        level,
+        difficulty: difficulty.id,
+        prompt: t("Когда появилось новшество?"),
+        event,
+        explanation: `${event.title}: ${timelineEventDate(event)}. ${event.gave}`,
+      })),
+    ),
   );
 }
 
@@ -2323,7 +2424,7 @@ function timelinePeriodById(periodId) {
 }
 
 function timelineEventById(eventId) {
-  return (games.timelineEvents || []).find((event) => event.id === eventId);
+  return gameTimelineEvents().find((event) => event.id === eventId);
 }
 
 function timelineCorrectValue() {
@@ -2342,10 +2443,10 @@ function timelineDateValue(timeMa) {
 function timelineNextStep() {
   const event = currentGame?.question?.event;
   if (!event) return null;
-  const level = currentGame.question.level || "easy";
+  const difficulty = currentGame.question.difficulty || "medium";
   const step = timelineCurrentStep();
-  if (step === "era" && levelRank(level) >= levelRank("medium") && timelinePeriodsForEvent(event).length > 1) return "period";
-  if (step === "period" && levelRank(level) >= levelRank("hard")) return "date";
+  if (step === "era" && levelRank(difficulty) >= levelRank("medium") && timelinePeriodsForEvent(event).length > 1) return "period";
+  if (step === "period" && levelRank(difficulty) >= levelRank("hard")) return "date";
   return null;
 }
 
@@ -2430,7 +2531,7 @@ function lastCommonRank(first, second) {
 }
 
 function progressState() {
-  const key = `${gameModeId}:${[...selectedGameLevels].sort().join(",")}:${gameFilterKey()}`;
+  const key = `${gameModeId}:${[...selectedGameLevels].sort().join(",")}:${gameUsesDifficulty(gameModeId) ? selectedGameDifficulty : "any"}:${gameFilterKey()}`;
   if (!gameProgress[key]) {
     gameProgress[key] = { freshQueue: [], retryQueue: [], rounds: 0, completedOnce: false, lastCards: [] };
   }
@@ -2649,12 +2750,8 @@ function rememberGameResult(game) {
 }
 
 function toggleGameLevel(levelId) {
-  if (selectedGameLevels.has(levelId)) {
-    if (selectedGameLevels.size === 1) return;
-    selectedGameLevels.delete(levelId);
-  } else {
-    selectedGameLevels.add(levelId);
-  }
+  if (!isGameLevelId(levelId)) return;
+  selectedGameLevels = new Set([levelId]);
   saveGameLevels();
   currentGame = null;
   chainSelection = [];
@@ -2665,9 +2762,27 @@ function toggleGameLevel(levelId) {
   render();
 }
 
+function setGameDifficulty(difficultyId) {
+  if (!isGameDifficultyId(difficultyId)) return;
+  selectedGameDifficulty = difficultyId;
+  saveGameDifficulty();
+  currentGame = null;
+  updateSectionUrl();
+  preferredGameFocus = `[data-game-difficulty="${cssEscape(difficultyId)}"]`;
+  render();
+}
+
 function saveGameLevels() {
   try {
     window.localStorage.setItem("evol-game-levels", JSON.stringify([...selectedGameLevels]));
+  } catch {
+    // The game still works if storage is unavailable.
+  }
+}
+
+function saveGameDifficulty() {
+  try {
+    window.localStorage.setItem("evol-game-difficulty", selectedGameDifficulty);
   } catch {
     // The game still works if storage is unavailable.
   }
@@ -3341,27 +3456,9 @@ function formatMaRounded(ma) {
 }
 
 function renderSchemeNav() {
-  const deckButtons = decks
-    .map(
-      (deck, i) => `
-        <button class="scheme-submenu-button ${section === "slides" && i === deckIndex ? "active" : ""}" type="button" data-deck="${i}" aria-pressed="${section === "slides" && i === deckIndex}">
-          <span>${escapeHtml(deck.label)}</span>
-        </button>
-      `,
-    )
-    .join("");
-
   schemeNavNode.innerHTML = `
-    <details class="scheme-menu">
-      <summary class="scheme-button ${section === "slides" ? "active" : ""}" aria-current="${section === "slides" ? "page" : "false"}">
-        <span>${escapeHtml(t("Таймлайны"))}</span>
-      </summary>
-      <div class="scheme-submenu">
-        ${deckButtons}
-      </div>
-    </details>
     <button class="scheme-button ${section === "new-timelines" ? "active" : ""}" type="button" data-section="new-timelines" aria-pressed="${section === "new-timelines"}">
-      <span>${escapeHtml(t("Новые таймлайны"))}</span>
+      <span>${escapeHtml(t("Таймлайны"))}</span>
     </button>
     <button class="scheme-button ${section === "games" ? "active" : ""}" type="button" data-section="games" aria-pressed="${section === "games"}">
       <span>${escapeHtml(t("Игры"))}</span>
@@ -3572,6 +3669,12 @@ slideNode.addEventListener("click", (event) => {
   const levelButton = event.target.closest("[data-game-level]");
   if (levelButton) {
     toggleGameLevel(levelButton.dataset.gameLevel);
+    return;
+  }
+
+  const difficultyButton = event.target.closest("[data-game-difficulty]");
+  if (difficultyButton) {
+    setGameDifficulty(difficultyButton.dataset.gameDifficulty);
     return;
   }
 
