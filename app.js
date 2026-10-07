@@ -36,6 +36,7 @@ let selectedGameDifficulty = initialGameDifficulty();
 let gameFilters = initialGameFilters();
 let gameSettingsOpen = false;
 let gameProgress = {};
+let eligibleQuestionsCache = { key: "", questions: [] };
 let revealedCreatureNotes = new Set();
 let chainPointerDrag = null;
 let branchPointerDrag = null;
@@ -1925,10 +1926,18 @@ function rememberShownQuestion(state, question) {
 }
 
 function eligibleQuestions() {
+  const key = gameQuestionSettingsKey();
+  if (eligibleQuestionsCache.key === key) return eligibleQuestionsCache.questions;
   const levels = selectedGameLevels.size ? selectedGameLevels : new Set(games.levels.map((level) => level.id));
-  return generatedGameQuestions(gameModeId)
+  const questions = generatedGameQuestions(gameModeId)
     .filter((question) => levels.has(question.level || "easy"))
     .filter((question) => !gameUsesDifficulty(gameModeId) || (question.difficulty || "medium") === selectedGameDifficulty);
+  eligibleQuestionsCache = { key, questions };
+  return questions;
+}
+
+function gameQuestionSettingsKey() {
+  return `${gameModeId}:${[...selectedGameLevels].sort().join(",")}:${gameUsesDifficulty(gameModeId) ? selectedGameDifficulty : "any"}:${gameFilterKey()}:${language}`;
 }
 
 function generatedGameQuestions(modeId) {
@@ -2555,7 +2564,7 @@ function lastCommonRank(first, second) {
 }
 
 function progressState() {
-  const key = `${gameModeId}:${[...selectedGameLevels].sort().join(",")}:${gameUsesDifficulty(gameModeId) ? selectedGameDifficulty : "any"}:${gameFilterKey()}`;
+  const key = gameQuestionSettingsKey();
   if (!gameProgress[key]) {
     gameProgress[key] = { freshQueue: [], retryQueue: [], rounds: 0, completedOnce: false, lastCards: [] };
   }
