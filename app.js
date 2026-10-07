@@ -2048,10 +2048,10 @@ function generatedAncestorQuestions() {
           id: `ancestor:${level}:${a.id}:${b.id}`,
           level,
           pair: [a.id, b.id],
-          prompt: t("Где последний общий предок?"),
+          prompt: t("Где последний общий предок из перечисленных?"),
           options: ancestorOptions(answer, a.path, b.path),
           answer,
-          explanation: `${a.name} ${t("и")} ${b.name}: ${t("последний общий предок")} - ${answer}.`,
+          explanation: `${a.name} ${t("и")} ${b.name}: ${t("лучший ответ из перечисленных")} - ${answer}.`,
         });
       }
     }

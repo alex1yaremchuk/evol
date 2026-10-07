@@ -1758,6 +1758,8 @@ Object.assign(window.EVOL_I18N.en, {
   "Птицы уходят от нашей линии на развилке синапсиды / завропсиды; амфибии отделились раньше.": "Birds leave our line at the synapsid / sauropsid split; amphibians split earlier.",
   "Растения отделились от животно-грибной линии раньше, чем грибы от животных.": "Plants split from the animal-fungal line earlier than fungi split from animals.",
   "Где последний общий предок?": "Where is the last common ancestor?",
+  "Где последний общий предок из перечисленных?": "Which listed option is the last common ancestor?",
+  "лучший ответ из перечисленных": "best listed answer",
   "эукариоты": "eukaryotes",
   "животные": "animals",
   "хордовые": "chordates",
