@@ -1638,6 +1638,7 @@ function timelineGameMarkup(mode) {
   const event = question.event;
   const options = timelineCurrentOptions();
   const step = timelineCurrentStep();
+  const axisDomain = timelineAnswerDomain(options, step);
 
   return `
     <section class="game-panel timeline-game-panel">
@@ -1657,9 +1658,9 @@ function timelineGameMarkup(mode) {
       </div>
       ${timelineTrailMarkup()}
       <div class="timeline-answer-axis timeline-step-${escapeHtml(step)}" aria-label="${escapeHtml(t("Шкала времени"))}">
-        ${timelineAxisLabels()}
+        ${timelineAxisLabels(axisDomain)}
         <div class="timeline-answer-track">
-          ${options.map((answer, answerIndex) => timelineAnswerButton(answer, answerIndex)).join("")}
+          ${options.map((answer, answerIndex) => timelineAnswerButton(answer, answerIndex, axisDomain)).join("")}
         </div>
       </div>
       ${gameFeedbackMarkup()}
@@ -1667,14 +1668,14 @@ function timelineGameMarkup(mode) {
   `;
 }
 
-function timelineAnswerButton(answer, answerIndex) {
+function timelineAnswerButton(answer, answerIndex, axisDomain = timelineDefaultDomain()) {
   const isAnswered = Boolean(currentGame.result);
   const isCorrect = timelineCorrectValue() === answer.value;
   const className = isAnswered ? (isCorrect ? "correct" : currentGame.chosen === answer.value ? "wrong" : "") : "";
   const range = answer.type === "range";
   const lane = range ? answerIndex % 4 : answerIndex % 3;
-  const left = range ? timelineGamePosition(answer.startMa) : timelineGamePosition(answer.timeMa);
-  const right = range ? timelineGamePosition(answer.endMa) : left;
+  const left = range ? timelineGamePosition(answer.startMa, axisDomain) : timelineGamePosition(answer.timeMa, axisDomain);
+  const right = range ? timelineGamePosition(answer.endMa, axisDomain) : left;
   const width = range ? Math.max(4, right - left) : 0;
   return `
     <button
@@ -1700,15 +1701,9 @@ function timelineTrailMarkup() {
   `;
 }
 
-function timelineAxisLabels() {
-  return [
-    { label: t("4 млрд"), timeMa: 4000 },
-    { label: t("1 млрд"), timeMa: 1000 },
-    { label: t("100 млн"), timeMa: 100 },
-    { label: t("10 млн"), timeMa: 10 },
-    { label: t("сейчас"), timeMa: 0 },
-  ]
-    .map((item) => `<span class="timeline-axis-label" style="left: ${timelineGamePosition(item.timeMa)}%">${escapeHtml(item.label)}</span>`)
+function timelineAxisLabels(axisDomain = timelineDefaultDomain()) {
+  return timelineAxisTicks(axisDomain)
+    .map((item) => `<span class="timeline-axis-label" style="left: ${timelineGamePosition(item.timeMa, axisDomain)}%">${escapeHtml(item.label)}</span>`)
     .join("");
 }
 
@@ -2561,11 +2556,60 @@ function formatNumber(value) {
   return String(rounded).replace(".", language === "ru" ? "," : ".");
 }
 
-function timelineGamePosition(timeMa) {
+function timelineDefaultDomain() {
+  return { startMa: 4000, endMa: 0 };
+}
+
+function timelineAnswerDomain(options, step) {
+  if (step !== "date") return timelineDefaultDomain();
+  const times = options.map((option) => option.timeMa).filter((timeMa) => Number.isFinite(timeMa));
+  if (times.length < 2) return timelineDefaultDomain();
+  const oldest = Math.max(...times);
+  const youngest = Math.min(...times);
+  const rawSpan = Math.max(1, oldest - youngest);
+  const padding = Math.max(rawSpan * 0.14, oldest > 1000 ? 60 : oldest > 100 ? 8 : 1);
+  return {
+    startMa: Math.min(4000, oldest + padding),
+    endMa: Math.max(0, youngest - padding),
+  };
+}
+
+function timelineAxisTicks(axisDomain = timelineDefaultDomain()) {
+  const { startMa, endMa } = axisDomain;
+  if (startMa === 4000 && endMa === 0) {
+    return [
+      { label: t("4 млрд"), timeMa: 4000 },
+      { label: t("1 млрд"), timeMa: 1000 },
+      { label: t("100 млн"), timeMa: 100 },
+      { label: t("10 млн"), timeMa: 10 },
+      { label: t("сейчас"), timeMa: 0 },
+    ];
+  }
+  const middle = (startMa + endMa) / 2;
+  return [
+    { label: timelineShortTimeLabel(startMa), timeMa: startMa },
+    { label: timelineShortTimeLabel(middle), timeMa: middle },
+    { label: endMa <= 0.1 ? t("сейчас") : timelineShortTimeLabel(endMa), timeMa: endMa },
+  ];
+}
+
+function timelineShortTimeLabel(timeMa) {
+  if (timeMa >= 1000) return `${formatNumber(timeMa / 1000)} ${t("млрд")}`;
+  if (timeMa >= 1) return `${formatNumber(timeMa)} ${t("млн")}`;
+  return `${formatNumber(timeMa * 1000)} ${t("тыс.")}`;
+}
+
+function timelineGamePosition(timeMa, axisDomain = timelineDefaultDomain()) {
   const maxMa = 4000;
   const clamped = Math.max(0, Math.min(maxMa, Number(timeMa) || 0));
-  const oldness = Math.pow(clamped / maxMa, 0.35);
-  return Math.round((100 - oldness * 100) * 10) / 10;
+  const start = Math.max(0, Math.min(maxMa, Number(axisDomain.startMa) || maxMa));
+  const end = Math.max(0, Math.min(maxMa, Number(axisDomain.endMa) || 0));
+  const startScore = Math.pow(start / maxMa, 0.35);
+  const endScore = Math.pow(end / maxMa, 0.35);
+  const score = Math.pow(clamped / maxMa, 0.35);
+  const span = Math.max(0.000001, startScore - endScore);
+  const position = ((startScore - score) / span) * 100;
+  return Math.round(Math.max(0, Math.min(100, position)) * 10) / 10;
 }
 
 function withLeveledPath(card, level) {
