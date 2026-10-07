@@ -2156,6 +2156,7 @@ Object.assign(window.EVOL_I18N.en, {
   "Человек": "Human",
   "Собрано из узлов дерева и карточек": "Built from tree nodes and cards",
   "Готовая шкала": "Fixed scale",
+  "Подсказка": "Hint",
   "Детализация": "Detail",
   "Масштаб": "Scale",
   "Эры": "Eras",

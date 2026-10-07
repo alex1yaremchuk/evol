@@ -1116,6 +1116,20 @@ button {
   font-weight: 720;
 }
 
+.creature-note-hint {
+  display: inline-grid;
+  width: 1.15rem;
+  height: 1.15rem;
+  place-items: center;
+  border: 1px solid rgba(36, 125, 116, 0.32);
+  border-radius: 999px;
+  color: var(--accent-2);
+  font-size: 0.75rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: help;
+}
+
 .game-answers,
 .chain-options,
 .game-actions,

@@ -836,7 +836,7 @@ function uniqueTextList(items) {
 
 function generatedEventSummaryTitle(event) {
   const title = event.title || event.node;
-  return `${title} (${formatMa(event.appearedMa)})`;
+  return `${title} (${formatMaRounded(event.appearedMa)})`;
 }
 
 function generatedLimitedList(items, limit, hiddenCount = 0) {
@@ -862,7 +862,7 @@ function generatedScaleDefinition(focus) {
   if (focus?.scaleId === "pow2") {
     const points = Array.from({ length: 31 }, (_, index) => 32 - index).map((power) => {
       const ma = generatedYearsToMa(2 ** power);
-      return { ma, label: `2^${power} ${t("лет назад")} (${formatMa(ma)})` };
+      return { ma, label: `2^${power} ${t("лет назад")} (${formatMaRounded(ma)})` };
     });
     return {
       id: "pow2",
@@ -875,7 +875,7 @@ function generatedScaleDefinition(focus) {
   const exponents = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
   const points = exponents.map((exponent) => {
     const ma = generatedYearsToMa(10 ** exponent);
-    return { ma, label: `10^${exponent} ${t("лет назад")} (${formatMa(ma)})` };
+    return { ma, label: `10^${exponent} ${t("лет назад")} (${formatMaRounded(ma)})` };
   });
   return {
     id: "log10",
@@ -891,7 +891,7 @@ function generatedYearsToMa(years) {
 }
 
 function generatedIntervalLabel(olderMa, newerMa) {
-  return `${formatMa(olderMa)} - ${formatMa(newerMa)}`;
+  return `${formatMaRounded(olderMa)} - ${formatMaRounded(newerMa)}`;
 }
 
 function isGeneratedEventVisibleForFocus(item, focus) {
@@ -1655,24 +1655,28 @@ function creatureChoiceCard(card, question = null) {
   const isCorrect = isAnswered && value && currentGame.correctValue === value;
   const isWrongChoice = isAnswered && value && currentGame.chosen === value && currentGame.result === "wrong";
   const resultClass = isCorrect ? "correct" : isWrongChoice ? "wrong" : "";
-  const showNote = gameModeId !== "odd" || isAnswered;
+  const showNote = isAnswered;
+  const hintText = card.note ? `${t("Подсказка")}: ${card.note}` : "";
+  const hiddenHint = !showNote && hintText ? `<small class="creature-note-hint" title="${escapeHtml(hintText)}" aria-label="${escapeHtml(hintText)}">?</small>` : "";
   if (answerable && value) {
     return `
-      <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}">
+      <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}" ${hintText ? `title="${escapeHtml(hintText)}"` : ""}>
         <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
         <span>
           <strong>${escapeHtml(card.name)}</strong>
           ${showNote ? `<em>${escapeHtml(card.note)}</em>` : ""}
+          ${hiddenHint}
         </span>
       </button>
     `;
   }
   return `
-    <figure class="game-creature-card ${resultClass}">
+    <figure class="game-creature-card ${resultClass}" ${hintText && !showNote ? `title="${escapeHtml(hintText)}"` : ""}>
       <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
       <figcaption>
         <strong>${escapeHtml(card.name)}</strong>
         ${showNote ? `<span>${escapeHtml(card.note)}</span>` : ""}
+        ${hiddenHint}
       </figcaption>
     </figure>
   `;
@@ -3295,6 +3299,24 @@ function formatMa(ma) {
   }
   if (ma >= 1000) return `~${(ma / 1000).toFixed(1).replace(".", ",")} млрд лет назад`;
   if (ma >= 1) return `~${ma} млн лет назад`;
+  if (ma >= 0.001) return `~${Math.round(ma * 1000).toLocaleString("ru-RU")} тыс. лет назад`;
+  return `~${Math.round(ma * 1000000).toLocaleString("ru-RU")} лет назад`;
+}
+
+function formatMaRounded(ma) {
+  const roundedMillionYears = (value, locale) => {
+    if (value >= 100) return Math.round(value).toLocaleString(locale);
+    if (value >= 10) return Math.round(value).toLocaleString(locale);
+    return value.toFixed(1).replace(".", locale === "ru-RU" ? "," : ".");
+  };
+  if (language === "en") {
+    if (ma >= 1000) return `~${(ma / 1000).toFixed(1)} billion years ago`;
+    if (ma >= 1) return `~${roundedMillionYears(ma, "en-US")} million years ago`;
+    if (ma >= 0.001) return `~${Math.round(ma * 1000).toLocaleString("en-US")} thousand years ago`;
+    return `~${Math.round(ma * 1000000).toLocaleString("en-US")} years ago`;
+  }
+  if (ma >= 1000) return `~${(ma / 1000).toFixed(1).replace(".", ",")} млрд лет назад`;
+  if (ma >= 1) return `~${roundedMillionYears(ma, "ru-RU")} млн лет назад`;
   if (ma >= 0.001) return `~${Math.round(ma * 1000).toLocaleString("ru-RU")} тыс. лет назад`;
   return `~${Math.round(ma * 1000000).toLocaleString("ru-RU")} лет назад`;
 }
