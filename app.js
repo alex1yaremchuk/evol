@@ -1731,17 +1731,19 @@ function creatureChoiceCard(card, question = null) {
   const resultClass = isCorrect ? "correct" : isWrongChoice ? "wrong" : "";
   const showNote = isAnswered || revealedCreatureNotes.has(value);
   const hintLabel = card.note ? `${t("Показать категорию")}: ${card.note}` : "";
-  const hiddenHint = !showNote && hintLabel ? `<small class="creature-note-hint" role="button" tabindex="0" data-creature-note="${escapeHtml(value)}" aria-label="${escapeHtml(hintLabel)}">?</small>` : "";
+  const hiddenHint = !showNote && hintLabel ? `<button class="creature-note-hint" type="button" data-creature-note="${escapeHtml(value)}" aria-label="${escapeHtml(hintLabel)}">?</button>` : "";
   if (answerable && value) {
     return `
-      <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}">
-        <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
-        <span>
-          <strong>${escapeHtml(card.name)}</strong>
-          ${showNote ? `<em>${escapeHtml(card.note)}</em>` : ""}
-          ${hiddenHint}
-        </span>
-      </button>
+      <figure class="game-creature-card answerable-creature-card">
+        <button class="creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}">
+          <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
+          <span>
+            <strong>${escapeHtml(card.name)}</strong>
+            ${showNote ? `<em>${escapeHtml(card.note)}</em>` : ""}
+          </span>
+        </button>
+        ${hiddenHint}
+      </figure>
     `;
   }
   return `

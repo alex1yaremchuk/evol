@@ -1106,6 +1106,7 @@ button {
 }
 
 .game-creature-card {
+  position: relative;
   overflow: hidden;
   margin: 0;
   border: 1px solid rgba(24, 33, 43, 0.16);
@@ -1155,15 +1156,18 @@ button {
 .creature-choice {
   display: grid;
   width: 100%;
+  height: 100%;
   padding: 0;
-  border: 1px solid var(--line);
+  border: 0;
+  background: transparent;
+  color: inherit;
   text-align: left;
 }
 
 .creature-choice:hover,
 .creature-choice:focus-visible {
-  border-color: rgba(36, 125, 116, 0.5);
   box-shadow: 0 0 0 3px rgba(36, 125, 116, 0.16);
+  outline: none;
 }
 
 .creature-choice span {
@@ -1180,6 +1184,10 @@ button {
 }
 
 .creature-note-hint {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.48rem;
+  z-index: 2;
   display: inline-grid;
   width: 1.35rem;
   height: 1.35rem;
