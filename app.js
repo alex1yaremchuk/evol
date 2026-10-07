@@ -10,6 +10,7 @@ const prevButton = document.getElementById("prev");
 const nextButton = document.getElementById("next");
 const languageButtons = document.querySelectorAll("[data-lang]");
 const languageSwitchNode = document.querySelector(".language-switch");
+const homeLinkNode = document.querySelector(".home-link");
 const contactNode = document.querySelector(".contact-link");
 const topToolsNode = document.querySelector(".top-tools");
 
@@ -288,6 +289,11 @@ function setLanguage(nextLanguage, updateUrl = true) {
 
 function updateStaticText() {
   document.title = language === "en" ? "Major Forks in Evolution" : "Основные развилки эволюции";
+  if (homeLinkNode) {
+    homeLinkNode.href = homeLinkHref();
+    homeLinkNode.setAttribute("aria-label", t("Открыть таймлайны"));
+    homeLinkNode.setAttribute("title", t("Открыть таймлайны"));
+  }
   languageSwitchNode?.setAttribute("aria-label", language === "en" ? "Language" : "Язык");
   schemeNavNode.setAttribute("aria-label", t("Схемы"));
   prevButton.setAttribute("aria-label", t("Предыдущий слайд"));
@@ -302,6 +308,15 @@ function updateStaticText() {
     button.setAttribute("aria-pressed", String(isActive));
     button.setAttribute("aria-label", button.dataset.lang === "en" ? t("английский") : t("русский"));
   });
+}
+
+function homeLinkHref() {
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("section", "new-timelines");
+  url.searchParams.set("lang", language);
+  return url.toString();
 }
 
 function iconSvg(kind, caption) {
