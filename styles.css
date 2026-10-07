@@ -1036,6 +1036,39 @@ button {
   font-weight: 760;
 }
 
+.game-question .game-question-meta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  text-align: right;
+}
+
+.game-question-level {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.42rem;
+  padding: 0.18rem 0.48rem;
+  border-radius: 999px;
+  background: rgba(36, 125, 116, 0.12);
+  color: var(--accent-2);
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.game-question-level.level-medium {
+  background: rgba(245, 200, 91, 0.2);
+  color: #856018;
+}
+
+.game-question-level.level-hard {
+  background: rgba(209, 79, 63, 0.13);
+  color: var(--accent);
+}
+
 .game-creatures {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

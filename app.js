@@ -1416,10 +1416,7 @@ function choiceGameMarkup(mode) {
 
   return `
     <section class="game-panel">
-      <div class="game-question">
-        <strong>${escapeHtml(question.prompt)}</strong>
-        <span>${escapeHtml(gameStatusText() || t("Выбери ответ"))}</span>
-      </div>
+      ${gameQuestionHeaderMarkup(question, gameStatusText() || t("Выбери ответ"))}
       <div class="game-creatures">
         ${pair.map((card) => creatureChoiceCard(card, imageAnswerable ? question : null)).join("")}
       </div>
@@ -1436,10 +1433,7 @@ function earlierGameMarkup(mode) {
 
   return `
     <section class="game-panel">
-      <div class="game-question">
-        <strong>${escapeHtml(question.prompt)}</strong>
-        <span>${escapeHtml(gameStatusText() || t("Выбери более древнее новшество"))}</span>
-      </div>
+      ${gameQuestionHeaderMarkup(question, gameStatusText() || t("Выбери более древнее новшество"))}
       <div class="timeline-event-choices">
         ${events.map((event) => timelineEventChoiceCard(event)).join("")}
       </div>
@@ -1456,10 +1450,7 @@ function branchesGameMarkup(mode) {
 
   return `
     <section class="game-panel">
-      <div class="game-question">
-        <strong>${escapeHtml(question.prompt)}</strong>
-        <span>${escapeHtml(gameStatusText() || t("Разложи по веткам"))}</span>
-      </div>
+      ${gameQuestionHeaderMarkup(question, gameStatusText() || t("Разложи по веткам"))}
       <div class="branch-board">
         ${branchZone("left", question.branches.left.label, branchSelection.left)}
         ${branchZone("right", question.branches.right.label, branchSelection.right)}
@@ -1502,10 +1493,7 @@ function chainGameMarkup(mode) {
 
   return `
     <section class="game-panel">
-      <div class="game-question">
-        <strong>${escapeHtml(question.prompt)}</strong>
-        <span>${escapeHtml(gameStatusText() || t("Нажимай по порядку"))}</span>
-      </div>
+      ${gameQuestionHeaderMarkup(question, gameStatusText() || t("Нажимай по порядку"))}
       <div class="chain-board">
         <div class="chain-zone chain-target" data-chain-drop="chain">
           <strong>${escapeHtml(t("Цепочка"))}</strong>
@@ -1554,6 +1542,25 @@ function chainBankItem(item) {
   `;
 }
 
+function gameQuestionHeaderMarkup(question, statusText) {
+  return `
+    <div class="game-question">
+      <strong>${escapeHtml(question.prompt)}</strong>
+      <span class="game-question-meta">
+        ${gameQuestionLevelBadge(question)}
+        <span>${escapeHtml(statusText)}</span>
+      </span>
+    </div>
+  `;
+}
+
+function gameQuestionLevelBadge(question) {
+  const levelId = question.level || "easy";
+  const level = games.levels.find((item) => item.id === levelId);
+  const title = level?.title || levelId;
+  return `<small class="game-question-level level-${escapeHtml(levelId)}">${escapeHtml(t(title))}</small>`;
+}
+
 function timelineGameMarkup(mode) {
   const question = currentGame.question;
   if (!question) return emptyGameMarkup();
@@ -1563,10 +1570,7 @@ function timelineGameMarkup(mode) {
 
   return `
     <section class="game-panel timeline-game-panel">
-      <div class="game-question">
-        <strong>${escapeHtml(question.prompt)}</strong>
-        <span>${escapeHtml(timelineGameStatusText())}</span>
-      </div>
+      ${gameQuestionHeaderMarkup(question, timelineGameStatusText())}
       <div class="timeline-challenge">
         <figure class="timeline-event-card">
           <img src="${escapeHtml(event.image)}" alt="${escapeHtml(event.title)}" loading="eager" decoding="async" />
