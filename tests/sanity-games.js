@@ -6,6 +6,7 @@ require("../evolution-model.js");
 
 const games = window.EVOL_GAMES;
 const model = window.EVOL_MODEL || { nodeDetails: [] };
+const evolutionStudyCutoffMa = 0.01;
 const levelIds = games.levels.map((level) => level.id);
 const levelRank = (level) => levelIds.indexOf(level);
 
@@ -222,6 +223,7 @@ function gameTimelineEvents() {
   const explicitIds = new Set(explicitEvents.map((event) => event.id));
   const modelEvents = (model.nodeDetails || [])
     .filter((event) => event.id && !explicitIds.has(event.id) && !explicitIds.has(timelineEventAliasForModelNode(event.id)) && event.appearedMa && event.novelty)
+    .filter((event) => event.appearedMa >= evolutionStudyCutoffMa)
     .map((node) => {
       const era = timelineRangeForTime(games.timelineEras || [], node.appearedMa);
       const period = timelineRangeForTime(games.timelinePeriods || [], node.appearedMa);
@@ -252,6 +254,7 @@ for (const event of timelineEvents) {
   const period = games.timelinePeriods.find((item) => item.id === event.periodId);
   assert.ok(era, `Missing era for ${event.id}`);
   assert.ok(period, `Missing period for ${event.id}`);
+  assert.ok(event.timeMa >= evolutionStudyCutoffMa, `Post-agriculture event should be hidden from game timeline: ${event.id}`);
   assert.equal(period.parentId, era.id, `Period ${event.periodId} is not inside era ${event.eraId} for ${event.id}`);
   assert.ok(event.timeMa <= era.startMa && event.timeMa >= era.endMa, `Event ${event.id} time ${event.timeMa} outside era ${event.eraId}`);
   assert.ok(event.timeMa <= period.startMa && event.timeMa >= period.endMa, `Event ${event.id} time ${event.timeMa} outside period ${event.periodId}`);

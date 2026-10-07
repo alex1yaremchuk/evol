@@ -1,6 +1,7 @@
 const sourceDecks = window.EVOL_DATA.decks;
 const sourceGames = window.EVOL_GAMES;
 const sourceModel = window.EVOL_MODEL || { nodeDetails: [], cardFlags: {} };
+const evolutionStudyCutoffMa = 0.01;
 
 const slideNode = document.getElementById("slide");
 const schemeNavNode = document.getElementById("scheme-nav");
@@ -772,6 +773,7 @@ function generatedTimelineSlides() {
   const localNodeIds = focus?.kind === "local" && Array.isArray(focus.nodeIds) ? new Set(focus.nodeIds) : null;
   return (model.nodeDetails || [])
     .filter((item) => item.appearedMa && levelRank(item.level || "hard") <= levelRank(generatedLevelId))
+    .filter(isWithinEvolutionStudyTime)
     .filter((item) => generatedImportanceRank(generatedEventImportance(item)) <= generatedScopeRank(generatedScopeForDetail(generatedLevelId)))
     .filter(isGeneratedEventInSelectedEra)
     .filter((item) => !localNodeIds || localNodeIds.has(item.id))
@@ -883,6 +885,7 @@ function generatedLimitedList(items, limit, hiddenCount = 0) {
 function generatedScaleEvents(olderMa, newerMa, includeOlderBoundary) {
   return (model.nodeDetails || [])
     .filter((item) => item.appearedMa && levelRank(item.level || "hard") <= levelRank(generatedLevelId))
+    .filter(isWithinEvolutionStudyTime)
     .filter((item) => generatedImportanceRank(generatedEventImportance(item)) <= generatedScopeRank(generatedScopeForDetail(generatedLevelId)))
     .filter(isGeneratedEventInSelectedEra)
     .filter((item) => {
@@ -895,7 +898,7 @@ function generatedScaleEvents(olderMa, newerMa, includeOlderBoundary) {
 
 function generatedScaleDefinition(focus) {
   if (focus?.scaleId === "pow2") {
-    const points = Array.from({ length: 31 }, (_, index) => 32 - index).map((power) => {
+    const points = Array.from({ length: 20 }, (_, index) => 32 - index).map((power) => {
       const ma = generatedYearsToMa(2 ** power);
       return { ma, label: `2^${power} ${t("лет назад")} (${formatMaRounded(ma)})` };
     });
@@ -907,7 +910,7 @@ function generatedScaleDefinition(focus) {
       points,
     };
   }
-  const exponents = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+  const exponents = [10, 9, 8, 7, 6, 5, 4];
   const points = exponents.map((exponent) => {
     const ma = generatedYearsToMa(10 ** exponent);
     return { ma, label: `10^${exponent} ${t("лет назад")} (${formatMaRounded(ma)})` };
@@ -927,6 +930,10 @@ function generatedYearsToMa(years) {
 
 function generatedIntervalLabel(olderMa, newerMa) {
   return `${formatMaRounded(olderMa)} - ${formatMaRounded(newerMa)}`;
+}
+
+function isWithinEvolutionStudyTime(item) {
+  return !item?.appearedMa || item.appearedMa >= evolutionStudyCutoffMa;
 }
 
 function isGeneratedEventVisibleForFocus(item, focus) {
@@ -1961,6 +1968,7 @@ function gameTimelineEvents() {
   const explicitIds = new Set(explicitEvents.map((event) => event.id));
   const modelEvents = (model.nodeDetails || [])
     .filter((event) => event.id && !explicitIds.has(event.id) && !explicitIds.has(timelineEventAliasForModelNode(event.id)) && event.appearedMa && event.novelty)
+    .filter(isWithinEvolutionStudyTime)
     .map(modelNodeTimelineEvent)
     .filter(Boolean);
   return [...explicitEvents, ...modelEvents];
