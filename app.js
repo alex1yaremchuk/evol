@@ -1965,10 +1965,32 @@ function gameTimelineEvents() {
   const explicitEvents = games.timelineEvents || [];
   const explicitIds = new Set(explicitEvents.map((event) => event.id));
   const modelEvents = (model.nodeDetails || [])
-    .filter((event) => event.id && !explicitIds.has(event.id) && event.appearedMa && event.novelty)
+    .filter((event) => event.id && !explicitIds.has(event.id) && !explicitIds.has(timelineEventAliasForModelNode(event.id)) && event.appearedMa && event.novelty)
     .map(modelNodeTimelineEvent)
     .filter(Boolean);
   return [...explicitEvents, ...modelEvents];
+}
+
+function timelineEventAliasForModelNode(modelNodeId) {
+  const aliases = {
+    life: "prokaryotic-cells",
+    eukaryotes: "eukaryotic-cell",
+    archaeplastids: "chloroplasts",
+    "green-plants": "multicellular-algae",
+    animals: "multicellular-animals",
+    craniates: "vertebrate-skull",
+    "jawed-vertebrates": "jaws",
+    tetrapods: "tetrapod-limbs",
+    "seed-plants": "seeds",
+    amniotes: "amniotic-egg",
+    synapsids: "synapsid-skull",
+    pterosaurs: "pterosaur-flight",
+    "flowering-plants": "flowers",
+    bats: "bat-flight",
+    humans: "homo-sapiens",
+    "winged-insects": "insect-wings",
+  };
+  return aliases[modelNodeId] || modelNodeId;
 }
 
 function modelNodeTimelineEvent(node) {

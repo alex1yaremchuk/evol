@@ -95,11 +95,33 @@ function timelineDateOptions(event) {
   return unique.sort((a, b) => b - a).map((timeMa) => ({ value: timelineDateValue(timeMa), label: timelineTimeLabel(timeMa) }));
 }
 
+function timelineEventAliasForModelNode(modelNodeId) {
+  const aliases = {
+    life: "prokaryotic-cells",
+    eukaryotes: "eukaryotic-cell",
+    archaeplastids: "chloroplasts",
+    "green-plants": "multicellular-algae",
+    animals: "multicellular-animals",
+    craniates: "vertebrate-skull",
+    "jawed-vertebrates": "jaws",
+    tetrapods: "tetrapod-limbs",
+    "seed-plants": "seeds",
+    amniotes: "amniotic-egg",
+    synapsids: "synapsid-skull",
+    pterosaurs: "pterosaur-flight",
+    "flowering-plants": "flowers",
+    bats: "bat-flight",
+    humans: "homo-sapiens",
+    "winged-insects": "insect-wings",
+  };
+  return aliases[modelNodeId] || modelNodeId;
+}
+
 function gameTimelineEvents() {
   const explicitEvents = games.timelineEvents || [];
   const explicitIds = new Set(explicitEvents.map((event) => event.id));
   const modelEvents = (model.nodeDetails || [])
-    .filter((event) => event.id && !explicitIds.has(event.id) && event.appearedMa && event.novelty)
+    .filter((event) => event.id && !explicitIds.has(event.id) && !explicitIds.has(timelineEventAliasForModelNode(event.id)) && event.appearedMa && event.novelty)
     .map((node) => {
       const era = timelineRangeForTime(games.timelineEras || [], node.appearedMa);
       const period = timelineRangeForTime(games.timelinePeriods || [], node.appearedMa);
@@ -117,7 +139,15 @@ function gameTimelineEvents() {
   return [...explicitEvents, ...modelEvents];
 }
 
-for (const event of gameTimelineEvents()) {
+const timelineEvents = gameTimelineEvents();
+assert.equal(new Set(timelineEvents.map((event) => event.id)).size, timelineEvents.length, "Duplicate timeline event ids");
+assert.equal(
+  new Set(timelineEvents.map((event) => event.id.replace(/^model:/, ""))).size,
+  timelineEvents.length,
+  "Duplicate canonical timeline event ids",
+);
+
+for (const event of timelineEvents) {
   const era = games.timelineEras.find((item) => item.id === event.eraId);
   const period = games.timelinePeriods.find((item) => item.id === event.periodId);
   assert.ok(era, `Missing era for ${event.id}`);
