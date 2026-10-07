@@ -2297,24 +2297,27 @@ function generatedOddQuestions() {
     const cards = gameCards().map((card) => withLeveledPath(card, level)).filter((card) => card.path.length >= 3);
     const buckets = oddQuestionBuckets(cards, level);
     for (const [node, groupCards] of buckets) {
-      const oddCard = oddCardForGroup(node, groupCards, cards, level);
-      if (!oddCard) continue;
-      const commonCards = representativeGroupCards(node, groupCards, level);
-      if (commonCards.length < 3) continue;
-      const choices = shuffle([...commonCards.map((card) => card.id), oddCard.id]);
-      const commonNames = commonCards.map((card) => card.name).join(", ");
-      const sharedWithOdd = lastCommonRank(commonCards[0].path, oddCard.path);
-      questions.push({
-        id: `odd:${level}:${node}:${commonCards.map((card) => card.id).join("-")}:${oddCard.id}`,
-        level,
-        choices,
-        answer: oddCard.id,
-        prompt: t("Кто лишний?"),
-        explanation: `${commonNames} - ${t("одна общая ветка")}: ${node}. ${oddCard.name} - ${t("лишняя карточка")}; ${t("общая ветка с ними")} - ${sharedWithOdd}.`,
-      });
+      const commonSets = representativeGroupCardSets(node, groupCards, level);
+      const oddCards = oddCardsForGroup(node, groupCards, cards, level);
+      for (const commonCards of commonSets) {
+        for (const oddCard of oddCards) {
+          if (commonCards.some((card) => card.id === oddCard.id)) continue;
+          const choices = shuffle([...commonCards.map((card) => card.id), oddCard.id]);
+          const commonNames = commonCards.map((card) => card.name).join(", ");
+          const sharedWithOdd = lastCommonRank(commonCards[0].path, oddCard.path);
+          questions.push({
+            id: `odd:${level}:${node}:${commonCards.map((card) => card.id).join("-")}:${oddCard.id}`,
+            level,
+            choices,
+            answer: oddCard.id,
+            prompt: t("Кто лишний?"),
+            explanation: `${commonNames} - ${t("одна общая ветка")}: ${node}. ${oddCard.name} - ${t("лишняя карточка")}; ${t("общая ветка с ними")} - ${sharedWithOdd}.`,
+          });
+        }
+      }
     }
   }
-  return questions;
+  return uniqueQuestions(questions);
 }
 
 function timelineLogDistance(firstMa, secondMa) {
@@ -2349,7 +2352,7 @@ function oddQuestionBuckets(cards, level) {
       }
       return b[1].length - a[1].length || a[0].localeCompare(b[0]);
     })
-    .slice(0, level === "hard" ? 36 : 28);
+    .slice(0, oddBucketLimit(level));
 }
 
 function oddNodeFitsLevel(node, level) {
@@ -2359,17 +2362,49 @@ function oddNodeFitsLevel(node, level) {
   return rank === levelRank("easy") && !["опистоконты", "opisthokonts"].includes(node);
 }
 
-function representativeGroupCards(node, groupCards, level) {
+function oddBucketLimit(level) {
+  if (level === "hard") return 54;
+  if (level === "medium") return 42;
+  return 32;
+}
+
+function oddVariantLimit(level) {
+  if (level === "hard") return 4;
+  if (level === "medium") return 3;
+  return 2;
+}
+
+function representativeGroupCardSets(node, groupCards, level) {
+  const sorted = orderedGroupCards(node, groupCards, level);
+  const limit = oddVariantLimit(level);
+  const sets = [];
+  for (let start = 0; start < sorted.length && sets.length < limit; start += 1) {
+    const set = [];
+    for (let offset = 0; offset < sorted.length && set.length < 3; offset += 1) {
+      const card = sorted[(start + offset) % sorted.length];
+      if (!set.some((item) => item.id === card.id)) set.push(card);
+    }
+    if (set.length === 3 && !sets.some((item) => sameCardSet(item, set))) sets.push(set);
+  }
+  return sets;
+}
+
+function orderedGroupCards(node, groupCards, level) {
   const sorted = [...groupCards].sort((a, b) => a.id.localeCompare(b.id));
-  if (level !== "hard") return sorted.slice(0, 3);
+  if (level !== "hard") return sorted;
   return sorted
     .map((card) => ({ card, distanceFromNode: Math.max(0, card.path.length - card.path.indexOf(node)) }))
     .sort((a, b) => b.distanceFromNode - a.distanceFromNode || a.card.id.localeCompare(b.card.id))
-    .map(({ card }) => card)
-    .slice(0, 3);
+    .map(({ card }) => card);
 }
 
-function oddCardForGroup(node, groupCards, cards, level) {
+function sameCardSet(first, second) {
+  const firstIds = first.map((card) => card.id).sort().join("|");
+  const secondIds = second.map((card) => card.id).sort().join("|");
+  return firstIds === secondIds;
+}
+
+function oddCardsForGroup(node, groupCards, cards, level) {
   const basePath = groupCards[0].path;
   const nodeIndex = basePath.indexOf(node);
   const parent = basePath[nodeIndex - 1];
@@ -2382,7 +2417,13 @@ function oddCardForGroup(node, groupCards, cards, level) {
     .sort((a, b) => {
       const closeness = level === "easy" ? a.closeness - b.closeness : b.closeness - a.closeness;
       return closeness || a.card.id.localeCompare(b.card.id);
-    })[0]?.card;
+    })
+    .map(({ card }) => card)
+    .slice(0, oddVariantLimit(level));
+}
+
+function uniqueQuestions(questions) {
+  return [...new Map(questions.map((question) => [question.id, question])).values()];
 }
 
 function generatedTimelineQuestions() {
