@@ -1,8 +1,8 @@
 window.EVOL_GAMES = {
   levels: [
-    { id: "easy", title: "легкий" },
-    { id: "medium", title: "средний" },
-    { id: "hard", title: "сложный" },
+    { id: "easy", title: "базово" },
+    { id: "medium", title: "подробнее" },
+    { id: "hard", title: "все" },
   ],
 
   target: "human",

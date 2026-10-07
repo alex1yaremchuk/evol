@@ -597,7 +597,7 @@ function renderGeneratedTimelines() {
         <div class="game-panel">
           <div class="game-question">
             <strong>${escapeHtml(t("Нет точек для выбранного фокуса"))}</strong>
-            <span>${escapeHtml(t("Выбери другой уровень или фокус"))}</span>
+            <span>${escapeHtml(t("Выбери другую детализацию или фокус"))}</span>
           </div>
         </div>
       </article>
@@ -1329,8 +1329,8 @@ function renderGames() {
       <nav class="game-modes" aria-label="${escapeHtml(t("Режимы игры"))}">
         ${modeButtons}
       </nav>
-      <div class="game-levels" aria-label="${escapeHtml(t("Уровни вопросов"))}">
-        <span>${escapeHtml(t("Уровень"))}</span>
+      <div class="game-levels" aria-label="${escapeHtml(t("Детализация вопросов"))}">
+        <span>${escapeHtml(t("Детализация"))}</span>
         ${levelButtons}
       </div>
       <div class="game-filter-summary">${gameFilterSummaryMarkup()}</div>
@@ -1660,8 +1660,8 @@ function emptyGameMarkup() {
   return `
     <section class="game-panel">
       <div class="game-question">
-        <strong>${escapeHtml(t("Нет вопросов для выбранных уровней"))}</strong>
-        <span>${escapeHtml(t("Выбери другой уровень или расширь фильтры"))}</span>
+        <strong>${escapeHtml(t("Нет вопросов для выбранной детализации"))}</strong>
+        <span>${escapeHtml(t("Выбери другую детализацию или расширь фильтры"))}</span>
       </div>
     </section>
   `;
