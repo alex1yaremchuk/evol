@@ -1181,16 +1181,25 @@ button {
 
 .creature-note-hint {
   display: inline-grid;
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.35rem;
+  height: 1.35rem;
   place-items: center;
   border: 1px solid rgba(36, 125, 116, 0.32);
   border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
   color: var(--accent-2);
   font-size: 0.75rem;
   font-weight: 900;
   line-height: 1;
-  cursor: help;
+  cursor: pointer;
+  user-select: none;
+}
+
+.creature-note-hint:hover,
+.creature-note-hint:focus-visible {
+  border-color: rgba(36, 125, 116, 0.62);
+  background: rgba(36, 125, 116, 0.12);
+  outline: none;
 }
 
 .game-answers,

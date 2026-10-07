@@ -2175,6 +2175,7 @@ Object.assign(window.EVOL_I18N.en, {
   "Готовая шкала": "Fixed scale",
   "Открыть таймлайны": "Open timelines",
   "Подсказка": "Hint",
+  "Показать категорию": "Show category",
   "Детализация": "Detail",
   "Масштаб": "Scale",
   "Эры": "Eras",

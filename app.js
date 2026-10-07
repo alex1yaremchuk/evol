@@ -36,6 +36,7 @@ let selectedGameDifficulty = initialGameDifficulty();
 let gameFilters = initialGameFilters();
 let gameSettingsOpen = false;
 let gameProgress = {};
+let revealedCreatureNotes = new Set();
 let chainPointerDrag = null;
 let branchPointerDrag = null;
 let suppressChainClick = false;
@@ -1728,12 +1729,12 @@ function creatureChoiceCard(card, question = null) {
   const isCorrect = isAnswered && value && currentGame.correctValue === value;
   const isWrongChoice = isAnswered && value && currentGame.chosen === value && currentGame.result === "wrong";
   const resultClass = isCorrect ? "correct" : isWrongChoice ? "wrong" : "";
-  const showNote = isAnswered;
-  const hintText = card.note ? `${t("Подсказка")}: ${card.note}` : "";
-  const hiddenHint = !showNote && hintText ? `<small class="creature-note-hint" title="${escapeHtml(hintText)}" aria-label="${escapeHtml(hintText)}">?</small>` : "";
+  const showNote = isAnswered || revealedCreatureNotes.has(value);
+  const hintLabel = card.note ? `${t("Показать категорию")}: ${card.note}` : "";
+  const hiddenHint = !showNote && hintLabel ? `<small class="creature-note-hint" role="button" tabindex="0" data-creature-note="${escapeHtml(value)}" aria-label="${escapeHtml(hintLabel)}">?</small>` : "";
   if (answerable && value) {
     return `
-      <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}" ${hintText ? `title="${escapeHtml(hintText)}"` : ""}>
+      <button class="game-creature-card creature-choice" type="button" data-game-answer="${escapeHtml(value)}" data-focus-value="${escapeHtml(value)}">
         <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
         <span>
           <strong>${escapeHtml(card.name)}</strong>
@@ -1744,7 +1745,7 @@ function creatureChoiceCard(card, question = null) {
     `;
   }
   return `
-    <figure class="game-creature-card ${resultClass}" ${hintText && !showNote ? `title="${escapeHtml(hintText)}"` : ""}>
+    <figure class="game-creature-card ${resultClass}">
       <img src="${escapeHtml(card.image)}" alt="${escapeHtml(card.name)}" loading="eager" decoding="async" />
       <figcaption>
         <strong>${escapeHtml(card.name)}</strong>
@@ -1839,6 +1840,7 @@ function nextGameQuestion() {
   chainSelection = [];
   branchSelection = { left: [], right: [] };
   activeBranchSide = "left";
+  revealedCreatureNotes = new Set();
   currentGame = {
     modeId: gameModeId,
     question,
@@ -2808,6 +2810,13 @@ function saveGameDifficulty() {
   }
 }
 
+function revealCreatureNote(cardId) {
+  if (!cardId || currentGame?.result) return;
+  revealedCreatureNotes.add(cardId);
+  preferredGameFocus = `[data-creature-note="${cssEscape(cardId)}"], [data-game-answer="${cssEscape(cardId)}"]`;
+  render();
+}
+
 function setGameSettingsOpen(nextValue) {
   gameSettingsOpen = Boolean(nextValue);
   preferredGameFocus = gameSettingsOpen ? ".game-period-select, .game-line-filter.active, .game-settings-close" : "[data-game-settings-open]";
@@ -3742,6 +3751,14 @@ slideNode.addEventListener("click", (event) => {
     return;
   }
 
+  const creatureNote = event.target.closest("[data-creature-note]");
+  if (creatureNote) {
+    event.preventDefault();
+    event.stopPropagation();
+    revealCreatureNote(creatureNote.dataset.creatureNote);
+    return;
+  }
+
   const answerButton = event.target.closest("[data-game-answer]");
   if (answerButton) {
     chooseGameAnswer(answerButton.dataset.gameAnswer);
@@ -3810,6 +3827,14 @@ slideNode.addEventListener("click", (event) => {
     return;
   }
   setDeck(deckIndex, Number(button.dataset.slide));
+});
+
+slideNode.addEventListener("keydown", (event) => {
+  const creatureNote = event.target.closest("[data-creature-note]");
+  if (!creatureNote || (event.key !== "Enter" && event.key !== " ")) return;
+  event.preventDefault();
+  event.stopPropagation();
+  revealCreatureNote(creatureNote.dataset.creatureNote);
 });
 
 slideNode.addEventListener("change", (event) => {
