@@ -2200,9 +2200,11 @@ function generatedBranchQuestions() {
         const b = withLeveledPath(cards[j], level);
         const prefix = commonPrefix(a.path, b.path);
         if (prefix.length < 3) continue;
-        const leftItems = a.path.slice(prefix.length);
-        const rightItems = b.path.slice(prefix.length);
-        if (leftItems.length < 2 || rightItems.length < 2 || leftItems[0] === rightItems[0]) continue;
+        const rawLeftItems = a.path.slice(prefix.length);
+        const rawRightItems = b.path.slice(prefix.length);
+        const leftItems = rawLeftItems.filter((item) => !rawRightItems.includes(item));
+        const rightItems = rawRightItems.filter((item) => !rawLeftItems.includes(item));
+        if (leftItems.length < 2 || rightItems.length < 2 || leftItems[0] === rightItems[0] || branchesOverlap(leftItems, rightItems)) continue;
         const ancestor = prefix[prefix.length - 1];
         questions.push({
           id: `branches:${level}:${a.id}:${b.id}`,
@@ -2219,6 +2221,11 @@ function generatedBranchQuestions() {
     }
   }
   return questions;
+}
+
+function branchesOverlap(leftItems, rightItems) {
+  const right = new Set(rightItems);
+  return leftItems.some((item) => right.has(item));
 }
 
 function generatedEarlierQuestions() {
@@ -2241,7 +2248,7 @@ function generatedEarlierQuestions() {
           eventPair: shuffle([a.id, b.id]),
           answer: answer.id,
           prompt: t("Что было раньше?"),
-          explanation: `${answer.title} ${t("появилось раньше")}: ${timelineEventDate(answer)}. ${other.title} ${t("появилось позже")}: ${timelineEventDate(other)}.`,
+          explanation: `${t("Раньше")}: ${answer.title} — ${timelineEventDate(answer)}. ${t("Позже")}: ${other.title} — ${timelineEventDate(other)}.`,
         });
       }
     }
@@ -2403,10 +2410,10 @@ function timelineDateOptions(event) {
   const candidates = [event.timeMa, event.timeMa + span * 0.22, event.timeMa - span * 0.22, startMa - span * 0.08, endMa + span * 0.12]
     .map((timeMa) => Math.max(endMa, Math.min(startMa, timeMa)))
     .map((timeMa) => Math.round(timeMa * 10) / 10);
-  const unique = [...new Set(candidates)].slice(0, 4);
+  const unique = uniqueTimelineDateValues(candidates).slice(0, 4);
   while (unique.length < 4) {
     const fallback = Math.round((startMa - (span * unique.length) / 4) * 10) / 10;
-    if (!unique.includes(fallback)) unique.push(fallback);
+    if (!unique.some((timeMa) => timelineTimeLabel(timeMa) === timelineTimeLabel(fallback))) unique.push(fallback);
     else break;
   }
   return unique
@@ -2417,6 +2424,19 @@ function timelineDateOptions(event) {
       label: timelineTimeLabel(timeMa),
       timeMa,
     }));
+}
+
+function uniqueTimelineDateValues(values) {
+  const seenValues = new Set();
+  const seenLabels = new Set();
+  return values.filter((value) => {
+    const rounded = Math.round(value * 10) / 10;
+    const label = timelineTimeLabel(rounded);
+    if (seenValues.has(rounded) || seenLabels.has(label)) return false;
+    seenValues.add(rounded);
+    seenLabels.add(label);
+    return true;
+  });
 }
 
 function timelinePeriodById(periodId) {

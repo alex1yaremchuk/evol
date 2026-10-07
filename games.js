@@ -104,7 +104,7 @@ window.EVOL_GAMES = {
       image: "assets/photos/plant-green-algae.jpg",
       timeMa: 1800,
       eraId: "proterozoic",
-      periodId: "middle-proterozoic",
+      periodId: "early-proterozoic",
       novelty: "мейоз перемешивает наследственность перед новым поколением",
       gave: "эукариоты стали быстрее перебирать варианты, а отбор получил больше материала для эволюции",
     },
