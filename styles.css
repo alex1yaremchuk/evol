@@ -506,6 +506,15 @@ button {
   letter-spacing: 0;
 }
 
+.scientific-label {
+  margin-top: -0.28rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
 .subtitle {
   margin: 0;
   max-width: 34rem;

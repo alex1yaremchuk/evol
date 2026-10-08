@@ -249,6 +249,22 @@ assert.equal(
   "Duplicate canonical timeline event ids",
 );
 
+const lineagePairs = new Map();
+for (const node of model.nodeDetails || []) {
+  if (!node.lineagePair) continue;
+  assert.ok(["lineage", "crown"].includes(node.lineageStage), `Invalid lineage stage for ${node.id}`);
+  if (!lineagePairs.has(node.lineagePair)) lineagePairs.set(node.lineagePair, {});
+  const pair = lineagePairs.get(node.lineagePair);
+  assert.equal(pair[node.lineageStage], undefined, `Duplicate ${node.lineageStage} node for ${node.lineagePair}`);
+  pair[node.lineageStage] = node;
+}
+
+for (const [pairId, pair] of lineagePairs) {
+  assert.ok(pair.lineage, `Missing lineage node for ${pairId}`);
+  assert.ok(pair.crown, `Missing crown node for ${pairId}`);
+  assert.ok(pair.lineage.appearedMa > pair.crown.appearedMa, `Crown node must be younger than lineage node for ${pairId}`);
+}
+
 for (const event of timelineEvents) {
   const era = games.timelineEras.find((item) => item.id === event.eraId);
   const period = games.timelinePeriods.find((item) => item.id === event.periodId);

@@ -577,6 +577,7 @@ function render() {
       <div class="copy">
         <div class="kicker">${escapeHtml(slide.kicker)}</div>
         <h1 class="title">${escapeHtml(slide.title)}</h1>
+        ${slide.scientificLabel ? `<div class="scientific-label">${escapeHtml(slide.scientificLabel)}</div>` : ""}
         <p class="subtitle">${escapeHtml(slide.subtitle)}</p>
         ${infoGrid(slide, deck)}
         ${successGrid(slide)}
@@ -636,6 +637,7 @@ function renderGeneratedTimelines() {
       <div class="copy">
         <div class="kicker">${escapeHtml(slide.kicker)}</div>
         <h1 class="title">${escapeHtml(slide.title)}</h1>
+        ${slide.scientificLabel ? `<div class="scientific-label">${escapeHtml(slide.scientificLabel)}</div>` : ""}
         <p class="subtitle">${escapeHtml(slide.subtitle)}</p>
         ${infoGrid(slide, deck)}
       </div>
@@ -968,18 +970,20 @@ function generatedSlideFromNode(item, focus, relevantNodes) {
   const sideExamples = sideNode ? generatedCardsForNode(sideNode).slice(0, 3) : [];
   const sideDetail = generatedNodeDetail(sideNode);
   const sideTitle = sideDetail?.title || sideNode;
-  const mainNames = examples.map((card) => card.name).join(", ") || item.node;
+  const nodeLabel = gameNodeLabel(item.node);
+  const mainNames = examples.map((card) => card.name).join(", ") || nodeLabel;
   const sideNames = sideExamples.map((card) => card.name).join(", ");
   return {
     kicker: focus?.title || t("Новые таймлайны"),
     title: item.title || item.node,
-    subtitle: `${item.node}: ${item.novelty}`,
+    scientificLabel: generatedLevelId === "easy" ? "" : item.scientificLabel || "",
+    subtitle: `${nodeLabel}: ${item.novelty}`,
     novelty: item.novelty,
-    mainBranch: `${item.node}: ${mainNames}`,
+    mainBranch: `${nodeLabel}: ${mainNames}`,
     sideBranch: item.sideLabel || (sideNode ? `${sideTitle}${sideNames ? `: ${sideNames}` : ""}` : t("соседняя ветка не показана")),
     effect: item.effect,
     side: item.sideLabel,
-    caption: `${t("Узел дерева")}: ${item.node}`,
+    caption: `${t("Узел дерева")}: ${nodeLabel}`,
     scene: generatedSceneForNode(item),
     marker: item.marker || "fork",
     symbolLabel: item.novelty,
@@ -1553,7 +1557,7 @@ function branchZone(side, label, items) {
 function branchItem(item, side = "", index = null) {
   return `
     <button class="chain-button branch-button" type="button" data-branch-item="${escapeHtml(item)}" data-branch-value="${escapeHtml(item)}" ${side ? `data-branch-side="${side}" data-branch-index="${index}"` : ""} ${currentGame.result ? "disabled" : ""}>
-      ${escapeHtml(item)}
+      ${escapeHtml(gameNodeLabel(item))}
     </button>
   `;
 }
@@ -1602,7 +1606,7 @@ function chainDropSlot(index) {
 function chainPlacedItem(item, index) {
   return `
     <button class="chain-button chain-placed" type="button" data-chain-index="${index}" data-chain-value="${escapeHtml(item)}" data-chain-remove="${index}" ${currentGame.result ? "disabled" : ""}>
-      <span>${index + 1}.</span> ${escapeHtml(item)}
+      <span>${index + 1}.</span> ${escapeHtml(gameNodeLabel(item))}
     </button>
   `;
 }
@@ -1610,7 +1614,7 @@ function chainPlacedItem(item, index) {
 function chainBankItem(item) {
   return `
     <button class="chain-button" type="button" data-chain-item="${escapeHtml(item)}" data-chain-value="${escapeHtml(item)}" ${currentGame.result ? "disabled" : ""}>
-      ${escapeHtml(item)}
+      ${escapeHtml(gameNodeLabel(item))}
     </button>
   `;
 }
@@ -2167,7 +2171,7 @@ function generatedCloserQuestions() {
           pair: [a.id, b.id],
           answer: answer.id,
           prompt: t("Кто ближе к человеку?"),
-          explanation: `${answer.name} ${t("ближе к человеку")}: ${t("общий предок")} - ${answerAncestor}. ${other.name}: ${t("более ранняя развилка")} - ${otherAncestor}.`,
+          explanation: `${answer.name} ${t("ближе к человеку")}: ${t("общий предок")} - ${gameNodeLabel(answerAncestor)}. ${other.name}: ${t("более ранняя развилка")} - ${gameNodeLabel(otherAncestor)}.`,
         });
       }
     }
@@ -2200,7 +2204,7 @@ function generatedAncestorQuestions() {
           prompt: t("Где последний общий предок из перечисленных?"),
           options: ancestorOptions(answer, a.path, b.path),
           answer,
-          explanation: `${a.name} ${t("и")} ${b.name}: ${t("лучший ответ из перечисленных")} - ${answer}.`,
+          explanation: `${a.name} ${t("и")} ${b.name}: ${t("лучший ответ из перечисленных")} - ${gameNodeLabel(answer)}.`,
         });
       }
     }
@@ -2221,7 +2225,7 @@ function generatedChainQuestions() {
             level,
             prompt: `${t("Собери путь")}: ${card.name}`,
             items,
-            explanation: `${t("Правильный путь")}: ${items.join(" → ")}.`,
+            explanation: `${t("Правильный путь")}: ${items.map(gameNodeLabel).join(" → ")}.`,
           };
         }),
     )
@@ -2247,13 +2251,13 @@ function generatedBranchQuestions() {
         questions.push({
           id: `branches:${level}:${a.id}:${b.id}`,
           level,
-          prompt: `${t("Собери две ветки")}: ${ancestor}`,
+          prompt: `${t("Собери две ветки")}: ${gameNodeLabel(ancestor)}`,
           branches: {
-            left: { label: `${a.name}: ${leftItems[0]}`, items: leftItems },
-            right: { label: `${b.name}: ${rightItems[0]}`, items: rightItems },
+            left: { label: `${a.name}: ${gameNodeLabel(leftItems[0])}`, items: leftItems },
+            right: { label: `${b.name}: ${gameNodeLabel(rightItems[0])}`, items: rightItems },
           },
           items: shuffle([...leftItems, ...rightItems]),
-          explanation: `${t("Общий предок")} - ${ancestor}. ${a.name}: ${leftItems.join(" → ")}. ${b.name}: ${rightItems.join(" → ")}.`,
+          explanation: `${t("Общий предок")} - ${gameNodeLabel(ancestor)}. ${a.name}: ${leftItems.map(gameNodeLabel).join(" → ")}. ${b.name}: ${rightItems.map(gameNodeLabel).join(" → ")}.`,
         });
       }
     }
@@ -2644,6 +2648,10 @@ function nodeLevel(node) {
   return entry?.level || "hard";
 }
 
+function gameNodeLabel(node) {
+  return model.nodeDisplayLabels?.find((item) => item.node === node)?.label || node;
+}
+
 function levelRank(level) {
   return gameLevelIds().indexOf(level);
 }
@@ -2715,7 +2723,7 @@ function timelineStepTitle(step) {
 
 function gameAnswers(modeId, question) {
   if (modeId === "ancestor") {
-    return shuffle(question.options).map((option) => ({ value: option, label: option }));
+    return shuffle(question.options).map((option) => ({ value: option, label: gameNodeLabel(option) }));
   }
   if (modeId === "timeline" || modeId === "earlier" || modeId === "odd") return [];
   if (modeId === "chain" || modeId === "branches") return [];
