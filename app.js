@@ -1,6 +1,7 @@
 const sourceDecks = window.EVOL_DATA.decks;
 const sourceGames = window.EVOL_GAMES;
 const sourceModel = window.EVOL_MODEL || { nodeDetails: [], cardFlags: {} };
+const earthHistory = window.EVOL_EARTH_HISTORY || { oldestMa: 4500, youngestMa: 0.01, ticks: [], snapshots: [] };
 const evolutionStudyCutoffMa = 0.01;
 
 const slideNode = document.getElementById("slide");
@@ -27,6 +28,7 @@ let generatedIndex = initialGeneratedIndex();
 let generatedFocusId = initialGeneratedFocus();
 let generatedLevelId = initialGeneratedLevel();
 let generatedEraIds = initialGeneratedEras();
+let earthTimeMa = initialEarthTime();
 let currentGame = null;
 let gameScore = { correct: 0, total: 0 };
 let chainSelection = [];
@@ -61,14 +63,27 @@ function initialLanguage() {
 function initialSection() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("section") === "games") return "games";
+  if (params.get("section") === "earth") return "earth";
   if (params.get("section") === "new-timelines") return "new-timelines";
   if (params.has("deck") || params.has("slide")) return "slides";
 
   try {
     const saved = window.localStorage.getItem("evol-section");
-    return saved === "games" ? "games" : "new-timelines";
+    return ["games", "earth", "new-timelines"].includes(saved) ? saved : "new-timelines";
   } catch {
     return "new-timelines";
+  }
+}
+
+function initialEarthTime() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = Number(params.get("time"));
+  if (params.has("time") && Number.isFinite(fromUrl) && fromUrl > 0) return clampEarthTime(fromUrl);
+  try {
+    const saved = Number(window.localStorage.getItem("evol-earth-time"));
+    return Number.isFinite(saved) && saved > 0 ? clampEarthTime(saved) : 150;
+  } catch {
+    return 150;
   }
 }
 
@@ -565,6 +580,10 @@ function render() {
     renderGeneratedTimelines();
     return;
   }
+  if (section === "earth") {
+    renderEarthPanorama();
+    return;
+  }
 
   const deck = decks[deckIndex];
   const slide = deck.slides[index];
@@ -658,6 +677,182 @@ function renderGeneratedTimelines() {
   prevButton.disabled = generatedIndex === 0;
   nextButton.disabled = generatedIndex >= slides.length - 1;
   renderSchemeNav();
+}
+
+function renderEarthPanorama() {
+  const snapshot = earthSnapshotForTime(earthTimeMa);
+  if (!snapshot) return;
+  const colors = snapshot.colors || ["#b8d3cf", "#71845a", "#4d8293"];
+  slideNode.style.setProperty("--bg-a", colors[0]);
+  slideNode.style.setProperty("--bg-b", colors[1]);
+  slideNode.style.setProperty("--earth-sky", colors[0]);
+  slideNode.style.setProperty("--earth-land", colors[1]);
+  slideNode.style.setProperty("--earth-sea", colors[2]);
+  document.querySelector(".controls")?.classList.add("hidden");
+  currentNode.textContent = "";
+  totalNode.textContent = "";
+
+  slideNode.innerHTML = `
+    <article class="earth-screen">
+      <header class="earth-header">
+        <div>
+          <div class="kicker">${escapeHtml(language === "en" ? "Earth through time" : "Земля во времени")}</div>
+          <h1 data-earth-title>${escapeHtml(earthText(snapshot.title))}</h1>
+          <p data-earth-headline>${escapeHtml(earthText(snapshot.headline))}</p>
+        </div>
+        <div class="earth-date">
+          <strong data-earth-date>${escapeHtml(formatMaRounded(earthTimeMa))}</strong>
+          <span data-earth-period>${escapeHtml(earthText(snapshot.period))}</span>
+        </div>
+      </header>
+
+      <section class="earth-atmosphere earth-zone">
+        <div class="earth-zone-copy">
+          <span>${escapeHtml(language === "en" ? "Atmosphere" : "Атмосфера")}</span>
+          <p data-earth-atmosphere-text>${escapeHtml(earthText(snapshot.atmosphere))}</p>
+        </div>
+        <div data-earth-air-life>${earthLifeMarkup(snapshot.airLife)}</div>
+      </section>
+
+      <div class="earth-surface-grid">
+        <section class="earth-land earth-zone">
+          <div class="earth-zone-copy">
+            <span>${escapeHtml(language === "en" ? "Land" : "Суша")}</span>
+            <p data-earth-land-text>${escapeHtml(earthText(snapshot.land))}</p>
+          </div>
+          <div data-earth-land-life>${earthLifeMarkup(snapshot.landLife, language === "en" ? "No visible land life" : "Заметной наземной жизни нет")}</div>
+        </section>
+        <section class="earth-sea earth-zone">
+          <div class="earth-zone-copy">
+            <span>${escapeHtml(language === "en" ? "Seas" : "Моря")}</span>
+            <p data-earth-sea-text>${escapeHtml(earthText(snapshot.sea))}</p>
+          </div>
+          <div data-earth-sea-life>${earthLifeMarkup(snapshot.seaLife, language === "en" ? "No confirmed life" : "Подтвержденной жизни нет")}</div>
+        </section>
+      </div>
+
+      <section class="earth-time-control" aria-label="${escapeHtml(language === "en" ? "Time control" : "Управление временем")}">
+        <div class="earth-scale-labels">
+          <strong>${escapeHtml(language === "en" ? "Deep past" : "Глубокое прошлое")}</strong>
+          <span>${escapeHtml(language === "en" ? "toward agriculture" : "к земледелию")}</span>
+        </div>
+        <div class="earth-slider-wrap">
+          <input
+            class="earth-slider"
+            type="range"
+            min="0"
+            max="1000"
+            step="1"
+            value="${earthSliderPosition(earthTimeMa)}"
+            data-earth-time
+            aria-label="${escapeHtml(language === "en" ? "Millions of years ago" : "Миллионов лет назад")}" />
+          <div class="earth-ticks" aria-hidden="true">
+            ${earthHistory.ticks.map((tick) => `<span style="left:${earthSliderPosition(tick.ma) / 10}%">${escapeHtml(language === "en" ? tick.en : tick.ru)}</span>`).join("")}
+          </div>
+        </div>
+      </section>
+    </article>
+  `;
+  renderSchemeNav();
+}
+
+function earthLifeMarkup(items = [], emptyLabel = "") {
+  if (!items.length) return `<div class="earth-life-empty">${escapeHtml(emptyLabel)}</div>`;
+  return `
+    <div class="earth-life-list">
+      ${items
+        .map(
+          (item) => `
+            <div class="earth-life ${escapeHtml(item.status || "common")}">
+              <span class="earth-life-icon">${markerSvg(item.marker || "animal")}</span>
+              <span><strong>${escapeHtml(earthText(item.label))}</strong><small>${escapeHtml(earthStatusLabel(item.status))}</small></span>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function earthText(value) {
+  if (!value || typeof value !== "object") return value || "";
+  return language === "en" ? value.en || value.ru || "" : value.ru || value.en || "";
+}
+
+function earthStatusLabel(status) {
+  const labels = {
+    new: language === "en" ? "appearing" : "появляются",
+    common: language === "en" ? "widespread" : "широко распространены",
+    dominant: language === "en" ? "dominant" : "господствуют",
+  };
+  return labels[status] || labels.common;
+}
+
+function earthSnapshotForTime(timeMa) {
+  const snapshots = earthHistory.snapshots || [];
+  return snapshots.find((item, index) => timeMa <= item.fromMa && (timeMa > item.toMa || index === snapshots.length - 1)) || snapshots.at(-1);
+}
+
+function clampEarthTime(timeMa) {
+  return Math.max(earthHistory.youngestMa, Math.min(earthHistory.oldestMa, Number(timeMa) || earthHistory.youngestMa));
+}
+
+function earthSliderPosition(timeMa) {
+  const oldestLog = Math.log10(earthHistory.oldestMa);
+  const youngestLog = Math.log10(earthHistory.youngestMa);
+  const position = ((oldestLog - Math.log10(clampEarthTime(timeMa))) / (oldestLog - youngestLog)) * 1000;
+  return Math.round(Math.max(0, Math.min(1000, position)));
+}
+
+function earthTimeFromSlider(position) {
+  const oldestLog = Math.log10(earthHistory.oldestMa);
+  const youngestLog = Math.log10(earthHistory.youngestMa);
+  const exponent = oldestLog - (Math.max(0, Math.min(1000, Number(position))) / 1000) * (oldestLog - youngestLog);
+  return clampEarthTime(10 ** exponent);
+}
+
+function setEarthTime(timeMa, updateUrl = true) {
+  earthTimeMa = clampEarthTime(timeMa);
+  try {
+    window.localStorage.setItem("evol-earth-time", String(earthTimeMa));
+  } catch {
+    // The panorama still works if storage is unavailable.
+  }
+  if (updateUrl) updateSectionUrl();
+  if (section === "earth" && slideNode.querySelector(".earth-screen")) updateEarthPanoramaDom();
+  else renderEarthPanorama();
+}
+
+function updateEarthPanoramaDom() {
+  const snapshot = earthSnapshotForTime(earthTimeMa);
+  if (!snapshot) return;
+  const colors = snapshot.colors || ["#b8d3cf", "#71845a", "#4d8293"];
+  slideNode.style.setProperty("--bg-a", colors[0]);
+  slideNode.style.setProperty("--bg-b", colors[1]);
+  slideNode.style.setProperty("--earth-sky", colors[0]);
+  slideNode.style.setProperty("--earth-land", colors[1]);
+  slideNode.style.setProperty("--earth-sea", colors[2]);
+
+  const setText = (selector, value) => {
+    const node = slideNode.querySelector(selector);
+    if (node) node.textContent = value;
+  };
+  const setMarkup = (selector, value) => {
+    const node = slideNode.querySelector(selector);
+    if (node) node.innerHTML = value;
+  };
+  setText("[data-earth-title]", earthText(snapshot.title));
+  setText("[data-earth-headline]", earthText(snapshot.headline));
+  setText("[data-earth-date]", formatMaRounded(earthTimeMa));
+  setText("[data-earth-period]", earthText(snapshot.period));
+  setText("[data-earth-atmosphere-text]", earthText(snapshot.atmosphere));
+  setText("[data-earth-land-text]", earthText(snapshot.land));
+  setText("[data-earth-sea-text]", earthText(snapshot.sea));
+  setMarkup("[data-earth-air-life]", earthLifeMarkup(snapshot.airLife));
+  setMarkup("[data-earth-land-life]", earthLifeMarkup(snapshot.landLife, language === "en" ? "No visible land life" : "Заметной наземной жизни нет"));
+  setMarkup("[data-earth-sea-life]", earthLifeMarkup(snapshot.seaLife, language === "en" ? "No confirmed life" : "Подтвержденной жизни нет"));
+  const slider = slideNode.querySelector("[data-earth-time]");
+  if (slider) slider.value = String(earthSliderPosition(earthTimeMa));
 }
 
 function generatedToolbar(slideCount) {
@@ -3623,6 +3818,9 @@ function renderSchemeNav() {
     <button class="scheme-button ${section === "new-timelines" ? "active" : ""}" type="button" data-section="new-timelines" aria-pressed="${section === "new-timelines"}">
       <span>${escapeHtml(t("Таймлайны"))}</span>
     </button>
+    <button class="scheme-button ${section === "earth" ? "active" : ""}" type="button" data-section="earth" aria-pressed="${section === "earth"}">
+      <span>${escapeHtml(language === "en" ? "Earth" : "Земля")}</span>
+    </button>
     <button class="scheme-button ${section === "games" ? "active" : ""}" type="button" data-section="games" aria-pressed="${section === "games"}">
       <span>${escapeHtml(t("Игры"))}</span>
     </button>
@@ -3647,6 +3845,13 @@ function setGamesSection() {
 
 function setGeneratedTimelinesSection() {
   section = "new-timelines";
+  updateSectionUrl();
+  updatePresentationState();
+  render();
+}
+
+function setEarthSection() {
+  section = "earth";
   updateSectionUrl();
   updatePresentationState();
   render();
@@ -3708,6 +3913,19 @@ function updateSectionUrl() {
     url.searchParams.delete("game");
     url.searchParams.delete("deck");
     url.searchParams.delete("slide");
+    url.searchParams.delete("time");
+  } else if (section === "earth") {
+    url.searchParams.set("section", "earth");
+    url.searchParams.set("time", String(Math.round(earthTimeMa * 10000) / 10000));
+    url.searchParams.delete("game");
+    url.searchParams.delete("deck");
+    url.searchParams.delete("slide");
+    url.searchParams.delete("focus");
+    url.searchParams.delete("level");
+    url.searchParams.delete("scope");
+    url.searchParams.delete("detail");
+    url.searchParams.delete("eras");
+    url.searchParams.delete("point");
   } else {
     url.searchParams.delete("section");
     url.searchParams.delete("game");
@@ -3717,6 +3935,7 @@ function updateSectionUrl() {
     url.searchParams.delete("detail");
     url.searchParams.delete("eras");
     url.searchParams.delete("point");
+    url.searchParams.delete("time");
     url.searchParams.set("deck", String(deckIndex));
     url.searchParams.set("slide", String(index));
   }
@@ -3759,7 +3978,7 @@ function saveUiState() {
 }
 
 function go(delta) {
-  if (section === "games") return;
+  if (section === "games" || section === "earth") return;
   if (section === "new-timelines") {
     const slides = generatedTimelineSlides();
     generatedIndex = clampIndex(generatedIndex + delta, slides.length);
@@ -3802,6 +4021,12 @@ schemeNavNode.addEventListener("click", (event) => {
   const generatedSectionButton = event.target.closest("[data-section='new-timelines']");
   if (generatedSectionButton) {
     setGeneratedTimelinesSection();
+    return;
+  }
+
+  const earthSectionButton = event.target.closest("[data-section='earth']");
+  if (earthSectionButton) {
+    setEarthSection();
     return;
   }
 
@@ -3972,9 +4197,20 @@ slideNode.addEventListener("keydown", (event) => {
 });
 
 slideNode.addEventListener("change", (event) => {
+  const timeSlider = event.target.closest("[data-earth-time]");
+  if (timeSlider) {
+    setEarthTime(earthTimeFromSlider(timeSlider.value));
+    return;
+  }
   const periodSelect = event.target.closest("[data-game-period-filter]");
   if (!periodSelect) return;
   setGamePeriodFilter(periodSelect.value);
+});
+
+slideNode.addEventListener("input", (event) => {
+  const timeSlider = event.target.closest("[data-earth-time]");
+  if (!timeSlider) return;
+  setEarthTime(earthTimeFromSlider(timeSlider.value), false);
 });
 
 document.addEventListener("keydown", (event) => {
@@ -4027,6 +4263,24 @@ document.addEventListener("keydown", (event) => {
         event.preventDefault();
         moveBranchItem(activeBranch.dataset.branchValue, "bank");
       }
+    }
+    return;
+  }
+  if (section === "earth") {
+    if (event.target.closest("[data-earth-time]")) return;
+    const currentPosition = earthSliderPosition(earthTimeMa);
+    if (event.key === "ArrowRight" || event.key === "PageDown") {
+      event.preventDefault();
+      setEarthTime(earthTimeFromSlider(currentPosition + 12));
+    } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+      event.preventDefault();
+      setEarthTime(earthTimeFromSlider(currentPosition - 12));
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setEarthTime(earthHistory.oldestMa);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      setEarthTime(earthHistory.youngestMa);
     }
     return;
   }

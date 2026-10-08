@@ -818,6 +818,275 @@ button {
   display: none;
 }
 
+.earth-screen {
+  display: grid;
+  grid-template-rows: auto auto minmax(15rem, 1fr) auto;
+  gap: 0.72rem;
+  width: min(100%, 1420px);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: 4.7rem clamp(1rem, 3.2vw, 3.2rem) 1.15rem;
+}
+
+.earth-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.earth-header > div:first-child {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.earth-header h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.2vw, 3.15rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.earth-header p {
+  max-width: 52rem;
+  margin: 0;
+  color: #34414c;
+  font-size: clamp(0.86rem, 1.2vw, 1rem);
+  font-weight: 650;
+}
+
+.earth-date {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.12rem;
+  min-width: 13rem;
+  padding: 0.52rem 0.7rem;
+  border: 1px solid rgba(24, 33, 43, 0.16);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.72);
+  text-align: right;
+}
+
+.earth-date strong {
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.earth-date span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.earth-zone {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(24, 33, 43, 0.15);
+  border-radius: 0.65rem;
+  box-shadow: 0 0.75rem 1.6rem rgba(24, 33, 43, 0.08);
+}
+
+.earth-atmosphere {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) minmax(0, 1.35fr);
+  gap: 0.8rem;
+  align-items: center;
+  min-height: 6.1rem;
+  padding: 0.62rem 0.75rem;
+  background: color-mix(in srgb, var(--earth-sky) 58%, white);
+}
+
+.earth-surface-grid {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  min-height: 0;
+  gap: 0.72rem;
+}
+
+.earth-land,
+.earth-sea {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.65rem;
+  padding: 0.72rem;
+}
+
+.earth-land {
+  background: color-mix(in srgb, var(--earth-land) 38%, white);
+}
+
+.earth-sea {
+  background: color-mix(in srgb, var(--earth-sea) 34%, white);
+}
+
+.earth-zone-copy {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.earth-zone-copy > span {
+  color: rgba(24, 33, 43, 0.72);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.earth-zone-copy p {
+  margin: 0;
+  color: #25323d;
+  font-size: clamp(0.78rem, 1vw, 0.9rem);
+  font-weight: 650;
+  line-height: 1.24;
+}
+
+.earth-life-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+  align-content: center;
+}
+
+.earth-atmosphere .earth-life-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+[data-earth-air-life],
+[data-earth-land-life],
+[data-earth-sea-life] {
+  min-width: 0;
+}
+
+.earth-life {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0.45rem;
+  align-items: center;
+  min-height: 3.35rem;
+  padding: 0.4rem 0.46rem;
+  border: 1px solid rgba(24, 33, 43, 0.14);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.earth-life.new {
+  border-color: rgba(209, 79, 63, 0.48);
+  box-shadow: inset 0.2rem 0 0 rgba(209, 79, 63, 0.72);
+}
+
+.earth-life.dominant {
+  border-color: rgba(36, 125, 116, 0.42);
+  background: rgba(224, 241, 230, 0.78);
+}
+
+.earth-life-icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.74);
+  color: #263944;
+}
+
+.earth-life-icon svg {
+  width: 1.65rem;
+  height: 1.65rem;
+}
+
+.earth-life-icon path,
+.earth-life-icon circle,
+.earth-life-icon ellipse,
+.earth-life-icon rect {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.earth-life-icon .mark-accent {
+  fill: var(--accent);
+  stroke: none;
+}
+
+.earth-life > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.06rem;
+}
+
+.earth-life strong {
+  overflow-wrap: anywhere;
+  font-size: clamp(0.72rem, 0.95vw, 0.84rem);
+  line-height: 1.08;
+}
+
+.earth-life small {
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 750;
+  line-height: 1.05;
+}
+
+.earth-life-empty {
+  display: grid;
+  min-height: 5rem;
+  place-items: center;
+  border: 1px dashed rgba(24, 33, 43, 0.2);
+  border-radius: 0.5rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.earth-time-control {
+  padding: 0.52rem 0.72rem 0.7rem;
+  border: 1px solid rgba(24, 33, 43, 0.15);
+  border-radius: 0.62rem;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 0.75rem 1.6rem rgba(24, 33, 43, 0.08);
+}
+
+.earth-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.18rem;
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.earth-slider-wrap {
+  position: relative;
+  padding-bottom: 1.2rem;
+}
+
+.earth-slider {
+  width: 100%;
+  height: 1.5rem;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: ew-resize;
+}
+
+.earth-ticks {
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0;
+  left: 0.45rem;
+  height: 1rem;
+}
+
+.earth-ticks span {
+  position: absolute;
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 750;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
 .game-screen {
   display: grid;
   align-content: start;
@@ -2164,6 +2433,24 @@ svg .bone {
     overflow: auto;
   }
 
+  .earth-screen {
+    grid-template-rows: auto auto auto auto;
+    align-content: start;
+    padding: 6rem 0.8rem 1rem;
+  }
+
+  .earth-header {
+    align-items: stretch;
+  }
+
+  .earth-date {
+    min-width: 10rem;
+  }
+
+  .earth-surface-grid {
+    grid-template-columns: 1fr;
+  }
+
   .scheme-nav {
     top: 0.55rem;
     left: 4.5rem;
@@ -2353,6 +2640,35 @@ svg .bone {
 @media (max-width: 640px) {
   body {
     overflow-x: hidden;
+  }
+
+  .earth-screen {
+    gap: 0.55rem;
+    padding-top: 5.5rem;
+  }
+
+  .earth-header {
+    display: grid;
+  }
+
+  .earth-date {
+    min-width: 0;
+    align-content: center;
+    align-self: start;
+    text-align: left;
+  }
+
+  .earth-atmosphere {
+    grid-template-columns: 1fr;
+  }
+
+  .earth-life-list,
+  .earth-atmosphere .earth-life-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .earth-ticks span:nth-child(even) {
+    display: none;
   }
 
   .scheme-nav {
