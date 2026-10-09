@@ -83,12 +83,12 @@ function initialEarthSceneIndex() {
   const fromUrl = Number(params.get("time"));
   if (params.has("time") && Number.isFinite(fromUrl) && fromUrl > 0) return earthSceneIndexForTime(fromUrl);
   try {
-    const savedScene = Number(window.localStorage.getItem("evol-earth-scene"));
-    if (Number.isInteger(savedScene) && savedScene >= 0) return clampIndex(savedScene, earthHistory.snapshots.length);
-    const saved = Number(window.localStorage.getItem("evol-earth-time"));
-    return Number.isFinite(saved) && saved > 0 ? earthSceneIndexForTime(saved) : earthSceneIndexForTime(150);
+    const savedSceneValue = window.localStorage.getItem("evol-earth-scene");
+    const savedScene = Number(savedSceneValue);
+    if (savedSceneValue !== null && Number.isInteger(savedScene) && savedScene >= 0) return clampIndex(savedScene, earthHistory.snapshots.length);
+    return 0;
   } catch {
-    return earthSceneIndexForTime(150);
+    return 0;
   }
 }
 
