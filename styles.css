@@ -820,7 +820,7 @@ button {
 
 .earth-screen {
   display: grid;
-  grid-template-rows: auto auto minmax(15rem, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(15rem, 1fr);
   gap: 0.72rem;
   width: min(100%, 1420px);
   min-height: 100svh;
@@ -855,28 +855,23 @@ button {
   font-weight: 650;
 }
 
-.earth-date {
-  display: grid;
-  flex: 0 0 auto;
-  gap: 0.12rem;
-  min-width: 13rem;
-  padding: 0.52rem 0.7rem;
-  border: 1px solid rgba(24, 33, 43, 0.16);
-  border-radius: 0.55rem;
-  background: rgba(255, 255, 255, 0.72);
-  text-align: right;
+.earth-transition {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: fit-content;
+  margin-top: 0.25rem;
+  padding: 0.3rem 0.48rem;
+  border-left: 0.25rem solid #d14f3f;
+  border-radius: 0.25rem;
+  background: rgba(255, 238, 231, 0.84);
+  color: #78372e;
+  font-size: 0.72rem;
 }
 
-.earth-date strong {
-  color: var(--accent);
-  font-size: 1rem;
-}
-
-.earth-date span {
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
+.earth-transition span {
+  color: #55433f;
+  font-weight: 650;
 }
 
 .earth-zone {
@@ -895,6 +890,27 @@ button {
   min-height: 6.1rem;
   padding: 0.62rem 0.75rem;
   background: color-mix(in srgb, var(--earth-sky) 58%, white);
+}
+
+.earth-atmosphere.no-air-life {
+  grid-template-columns: 1fr;
+}
+
+.earth-air-life {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.earth-air-life[hidden] {
+  display: none;
+}
+
+.earth-air-life > span {
+  color: rgba(24, 33, 43, 0.72);
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .earth-surface-grid {
@@ -1042,11 +1058,61 @@ button {
 }
 
 .earth-time-control {
-  padding: 0.52rem 0.72rem 0.7rem;
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.45rem 0.72rem 0.62rem;
   border: 1px solid rgba(24, 33, 43, 0.15);
   border-radius: 0.62rem;
   background: rgba(255, 255, 255, 0.72);
   box-shadow: 0 0.75rem 1.6rem rgba(24, 33, 43, 0.08);
+}
+
+.earth-time-nav {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) 2.2rem;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.earth-time-nav button {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border: 1px solid rgba(24, 33, 43, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.earth-time-nav button:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.earth-time-current {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.45rem;
+  text-align: center;
+}
+
+.earth-time-current strong {
+  color: var(--accent);
+  font-size: 0.92rem;
+}
+
+.earth-time-current span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-transform: uppercase;
 }
 
 .earth-scale-labels {
@@ -1059,7 +1125,40 @@ button {
 
 .earth-slider-wrap {
   position: relative;
+  padding-top: 0.15rem;
   padding-bottom: 1.2rem;
+}
+
+.earth-catastrophes {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.45rem;
+  bottom: 1.2rem;
+  left: 0.45rem;
+  pointer-events: none;
+}
+
+.earth-catastrophes span {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.earth-catastrophes i {
+  display: block;
+  width: 2px;
+  height: 100%;
+  background: rgba(209, 79, 63, 0.7);
+}
+
+.earth-catastrophes b {
+  position: absolute;
+  top: -0.42rem;
+  left: 0.25rem;
+  color: #a33e32;
+  font-size: 0.55rem;
+  white-space: nowrap;
 }
 
 .earth-slider {
@@ -2439,12 +2538,16 @@ svg .bone {
     padding: 6rem 0.8rem 1rem;
   }
 
-  .earth-header {
-    align-items: stretch;
+  .earth-time-control {
+    position: sticky;
+    top: 5.25rem;
+    z-index: 6;
+    background: rgba(250, 250, 246, 0.94);
+    backdrop-filter: blur(10px);
   }
 
-  .earth-date {
-    min-width: 10rem;
+  .earth-header {
+    align-items: stretch;
   }
 
   .earth-surface-grid {
@@ -2651,15 +2754,33 @@ svg .bone {
     display: grid;
   }
 
-  .earth-date {
-    min-width: 0;
-    align-content: center;
-    align-self: start;
-    text-align: left;
+  .earth-transition {
+    display: grid;
+    gap: 0.1rem;
+    width: 100%;
   }
 
   .earth-atmosphere {
     grid-template-columns: 1fr;
+  }
+
+  .earth-time-control {
+    top: 4.95rem;
+    margin-inline: -0.2rem;
+    padding-inline: 0.52rem;
+  }
+
+  .earth-time-current {
+    display: grid;
+    gap: 0.02rem;
+  }
+
+  .earth-time-current strong {
+    font-size: 0.78rem;
+  }
+
+  .earth-scale-labels {
+    display: none;
   }
 
   .earth-life-list,
