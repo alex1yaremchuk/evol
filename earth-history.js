@@ -88,9 +88,9 @@ window.EVOL_EARTH_HISTORY = {
       period: { ru: "неопротерозой", en: "Neoproterozoic" },
       headline: { ru: "Появляются крупные многоклеточные организмы", en: "Large multicellular organisms appear" },
       atmosphere: { ru: "Кислород приближается к уровню, достаточному для крупных активных тел.", en: "Oxygen approaches levels sufficient for large active bodies." },
-      land: { ru: "Суша почти безжизненна; возможны микробные пленки и простые грибы у воды.", en: "Land is nearly lifeless, with possible microbial films and simple fungi near water." },
+      land: { ru: "Суша почти безжизненна; местами могут существовать микробные пленки на влажных поверхностях.", en: "Land is nearly lifeless; microbial films may exist locally on damp surfaces." },
       sea: { ru: "Водоросли, ранние животные и мягкотелые эдиакарские сообщества.", en: "Algae, early animals, and soft-bodied Ediacaran communities." },
-      landLife: [{ marker: "fungus", label: { ru: "простые наземные формы", en: "simple terrestrial forms" }, status: "new" }],
+      landLife: [],
       seaLife: [
         { marker: "algae", label: { ru: "многоклеточные водоросли", en: "multicellular algae" }, status: "common" },
         { marker: "animal", label: { ru: "ранние животные", en: "early animals" }, status: "new" },
@@ -106,7 +106,7 @@ window.EVOL_EARTH_HISTORY = {
       period: { ru: "кембрий — ордовик", en: "Cambrian–Ordovician" },
       headline: { ru: "Скелеты, глаза, хищники и множество планов тела", en: "Skeletons, eyes, predators, and many body plans" },
       atmosphere: { ru: "Кислорода достаточно для активных животных; озоновый слой усиливается.", en: "Enough oxygen for active animals; the ozone layer strengthens." },
-      land: { ru: "Материки остаются почти полностью безжизненными; настоящей почвы еще нет.", en: "Continents remain almost entirely lifeless; true soil has not yet formed." },
+      land: { ru: "Материки остаются почти полностью безжизненными; настоящих наземных экосистем еще нет.", en: "Continents remain almost entirely lifeless; true terrestrial ecosystems do not yet exist." },
       sea: { ru: "Главное разнообразие жизни находится в море.", en: "Most of life's diversity is in the sea." },
       landLife: [],
       seaLife: [
